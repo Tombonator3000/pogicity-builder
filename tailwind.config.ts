@@ -47,6 +47,21 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // Game-specific colors
+        game: {
+          grass: "hsl(var(--game-grass))",
+          road: "hsl(var(--game-road))",
+          water: "hsl(var(--game-water))",
+          residential: "hsl(var(--game-residential))",
+          commercial: "hsl(var(--game-commercial))",
+          civic: "hsl(var(--game-civic))",
+        },
+        tool: {
+          build: "hsl(var(--tool-build))",
+          road: "hsl(var(--tool-road))",
+          zone: "hsl(var(--tool-zone))",
+          demolish: "hsl(var(--tool-demolish))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
@@ -65,25 +80,27 @@ export default {
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
+        "pulse-glow": {
+          "0%, 100%": { boxShadow: "0 0 8px 2px hsl(var(--primary) / 0.3)" },
+          "50%": { boxShadow: "0 0 16px 4px hsl(var(--primary) / 0.5)" },
+        },
+        "bounce-subtle": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-2px)" },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "pulse-glow": "pulse-glow 2s ease-in-out infinite",
+        "bounce-subtle": "bounce-subtle 0.5s ease-in-out",
       },
     },
   },
