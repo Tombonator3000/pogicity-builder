@@ -14,8 +14,8 @@ interface BuildingPanelProps {
 const CATEGORIES: { id: BuildingCategory; label: string; icon: string }[] = [
   { id: "residential", label: "Residential", icon: "🏠" },
   { id: "commercial", label: "Commercial", icon: "🏪" },
-  { id: "civic", label: "Civic", icon: "🏛️" },
   { id: "props", label: "Props", icon: "🌳" },
+  { id: "christmas", label: "Christmas", icon: "🎄" },
 ];
 
 export function BuildingPanel({
