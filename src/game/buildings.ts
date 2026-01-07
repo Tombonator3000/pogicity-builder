@@ -27,20 +27,6 @@ export function getBuildingFootprint(
 // All buildings defined in one place
 export const BUILDINGS: Record<string, BuildingDefinition> = {
   // ===== RESIDENTIAL =====
-  "small-house": {
-    id: "small-house",
-    name: "Small House",
-    category: "residential",
-    footprint: { width: 2, height: 2 },
-    sprites: {
-      south: "/Building/residential/2x2small_house_south.png",
-      north: "/Building/residential/2x2small_house_north.png",
-      east: "/Building/residential/2x2small_house_east.png",
-      west: "/Building/residential/2x2small_house_west.png",
-    },
-    icon: "🏠",
-    supportsRotation: true,
-  },
   "yellow-apartments": {
     id: "yellow-apartments",
     name: "Yellow Apartments",
@@ -207,56 +193,6 @@ export const BUILDINGS: Record<string, BuildingDefinition> = {
       west: "/Building/commercial/4x4bookstore_west.png",
     },
     icon: "📚",
-    supportsRotation: true,
-  },
-
-  // ===== CIVIC =====
-  "fire-station": {
-    id: "fire-station",
-    name: "Fire Station",
-    category: "civic",
-    footprint: { width: 3, height: 2 },
-    footprintByOrientation: {
-      south: { width: 3, height: 2 },
-      north: { width: 3, height: 2 },
-      east: { width: 2, height: 3 },
-      west: { width: 2, height: 3 },
-    },
-    sprites: {
-      south: "/Building/civic/3x2fire_station_south.png",
-      north: "/Building/civic/3x2fire_station_north.png",
-      east: "/Building/civic/2x3fire_station_east.png",
-      west: "/Building/civic/2x3fire_station_west.png",
-    },
-    icon: "🚒",
-    supportsRotation: true,
-  },
-  "police-station": {
-    id: "police-station",
-    name: "Police Station",
-    category: "civic",
-    footprint: { width: 3, height: 3 },
-    sprites: {
-      south: "/Building/civic/3x3police_station_south.png",
-      north: "/Building/civic/3x3police_station_north.png",
-      east: "/Building/civic/3x3police_station_east.png",
-      west: "/Building/civic/3x3police_station_west.png",
-    },
-    icon: "🚔",
-    supportsRotation: true,
-  },
-  hospital: {
-    id: "hospital",
-    name: "Hospital",
-    category: "civic",
-    footprint: { width: 4, height: 4 },
-    sprites: {
-      south: "/Building/civic/4x4hospital_south.png",
-      north: "/Building/civic/4x4hospital_north.png",
-      east: "/Building/civic/4x4hospital_east.png",
-      west: "/Building/civic/4x4hospital_west.png",
-    },
-    icon: "🏥",
     supportsRotation: true,
   },
 
