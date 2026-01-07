@@ -14,7 +14,7 @@ import {
   getAffectedSegments,
   canPlaceRoadSegment,
 } from "@/game/roadUtils";
-import { Save, FolderOpen, ZoomIn, ZoomOut, Trash2, Home, MapPin, User, Car } from "lucide-react";
+import { Save, FolderOpen, ZoomIn, ZoomOut, Trash2, Home, MapPin, User, Car, RotateCw, Snowflake, Square, CircleDot } from "lucide-react";
 import { toast } from "sonner";
 
 const STORAGE_KEY = "city-builder-save";
@@ -54,20 +54,35 @@ export function GameUI() {
 
   const handleBuildingSelect = (building: BuildingDefinition) => {
     setSelectedBuildingId(building.id);
+    setCurrentTool(ToolType.Building);
     setBuildingOrientation(Direction.Down);
     gameRef.current?.setBuilding(building.id);
     gameRef.current?.setTool(ToolType.Building);
+    gameRef.current?.setDirection(Direction.Down);
+  };
+
+  const handleRotate = () => {
+    const directions = [Direction.Down, Direction.Right, Direction.Up, Direction.Left];
+    const currentIndex = directions.indexOf(buildingOrientation);
+    const nextDirection = directions[(currentIndex + 1) % 4];
+    setBuildingOrientation(nextDirection);
+    gameRef.current?.setDirection(nextDirection);
   };
 
   const handleTileClick = useCallback((x: number, y: number) => {
+    // Get current state from refs/state
+    const tool = currentTool;
+    const buildingId = selectedBuildingId;
+    const orientation = buildingOrientation;
+    
     setGrid((prevGrid) => {
       const newGrid = prevGrid.map((row) => row.map((cell) => ({ ...cell })));
 
-      if (currentTool === ToolType.Building && selectedBuildingId) {
-        const building = getBuilding(selectedBuildingId);
+      if (tool === ToolType.Building && buildingId) {
+        const building = getBuilding(buildingId);
         if (!building) return prevGrid;
 
-        const footprint = getBuildingFootprint(building, buildingOrientation);
+        const footprint = getBuildingFootprint(building, orientation);
 
         // Check if all tiles are available
         for (let dy = 0; dy < footprint.height; dy++) {
@@ -75,7 +90,7 @@ export function GameUI() {
             const gx = x + dx;
             const gy = y + dy;
             if (gx >= GRID_WIDTH || gy >= GRID_HEIGHT) return prevGrid;
-            if (newGrid[gy][gx].type !== TileType.Grass) return prevGrid;
+            if (newGrid[gy][gx].type !== TileType.Grass && newGrid[gy][gx].type !== TileType.Snow) return prevGrid;
           }
         }
 
@@ -92,12 +107,14 @@ export function GameUI() {
               originX: x,
               originY: y,
               buildingId: building.id,
-              buildingOrientation,
+              buildingOrientation: orientation,
+              underlyingTileType: prevGrid[gy][gx].type,
             };
           }
         }
         gameRef.current?.shakeScreen();
-      } else if (currentTool === ToolType.Eraser) {
+        toast.success(`Placed ${building.name}`);
+      } else if (tool === ToolType.Eraser) {
         const cell = newGrid[y][x];
         if (cell.type === TileType.Building) {
           const originX = cell.originX ?? x;
@@ -110,7 +127,8 @@ export function GameUI() {
                 const gx = originX + dx;
                 const gy = originY + dy;
                 if (gx < GRID_WIDTH && gy < GRID_HEIGHT) {
-                  newGrid[gy][gx] = { type: TileType.Grass, x: gx, y: gy, isOrigin: true };
+                  const underlying = newGrid[gy][gx].underlyingTileType || TileType.Grass;
+                  newGrid[gy][gx] = { type: underlying, x: gx, y: gy, isOrigin: true };
                 }
               }
             }
@@ -265,7 +283,7 @@ export function GameUI() {
         onRoadDrag={handleRoadDrag}
       />
 
-      {/* Toolbar */}
+      {/* Main Toolbar */}
       <div className="game-toolbar">
         <div className="game-panel flex gap-1 p-2">
           <ToolButton
@@ -274,6 +292,25 @@ export function GameUI() {
             isActive={currentTool === ToolType.RoadNetwork}
             onClick={() => handleToolChange(ToolType.RoadNetwork)}
           />
+          <ToolButton
+            icon={<CircleDot className="w-5 h-5" />}
+            label="Asphalt"
+            isActive={currentTool === ToolType.Asphalt}
+            onClick={() => handleToolChange(ToolType.Asphalt)}
+          />
+          <ToolButton
+            icon={<Square className="w-5 h-5" />}
+            label="Tile"
+            isActive={currentTool === ToolType.Tile}
+            onClick={() => handleToolChange(ToolType.Tile)}
+          />
+          <ToolButton
+            icon={<Snowflake className="w-5 h-5" />}
+            label="Snow"
+            isActive={currentTool === ToolType.Snow}
+            onClick={() => handleToolChange(ToolType.Snow)}
+          />
+          <div className="w-px bg-border mx-1" />
           <ToolButton
             icon={<Home className="w-5 h-5" />}
             label="Build"
@@ -290,12 +327,32 @@ export function GameUI() {
         </div>
       </div>
 
+      {/* Building Panel with Rotate button */}
       <BuildingPanel
         isOpen={showBuildingPanel}
         selectedBuildingId={selectedBuildingId}
         onSelectBuilding={handleBuildingSelect}
         onClose={() => setShowBuildingPanel(false)}
       />
+
+      {/* Rotation control when building is selected */}
+      {selectedBuildingId && (
+        <div className="fixed left-4 top-1/2 -translate-y-1/2 z-50">
+          <div className="game-panel flex flex-col gap-1 p-2">
+            <ToolButton
+              icon={<RotateCw className="w-5 h-5" />}
+              label={`Rotate (${buildingOrientation})`}
+              onClick={handleRotate}
+            />
+            <div className="text-xs text-center text-muted-foreground mt-1">
+              {buildingOrientation === Direction.Down && "↓ South"}
+              {buildingOrientation === Direction.Up && "↑ North"}
+              {buildingOrientation === Direction.Left && "← West"}
+              {buildingOrientation === Direction.Right && "→ East"}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Spawn & Save/Load */}
       <div className="save-load-buttons">
