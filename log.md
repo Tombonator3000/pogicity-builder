@@ -52,6 +52,28 @@ Downloaded sprites from pogicity-demo.vercel.app:
 - Added Christmas category with 🎄 icon
 - Removed Civic category (no available sprites)
 
+### Building Placement Fixed
+- Fixed disconnect between MainScene tool state and GameUI state
+- Building placement now works correctly with proper orientation support
+- Added `underlyingTileType` tracking for buildings placed on snow
+- Added success toast when placing buildings
+
+### Terrain Tools Added
+- Added Asphalt tool (for car roads)
+- Added Tile tool (for sidewalks/plazas)
+- Added Snow tool (for winter terrain)
+- Tools now paint on drag for faster terrain creation
+
+### Rotation Controls Added
+- Added rotation button that appears when building is selected
+- Shows current direction (South/North/East/West)
+- Rotates through all 4 directions
+
+### UI Improvements
+- Reorganized toolbar with separators
+- Added terrain tools to main toolbar
+- Rotation panel appears on left side when building selected
+
 ---
 
 *Log format: Date > Section > Changes*
