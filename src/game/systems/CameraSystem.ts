@@ -24,10 +24,12 @@ export class CameraSystem implements GameSystem {
   private cameraStartY: number = 0;
 
   // Screen shake state
-  private shakeOffset: number = 0;
+  private shakeOffsetX: number = 0;
+  private shakeOffsetY: number = 0;
   private shakeDuration: number = 0;
   private shakeIntensity: number = 0;
   private shakeElapsed: number = 0;
+  private shakeAxis: 'x' | 'y' | 'both' = 'y';
 
   init(scene: Phaser.Scene): void {
     this.scene = scene;
@@ -125,10 +127,12 @@ export class CameraSystem implements GameSystem {
 
   /**
    * Triggers screen shake effect
+   * @param axis - Shake axis: 'x', 'y', or 'both'
    * @param intensity - Shake intensity (default 2)
    * @param duration - Shake duration in milliseconds (default 150)
    */
-  shakeScreen(intensity: number = 2, duration: number = 150): void {
+  shakeScreen(axis: 'x' | 'y' | 'both' = 'y', intensity: number = 2, duration: number = 150): void {
+    this.shakeAxis = axis;
     this.shakeIntensity = intensity;
     this.shakeDuration = duration;
     this.shakeElapsed = 0;
@@ -147,10 +151,22 @@ export class CameraSystem implements GameSystem {
       this.shakeElapsed += delta;
       const t = Math.min(this.shakeElapsed / this.shakeDuration, 1);
       const envelope = (1 - t) * (1 - t);
-      this.shakeOffset =
-        Math.sin(t * 3 * Math.PI * 2) * this.shakeIntensity * envelope;
+      const shakeValue = Math.sin(t * 3 * Math.PI * 2) * this.shakeIntensity * envelope;
+
+      if (this.shakeAxis === 'x' || this.shakeAxis === 'both') {
+        this.shakeOffsetX = shakeValue;
+      } else {
+        this.shakeOffsetX = 0;
+      }
+
+      if (this.shakeAxis === 'y' || this.shakeAxis === 'both') {
+        this.shakeOffsetY = shakeValue;
+      } else {
+        this.shakeOffsetY = 0;
+      }
     } else {
-      this.shakeOffset = 0;
+      this.shakeOffsetX = 0;
+      this.shakeOffsetY = 0;
     }
   }
 
@@ -175,8 +191,8 @@ export class CameraSystem implements GameSystem {
 
   private applyCamera(): void {
     this.camera.setScroll(
-      Math.round(this.baseScrollX),
-      Math.round(this.baseScrollY + this.shakeOffset)
+      Math.round(this.baseScrollX + this.shakeOffsetX),
+      Math.round(this.baseScrollY + this.shakeOffsetY)
     );
   }
 }
