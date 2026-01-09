@@ -1,4 +1,5 @@
 import { BuildingDefinition, BuildingCategory, Direction } from "./types";
+import { resolveAssetPathsInObject } from "./utils/AssetPathUtils";
 
 // Helper to get the correct footprint for a building based on orientation
 export function getBuildingFootprint(
@@ -24,8 +25,9 @@ export function getBuildingFootprint(
   return building.footprintByOrientation[dir] || building.footprint;
 }
 
-// All buildings defined in one place
-export const BUILDINGS: Record<string, BuildingDefinition> = {
+// Raw building definitions with relative paths
+// These will be resolved with the correct base path at runtime
+const RAW_BUILDINGS: Record<string, BuildingDefinition> = {
   // ===== RESIDENTIAL =====
   "yellow-apartments": {
     id: "yellow-apartments",
@@ -348,17 +350,66 @@ export const BUILDINGS: Record<string, BuildingDefinition> = {
   },
 };
 
+// Cache for resolved buildings (with correct base paths)
+let resolvedBuildings: Record<string, BuildingDefinition> | null = null;
+
+/**
+ * Gets all buildings with resolved asset paths
+ * Paths are resolved once and cached for performance
+ */
+export function getResolvedBuildings(): Record<string, BuildingDefinition> {
+  if (resolvedBuildings) {
+    return resolvedBuildings;
+  }
+
+  // Resolve all sprite paths with correct base path
+  resolvedBuildings = Object.entries(RAW_BUILDINGS).reduce(
+    (acc, [key, building]) => {
+      acc[key] = {
+        ...building,
+        sprites: resolveAssetPathsInObject(building.sprites),
+      };
+      return acc;
+    },
+    {} as Record<string, BuildingDefinition>
+  );
+
+  return resolvedBuildings;
+}
+
+/**
+ * Exported BUILDINGS object with resolved paths
+ * This ensures backward compatibility with existing code
+ */
+export const BUILDINGS = new Proxy({} as Record<string, BuildingDefinition>, {
+  get(_target, prop: string) {
+    return getResolvedBuildings()[prop];
+  },
+  ownKeys() {
+    return Object.keys(getResolvedBuildings());
+  },
+  getOwnPropertyDescriptor(_target, prop: string) {
+    return {
+      enumerable: true,
+      configurable: true,
+      value: getResolvedBuildings()[prop],
+    };
+  },
+});
+
 export function getBuilding(id: string): BuildingDefinition | undefined {
-  return BUILDINGS[id];
+  return getResolvedBuildings()[id];
 }
 
 export function getBuildingsByCategory(
   category: BuildingCategory
 ): BuildingDefinition[] {
-  return Object.values(BUILDINGS).filter((b) => b.category === category);
+  return Object.values(getResolvedBuildings()).filter(
+    (b) => b.category === category
+  );
 }
 
 // Legacy compatibility
 export function getBuildingById(id: string): BuildingDefinition | undefined {
-  return BUILDINGS[id];
+  return getResolvedBuildings()[id];
 }

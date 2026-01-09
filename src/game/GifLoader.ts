@@ -1,4 +1,5 @@
 import { parseGIF, decompressFrames, ParsedFrame } from 'gifuct-js';
+import { getAssetPath } from './utils/AssetPathUtils';
 
 export interface GifAnimation {
   frames: HTMLCanvasElement[];
@@ -109,8 +110,8 @@ export class CharacterAnimationManager {
     for (const char of characters) {
       for (const dir of directions) {
         const key = `${char}_${dir}`;
-        const url = `/Characters/${char}walk${dir}.gif`;
-        
+        const url = getAssetPath(`Characters/${char}walk${dir}.gif`);
+
         const promise = this.loadAnimation(key, url);
         loadPromises.push(promise);
       }
