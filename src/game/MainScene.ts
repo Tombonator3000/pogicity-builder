@@ -31,6 +31,7 @@ import {
   isAtIntersection,
   RoadConnection,
 } from "./roadUtils";
+import { CharacterAnimationManager } from "./GifLoader";
 
 // Event types for React communication
 export interface SceneEvents {
@@ -73,7 +74,11 @@ export class MainScene extends Phaser.Scene {
   private tileSprites: Map<string, Phaser.GameObjects.Image> = new Map();
   private buildingSprites: Map<string, Phaser.GameObjects.Image> = new Map();
   private carSprites: Map<string, Phaser.GameObjects.Sprite> = new Map();
-  private characterSprites: Map<string, Phaser.GameObjects.Sprite> = new Map();
+  private characterSprites: Map<string, Phaser.GameObjects.Image> = new Map();
+  
+  // Character animation state
+  private characterAnimationManager: CharacterAnimationManager | null = null;
+  private characterAnimationFrames: Map<string, { frameIndex: number; elapsed: number; lastDir: string }> = new Map();
 
   // Game state
   private grid: GridCell[][] = [];
@@ -173,6 +178,12 @@ export class MainScene extends Phaser.Scene {
     // Create preview graphics
     this.previewGraphics = this.add.graphics();
     this.previewGraphics.setDepth(999999);
+    
+    // Initialize character animation manager and load GIF animations
+    this.characterAnimationManager = new CharacterAnimationManager(this);
+    this.characterAnimationManager.loadCharacterAnimations().then(() => {
+      console.log('Character animations loaded');
+    });
 
     // Mark scene as ready
     this.isReady = true;
@@ -763,23 +774,78 @@ export class MainScene extends Phaser.Scene {
 
   private renderCharacter(char: Character): void {
     const screenPos = this.gridToScreen(char.x, char.y);
-
-    let sprite = this.characterSprites.get(char.id);
-    if (!sprite) {
-      // Create simple colored circle as fallback
-      const graphics = this.add.graphics();
-      const color = char.characterType === CharacterType.Banana ? 0xffeb3b : 0xef5350;
-      graphics.fillStyle(color, 1);
-      graphics.fillCircle(0, 0, 8);
-      graphics.setPosition(screenPos.x, screenPos.y - 10);
-      graphics.setDepth(this.depthFromSortPoint(char.x, char.y, 0.2));
+    const delta = this.game.loop.delta;
+    
+    // Get direction string
+    const dirMap: Record<Direction, string> = {
+      [Direction.Up]: 'north',
+      [Direction.Down]: 'south',
+      [Direction.Left]: 'west',
+      [Direction.Right]: 'east',
+    };
+    const dirStr = dirMap[char.direction];
+    const charType = char.characterType === CharacterType.Banana ? 'banana' : 'apple';
+    
+    // Get or create animation state
+    let animState = this.characterAnimationFrames.get(char.id);
+    if (!animState) {
+      animState = { frameIndex: 0, elapsed: 0, lastDir: dirStr };
+      this.characterAnimationFrames.set(char.id, animState);
+    }
+    
+    // Reset frame on direction change
+    if (animState.lastDir !== dirStr) {
+      animState.frameIndex = 0;
+      animState.elapsed = 0;
+      animState.lastDir = dirStr;
+    }
+    
+    // Check if we have GIF animation loaded
+    const animation = this.characterAnimationManager?.getAnimation(charType, dirStr);
+    
+    if (animation && animation.frameKeys.length > 0) {
+      // Update animation timing
+      animState.elapsed += delta;
+      const frameDelay = animation.delays[animState.frameIndex] || 100;
       
-      // Store as any since we're using graphics
-      const fakeSprite = graphics as unknown as Phaser.GameObjects.Sprite;
-      this.characterSprites.set(char.id, fakeSprite);
-    } else {
-      sprite.setPosition(screenPos.x, screenPos.y - 10);
+      if (animState.elapsed >= frameDelay) {
+        animState.elapsed = 0;
+        animState.frameIndex = (animState.frameIndex + 1) % animation.frameKeys.length;
+      }
+      
+      const frameKey = animation.frameKeys[animState.frameIndex];
+      
+      let sprite = this.characterSprites.get(char.id);
+      if (!sprite) {
+        sprite = this.add.image(screenPos.x, screenPos.y - 20, frameKey);
+        sprite.setOrigin(0.5, 1);
+        sprite.setScale(0.5); // Scale down if needed
+        this.characterSprites.set(char.id, sprite);
+      } else {
+        if (this.textures.exists(frameKey)) {
+          sprite.setTexture(frameKey);
+        }
+        sprite.setPosition(screenPos.x, screenPos.y - 5);
+      }
+      
       sprite.setDepth(this.depthFromSortPoint(char.x, char.y, 0.2));
+    } else {
+      // Fallback: colored circle
+      let sprite = this.characterSprites.get(char.id);
+      if (!sprite) {
+        const graphics = this.add.graphics();
+        const color = char.characterType === CharacterType.Banana ? 0xffeb3b : 0xef5350;
+        graphics.fillStyle(color, 1);
+        graphics.fillCircle(0, 0, 8);
+        graphics.setPosition(screenPos.x, screenPos.y - 10);
+        graphics.setDepth(this.depthFromSortPoint(char.x, char.y, 0.2));
+        
+        const fakeSprite = graphics as unknown as Phaser.GameObjects.Image;
+        this.characterSprites.set(char.id, fakeSprite);
+      } else {
+        sprite.setPosition(screenPos.x, screenPos.y - 10);
+        sprite.setDepth(this.depthFromSortPoint(char.x, char.y, 0.2));
+      }
     }
   }
 
