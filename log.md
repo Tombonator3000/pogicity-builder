@@ -104,4 +104,38 @@ Downloaded sprites from pogicity-demo.vercel.app:
 
 ---
 
+## 2026-01-09 (Session 2)
+
+### Documentation Overhaul
+- **Comprehensive agents.md update** with modular architecture guidelines:
+  - Added 6 modular architecture requirements (Separation of Concerns, Entity-Component Pattern, Configuration-Driven Design, Event-Driven Communication, Plugin Architecture, Data Layer Abstraction)
+  - Documented code organization best practices (file naming, import organization, type safety)
+  - Added 6 game development best practices (Performance Optimization, Asset Management, State Management, Input Handling, Testing Strategy, Error Handling)
+  - Included 4 scalability patterns (Feature Flags, Modular Loading, Data-Driven Content, Version Management)
+  - Listed anti-patterns to avoid (God Objects, Tight Coupling, Magic Numbers, etc.)
+  - Added documentation requirements with JSDoc examples
+
+### Architecture Guidelines
+- **Modular design principles** to minimize refactoring:
+  - Entity-Component pattern for game entities
+  - Event-driven communication between systems
+  - Plugin architecture for extensibility
+  - Data layer abstraction for persistence
+  - Configuration-driven design for flexibility
+
+### Code Quality Standards
+- Type safety requirements (strict TypeScript, no `any` types)
+- File naming conventions established
+- Import organization standards
+- Performance optimization patterns (object pooling, sprite atlases, culling)
+- Error handling and graceful degradation strategies
+
+### Development Workflow
+- Testing strategy documented (unit, integration, visual regression)
+- Asset management best practices
+- State management patterns (undo/redo with command pattern)
+- Version management for save data migration
+
+---
+
 *Log format: Date > Section > Changes*
