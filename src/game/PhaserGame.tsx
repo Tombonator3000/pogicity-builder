@@ -1,7 +1,7 @@
 import { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import Phaser from "phaser";
 import { MainScene, SceneEvents } from "./MainScene";
-import { GridCell, ToolType, Direction } from "./types";
+import { GridCell, ToolType, Direction, Resources } from "./types";
 
 interface PhaserGameProps {
   grid: GridCell[][];
@@ -23,6 +23,10 @@ export interface PhaserGameRef {
   getCharacterCount: () => number;
   getCarCount: () => number;
   shakeScreen: () => void;
+  // Resource system methods
+  canAffordBuilding: (cost?: Partial<Resources>) => boolean;
+  spendResources: (cost: Partial<Resources>) => boolean;
+  getScene: () => MainScene | null;
 }
 
 export const PhaserGame = forwardRef<PhaserGameRef, PhaserGameProps>(
@@ -64,6 +68,16 @@ export const PhaserGame = forwardRef<PhaserGameRef, PhaserGameProps>(
       },
       shakeScreen: () => {
         sceneRef.current?.shakeScreen();
+      },
+      canAffordBuilding: (cost?: Partial<Resources>) => {
+        if (!cost) return true;
+        return sceneRef.current?.getResourceSystem()?.canAfford(cost) ?? false;
+      },
+      spendResources: (cost: Partial<Resources>) => {
+        return sceneRef.current?.getResourceSystem()?.spendResources(cost) ?? false;
+      },
+      getScene: () => {
+        return sceneRef.current;
       },
     }));
 

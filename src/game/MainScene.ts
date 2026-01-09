@@ -9,6 +9,7 @@ import {
   CameraSystem,
   RenderSystem,
   InputSystem,
+  ResourceSystem,
   SceneEvents,
 } from './systems';
 
@@ -34,6 +35,7 @@ export class MainScene extends Phaser.Scene {
   private cameraSystem!: CameraSystem;
   private renderSystem!: RenderSystem;
   private inputSystem!: InputSystem;
+  private resourceSystem!: ResourceSystem;
 
   constructor() {
     super({ key: 'MainScene' });
@@ -94,6 +96,7 @@ export class MainScene extends Phaser.Scene {
     this.characterSystem.update(delta);
     this.vehicleSystem.update(delta);
     this.cameraSystem.update(delta);
+    this.resourceSystem.update(delta); // Update resource production/consumption
 
     // Render entities
     this.renderSystem.renderCharacters(this.characterSystem.getCharacters());
@@ -141,6 +144,16 @@ export class MainScene extends Phaser.Scene {
     this.inputSystem = new InputSystem();
     this.inputSystem.init(this);
     this.inputSystem.setGrid(this.grid);
+
+    // Initialize Resource System
+    this.resourceSystem = new ResourceSystem();
+    this.resourceSystem.init(this);
+    this.resourceSystem.setGrid(this.grid);
+
+    // Register all buildings with resource system
+    for (const building of Object.values(BUILDINGS)) {
+      this.resourceSystem.registerBuilding(building);
+    }
 
     // Set up input event handlers for wheel zoom
     this.input.on('wheel', this.handleWheel, this);
@@ -201,6 +214,11 @@ export class MainScene extends Phaser.Scene {
 
   shakeScreen(intensity?: number, duration?: number): void {
     this.cameraSystem.shakeScreen(intensity, duration);
+  }
+
+  // Resource system getters
+  getResourceSystem(): ResourceSystem {
+    return this.resourceSystem;
   }
 
   // ============================================

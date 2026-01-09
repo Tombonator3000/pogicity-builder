@@ -12,10 +12,12 @@ interface BuildingPanelProps {
 }
 
 const CATEGORIES: { id: BuildingCategory; label: string; icon: string }[] = [
-  { id: "residential", label: "Residential", icon: "🏠" },
-  { id: "commercial", label: "Commercial", icon: "🏪" },
+  { id: "residential", label: "Shelter", icon: "🏚️" },
+  { id: "resource", label: "Production", icon: "⚙️" },
+  { id: "infrastructure", label: "Infrastructure", icon: "⚡" },
+  { id: "defense", label: "Defense", icon: "🗼" },
+  { id: "commercial", label: "Trade", icon: "🏪" },
   { id: "props", label: "Props", icon: "🌳" },
-  { id: "christmas", label: "Christmas", icon: "🎄" },
 ];
 
 export function BuildingPanel({
@@ -59,6 +61,39 @@ export function BuildingPanel({
             >
               <span className="building-item-icon">{building.icon}</span>
               <span className="building-item-name">{building.name}</span>
+
+              {/* Cost display */}
+              {building.cost && (
+                <div className="flex flex-wrap gap-1 mt-1 text-[9px]">
+                  {building.cost.scrap > 0 && (
+                    <span className="text-gray-400">🔩{building.cost.scrap}</span>
+                  )}
+                  {building.cost.food > 0 && (
+                    <span className="text-amber-500">🍖{building.cost.food}</span>
+                  )}
+                  {building.cost.water > 0 && (
+                    <span className="text-blue-400">💧{building.cost.water}</span>
+                  )}
+                  {building.cost.power > 0 && (
+                    <span className="text-yellow-400">⚡{building.cost.power}</span>
+                  )}
+                  {building.cost.medicine > 0 && (
+                    <span className="text-red-400">💊{building.cost.medicine}</span>
+                  )}
+                  {building.cost.caps > 0 && (
+                    <span className="text-green-400">💰{building.cost.caps}</span>
+                  )}
+                </div>
+              )}
+
+              {/* Production/Consumption indicators */}
+              {(building.produces || building.consumes) && (
+                <div className="text-[9px] text-muted-foreground mt-0.5">
+                  {building.produces && <span className="text-green-400">+</span>}
+                  {building.consumes && <span className="text-red-400">-</span>}
+                </div>
+              )}
+
               <span className="text-[10px] text-muted-foreground">
                 {building.footprint.width}x{building.footprint.height}
               </span>
