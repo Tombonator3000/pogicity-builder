@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GridCell, TileType, ToolType, Direction } from './types';
 import { GRID_CONFIG } from './config';
 import { BUILDINGS } from './buildings';
+import { getAssetPath } from './utils/AssetPathUtils';
 import {
   CharacterSystem,
   VehicleSystem,
@@ -45,15 +46,16 @@ export class MainScene extends Phaser.Scene {
 
   preload(): void {
     // Load tile textures
-    this.load.image('grass', '/Tiles/1x1grass.png');
-    this.load.image('road', '/Tiles/1x1square_tile.png');
-    this.load.image('asphalt', '/Tiles/1x1asphalt_tile.png');
-    this.load.image('snow_1', '/Tiles/1x1snow_tile_1.png');
-    this.load.image('snow_2', '/Tiles/1x1snow_tile_2.png');
-    this.load.image('snow_3', '/Tiles/1x1snow_tile_3.png');
-    this.load.image('tile', '/Tiles/1x1square_tile.png');
+    this.load.image('grass', getAssetPath('Tiles/1x1grass.png'));
+    this.load.image('road', getAssetPath('Tiles/1x1square_tile.png'));
+    this.load.image('asphalt', getAssetPath('Tiles/1x1asphalt_tile.png'));
+    this.load.image('snow_1', getAssetPath('Tiles/1x1snow_tile_1.png'));
+    this.load.image('snow_2', getAssetPath('Tiles/1x1snow_tile_2.png'));
+    this.load.image('snow_3', getAssetPath('Tiles/1x1snow_tile_3.png'));
+    this.load.image('tile', getAssetPath('Tiles/1x1square_tile.png'));
 
     // Load building textures dynamically from registry
+    // Building paths are already resolved via BUILDINGS proxy
     for (const building of Object.values(BUILDINGS)) {
       for (const [dir, path] of Object.entries(building.sprites)) {
         const key = `${building.id}_${dir}`;
@@ -66,7 +68,7 @@ export class MainScene extends Phaser.Scene {
     const directions = ['n', 's', 'e', 'w'];
     for (const car of carTypes) {
       for (const dir of directions) {
-        this.load.image(`${car}_${dir}`, `/cars/${car}${dir}.png`);
+        this.load.image(`${car}_${dir}`, getAssetPath(`cars/${car}${dir}.png`));
       }
     }
   }

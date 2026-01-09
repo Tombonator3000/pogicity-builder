@@ -7,8 +7,11 @@
     "dev": "vite",
     "build": "vite build",
     "build:dev": "vite build --mode development",
+    "build:lovable": "vite build",
+    "build:github": "vite build --mode production --base=/pogicity-builder/",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "preview:github": "vite preview --base=/pogicity-builder/"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

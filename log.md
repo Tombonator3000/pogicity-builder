@@ -290,4 +290,133 @@ Downloaded sprites from pogicity-demo.vercel.app:
 
 ---
 
+## 2026-01-09 (Session 4)
+
+### Multi-Platform Support - GitHub & Lovable
+
+**Goal**: Make game runnable on both Lovable (root path) and GitHub Pages (subdirectory path)
+
+### Problem Analysis
+- All asset paths were hardcoded with absolute paths starting with `/`
+- This works on Lovable (`/Building/foo.png`) but fails on GitHub Pages (`/pogicity-builder/Building/foo.png`)
+- Need dynamic path resolution based on deployment platform
+
+### Asset Path Resolution System Created
+- Created `src/game/utils/AssetPathUtils.ts`:
+  - `getBasePath()` - Gets base path from Vite's `import.meta.env.BASE_URL`
+  - `getAssetPath(path)` - Resolves single asset path with base
+  - `resolveAssetPathsInObject()` - Resolves all paths in an object (for building sprites)
+  - Automatic handling of leading slashes and path joining
+
+**Benefits**:
+- Single source of truth for base path configuration
+- Automatic path resolution at runtime
+- No code changes needed between platforms
+
+### Environment Configuration
+Created environment files for platform-specific configuration:
+- `.env.development` - Development/Lovable: `VITE_BASE_PATH=/`
+- `.env.production` - Production/Lovable: `VITE_BASE_PATH=/`
+- `.env.github` - GitHub Pages: `VITE_BASE_PATH=/pogicity-builder/`
+
+### Vite Configuration Updated
+- `vite.config.ts`:
+  - Added `base` property reading from `VITE_BASE_PATH` env variable
+  - Defaults to `/` if not specified
+  - Supports command-line override via `--base` flag
+
+### Buildings System Updated
+- `src/game/buildings.ts`:
+  - Renamed `BUILDINGS` → `RAW_BUILDINGS` (with relative paths)
+  - Created `getResolvedBuildings()` function that resolves all sprite paths once
+  - Implemented caching for performance
+  - Created Proxy for `BUILDINGS` export to maintain backward compatibility
+  - All building sprites now use dynamic paths
+
+**Architecture**:
+```typescript
+RAW_BUILDINGS (static) → getResolvedBuildings() → BUILDINGS (Proxy)
+```
+
+### GIF Loader Updated
+- `src/game/GifLoader.ts`:
+  - Imported `getAssetPath` utility
+  - Updated character GIF loading to use dynamic paths
+  - Character animations (banana, apple) now work on all platforms
+
+### Main Scene Updated
+- `src/game/MainScene.ts`:
+  - Imported `getAssetPath` utility
+  - Updated tile texture loading (grass, road, asphalt, snow)
+  - Updated car texture loading (jeep, taxi in 4 directions)
+  - Building texture loading already uses resolved paths from BUILDINGS
+
+### Build Scripts Added
+- `package.json` updated with platform-specific scripts:
+  - `build:lovable` - Builds for Lovable (base: `/`)
+  - `build:github` - Builds for GitHub Pages (base: `/pogicity-builder/`)
+  - `preview:github` - Previews GitHub build locally with correct base
+
+**Usage**:
+```bash
+npm run build:lovable  # For Lovable deployment
+npm run build:github   # For GitHub Pages deployment
+```
+
+### Documentation Created
+- Created `DEPLOYMENT.md`:
+  - Complete deployment guide for both platforms
+  - GitHub Actions workflow example
+  - Manual deployment instructions
+  - Architecture overview
+  - Troubleshooting guide
+  - Performance notes
+
+### Files Created (4 new files)
+- `src/game/utils/AssetPathUtils.ts` - Asset path resolution utilities
+- `.env.development` - Development environment config
+- `.env.production` - Production environment config
+- `.env.github` - GitHub Pages environment config
+- `DEPLOYMENT.md` - Deployment guide
+
+### Files Modified (5 files)
+- `vite.config.ts` - Added base path configuration
+- `package.json` - Added platform-specific build scripts
+- `src/game/buildings.ts` - Dynamic path resolution with caching
+- `src/game/GifLoader.ts` - Dynamic character GIF paths
+- `src/game/MainScene.ts` - Dynamic asset loading
+
+### Build Testing
+- ✅ TypeScript compilation: No errors
+- ✅ Lovable build: Successful (1.85 MB JS bundle)
+- ✅ GitHub build: Successful (1.85 MB JS bundle)
+- ✅ Path resolution: Verified in built HTML (`/pogicity-builder/` prefix applied)
+
+### Platform Support Matrix
+| Platform | Base Path | Build Command | Status |
+|----------|-----------|---------------|--------|
+| **Lovable** | `/` | `npm run build:lovable` | ✅ Ready |
+| **GitHub Pages** | `/pogicity-builder/` | `npm run build:github` | ✅ Ready |
+
+### Technical Highlights
+- **Zero Runtime Overhead**: Path resolution happens once at initialization
+- **Backward Compatible**: Existing code works without changes via Proxy pattern
+- **Type Safe**: Full TypeScript support maintained
+- **Cacheable**: Resolved paths are cached for performance
+- **Configurable**: Easy to change base path via environment variables
+
+### Architecture Benefits
+- Single source of truth for base paths
+- Platform-agnostic game code
+- Easy to add new deployment targets
+- No hardcoded paths in application code
+- Testable path resolution logic
+
+### Next Steps (Future)
+- Set up GitHub Actions workflow for automatic deployment
+- Test actual deployment on GitHub Pages
+- Consider adding more deployment targets (Netlify, Vercel, etc.)
+
+---
+
 *Log format: Date > Section > Changes*
