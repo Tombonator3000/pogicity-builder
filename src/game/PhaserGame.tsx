@@ -22,7 +22,7 @@ export interface PhaserGameRef {
   spawnCar: () => void;
   getCharacterCount: () => number;
   getCarCount: () => number;
-  shakeScreen: () => void;
+  shakeScreen: (axis?: 'x' | 'y' | 'both', intensity?: number, duration?: number) => void;
   // Resource system methods
   canAffordBuilding: (cost?: Partial<Resources>) => boolean;
   spendResources: (cost: Partial<Resources>) => boolean;
@@ -66,8 +66,8 @@ export const PhaserGame = forwardRef<PhaserGameRef, PhaserGameProps>(
       getCarCount: () => {
         return sceneRef.current?.getCarCount() ?? 0;
       },
-      shakeScreen: () => {
-        sceneRef.current?.shakeScreen();
+      shakeScreen: (axis?: 'x' | 'y' | 'both', intensity?: number, duration?: number) => {
+        sceneRef.current?.shakeScreen(axis, intensity, duration);
       },
       canAffordBuilding: (cost?: Partial<Resources>) => {
         if (!cost) return true;

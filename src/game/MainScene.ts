@@ -212,8 +212,8 @@ export class MainScene extends Phaser.Scene {
     return this.vehicleSystem.getCount();
   }
 
-  shakeScreen(intensity?: number, duration?: number): void {
-    this.cameraSystem.shakeScreen(intensity, duration);
+  shakeScreen(axis?: 'x' | 'y' | 'both', intensity?: number, duration?: number): void {
+    this.cameraSystem.shakeScreen(axis, intensity, duration);
   }
 
   // Resource system getters
