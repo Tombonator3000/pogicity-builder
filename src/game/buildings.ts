@@ -1,5 +1,6 @@
 import { BuildingDefinition, BuildingCategory, Direction } from "./types";
 import { resolveAssetPathsInObject } from "./utils/AssetPathUtils";
+import { WASTELAND_BUILDINGS } from "./wastelandBuildings";
 
 // Helper to get the correct footprint for a building based on orientation
 export function getBuildingFootprint(
@@ -27,7 +28,12 @@ export function getBuildingFootprint(
 
 // Raw building definitions with relative paths
 // These will be resolved with the correct base path at runtime
-const RAW_BUILDINGS: Record<string, BuildingDefinition> = {
+// NOW USING POST-APOCALYPTIC WASTELAND BUILDINGS
+const RAW_BUILDINGS: Record<string, BuildingDefinition> = WASTELAND_BUILDINGS;
+
+// Old city builder buildings (commented out - can restore later if needed)
+/*
+const OLD_CITY_BUILDINGS: Record<string, BuildingDefinition> = {
   // ===== RESIDENTIAL =====
   "yellow-apartments": {
     id: "yellow-apartments",
@@ -349,6 +355,7 @@ const RAW_BUILDINGS: Record<string, BuildingDefinition> = {
     isDecoration: true,
   },
 };
+*/
 
 // Cache for resolved buildings (with correct base paths)
 let resolvedBuildings: Record<string, BuildingDefinition> | null = null;

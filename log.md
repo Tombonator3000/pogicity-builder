@@ -419,4 +419,102 @@ npm run build:github   # For GitHub Pages deployment
 
 ---
 
+## 2026-01-09 (Session 5)
+
+### Wasteland Rebuilders - Post-Apocalyptic City Builder Concept
+
+**Goal**: Transform game into Fallout-inspired post-apocalyptic city builder with resource management, survival mechanics, and tech progression.
+
+### Concept Exploration
+Explored three post-apocalyptic concepts:
+1. **Wasteland Rebuilders** (Fallout-inspired) - Resource management, radiation, factions, tech tree
+2. **Frozen Aftermath** (Frostpunk-inspired) - Temperature management, energy crisis
+3. **Scavenger City** (Simple economy-focused) - Trading routes, exploration
+
+**Selected**: Wasteland Rebuilders (Konsept 1)
+
+**Rationale**:
+- Perfect fit with existing Character/Vehicle/Building systems
+- Rich gameplay with resources, tech tree, factions, radiation
+- Modular development in 4 phases
+- Leverages recent architectural refactor
+
+### Implementation Plan - Phase 1: Resource System & Buildings
+
+**Core Features**:
+- ⚡ **Resources**: Scrap, Food, Water, Power, Medicine, Caps
+- 🏭 **Buildings**: Post-apocalyptic structures with production/consumption
+- 🌍 **Terrain**: Wasteland, Radiation, Rubble, Contaminated tiles
+- 💰 **Economy**: Buildings cost resources to place, produce/consume over time
+- 🎨 **UI**: ResourcePanel showing current resources
+
+**Technical Approach**:
+1. Extend type definitions (Resources interface, TileType enum)
+2. Create ResourceSystem following existing systems pattern
+3. Replace buildings with post-apocalyptic variants
+4. Create ResourcePanel UI component
+5. Update InputSystem to check resource costs
+6. Update RenderSystem for new terrain rendering
+
+### Phase 1 Implementation Complete ✅
+
+**Files Created (3 new files)**:
+- `src/game/systems/ResourceSystem.ts` (300 lines) - Resource production/consumption system
+- `src/game/wastelandBuildings.ts` (400+ lines) - 22 post-apocalyptic buildings
+- `src/components/game/ResourcePanel.tsx` (120 lines) - Resource UI display
+
+**Files Modified (8 files)**:
+- `src/game/types.ts` - Added Resources, ResourceRate interfaces; extended TileType, BuildingCategory, BuildingDefinition
+- `src/game/systems/index.ts` - Exported ResourceSystem
+- `src/game/buildings.ts` - Now uses WASTELAND_BUILDINGS (old buildings commented out)
+- `src/game/MainScene.ts` - Integrated ResourceSystem into update loop
+- `src/game/PhaserGame.tsx` - Added resource methods to API (canAffordBuilding, spendResources, getScene)
+- `src/components/game/BuildingPanel.tsx` - Shows resource costs on buildings; updated categories
+- `src/components/game/GameUI.tsx` - Integrated ResourcePanel; resource checking before placement; event listeners
+
+**New Building Categories**:
+- **Shelter** (3): Makeshift Shack, Reinforced Bunker, Repaired Apartments
+- **Production** (4): Scavenging Station, Water Purifier, Hydroponic Farm, Brahmin Pen
+- **Infrastructure** (4): Solar Array, Generator, Med Bay, Radio Tower
+- **Defense** (2): Guard Tower, Perimeter Wall
+- **Trade** (2): Trading Post, Workshop
+- **Props** (4): Rusted Car, Dead Tree, Campfire, Storage Container
+
+**Resource System Features**:
+- ✅ 6 resource types tracked (scrap, food, water, power, medicine, caps)
+- ✅ Resource capacity system with storage buildings
+- ✅ Real-time production/consumption calculations (per second)
+- ✅ Building costs validated before placement
+- ✅ Automatic resource updates via event system
+- ✅ UI shows current/max values and net rates (+/- per second)
+- ✅ Color-coded resource indicators (red when low, green when producing)
+
+**Building Economics**:
+- Buildings cost resources to build (e.g., Shack costs 20 scrap)
+- Some buildings produce resources (e.g., Scavenging Station: +2 scrap/sec)
+- Some buildings consume resources (e.g., Water Purifier: -1 power/sec)
+- Storage buildings increase capacity (e.g., Storage Container: +200 scrap capacity)
+- Starting resources: 100 scrap, 50 food, 50 water, 10 medicine
+
+**UI Improvements**:
+- ResourcePanel in top-right corner shows all 6 resources
+- BuildingPanel shows resource costs on each building tile
+- Category tabs renamed to post-apocalyptic theme (Shelter, Production, Infrastructure, Defense, Trade, Props)
+- Status bar updated to "☢️ Wasteland Rebuilders"
+- Toast notifications for insufficient resources
+
+**Architecture Highlights**:
+- ResourceSystem follows same pattern as CharacterSystem/VehicleSystem
+- Event-driven communication (resources:changed event)
+- Modular and testable design
+- Zero TypeScript errors ✅
+- Backward compatible (old buildings preserved in comments)
+
+**Future Phases**:
+- Phase 2: Citizen jobs & work assignments
+- Phase 3: Tech tree & radiation hazards
+- Phase 4: Factions & raider attacks
+
+---
+
 *Log format: Date > Section > Changes*

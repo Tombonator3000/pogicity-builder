@@ -5,6 +5,12 @@ export enum TileType {
   Tile = "tile",
   Snow = "snow",
   Building = "building",
+  // Post-apocalyptic terrain types
+  Wasteland = "wasteland",
+  Radiation = "radiation",
+  Contaminated = "contaminated",
+  Rubble = "rubble",
+  DeadForest = "deadForest",
 }
 
 export enum ToolType {
@@ -15,6 +21,9 @@ export enum ToolType {
   Snow = "snow",
   Building = "building",
   Eraser = "eraser",
+  // Post-apocalyptic tools
+  Wasteland = "wasteland",
+  Rubble = "rubble",
 }
 
 export interface GridCell {
@@ -71,7 +80,35 @@ export type BuildingCategory =
   | "civic"
   | "landmark"
   | "props"
-  | "christmas";
+  | "christmas"
+  // Post-apocalyptic categories
+  | "resource"
+  | "defense"
+  | "infrastructure";
+
+/**
+ * Resource types for post-apocalyptic economy
+ */
+export interface Resources {
+  scrap: number;      // Salvaged metal/materials
+  food: number;       // Sustenance for population
+  water: number;      // Clean water (critical)
+  power: number;      // Electricity generation
+  medicine: number;   // Healthcare supplies
+  caps: number;       // Currency/bottlecaps
+}
+
+/**
+ * Building resource production/consumption rates (per second)
+ */
+export interface ResourceRate {
+  scrap?: number;
+  food?: number;
+  water?: number;
+  power?: number;
+  medicine?: number;
+  caps?: number;
+}
 
 export interface BuildingDefinition {
   id: string;
@@ -94,6 +131,12 @@ export interface BuildingDefinition {
   icon: string;
   supportsRotation?: boolean;
   isDecoration?: boolean;
+  // Post-apocalyptic resource system
+  cost?: Resources;              // Resource cost to build
+  produces?: ResourceRate;       // Resources produced per second
+  consumes?: ResourceRate;       // Resources consumed per second
+  storage?: Partial<Resources>;  // Storage capacity increase
+  description?: string;          // Tooltip description
 }
 
 export interface GameState {
@@ -101,6 +144,9 @@ export interface GameState {
   zoom: number;
   cameraX: number;
   cameraY: number;
+  // Post-apocalyptic resources
+  resources?: Resources;
+  resourceCapacity?: Resources;
 }
 
 // Isometric constants - matching original repo (44x22)

@@ -2,7 +2,8 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { PhaserGame, PhaserGameRef } from "@/game/PhaserGame";
 import { ToolButton } from "./ToolButton";
 import { BuildingPanel } from "./BuildingPanel";
-import { GridCell, TileType, ToolType, GRID_WIDTH, GRID_HEIGHT, BuildingDefinition, Direction } from "@/game/types";
+import { ResourcePanel } from "./ResourcePanel";
+import { GridCell, TileType, ToolType, GRID_WIDTH, GRID_HEIGHT, BuildingDefinition, Direction, Resources } from "@/game/types";
 import { getBuilding, getBuildingFootprint } from "@/game/buildings";
 import {
   ROAD_SEGMENT_SIZE,
@@ -39,6 +40,25 @@ export function GameUI() {
   const [showBuildingPanel, setShowBuildingPanel] = useState(false);
   const [zoom, setZoom] = useState(1);
   const gameRef = useRef<PhaserGameRef>(null);
+
+  // Post-apocalyptic resources
+  const [resources, setResources] = useState<Resources>({
+    scrap: 100,
+    food: 50,
+    water: 50,
+    power: 0,
+    medicine: 10,
+    caps: 0,
+  });
+  const [resourceCapacity, setResourceCapacity] = useState<Resources>({
+    scrap: 500,
+    food: 200,
+    water: 200,
+    power: 100,
+    medicine: 100,
+    caps: 1000,
+  });
+  const [resourceRates, setResourceRates] = useState<Partial<Resources>>({});
 
   const handleGridChange = useCallback((newGrid: GridCell[][]) => {
     setGrid(newGrid);
@@ -84,6 +104,14 @@ export function GameUI() {
 
         const footprint = getBuildingFootprint(building, orientation);
 
+        // Check if player can afford the building
+        if (building.cost && !gameRef.current?.canAffordBuilding(building.cost)) {
+          toast.error("Not enough resources!", {
+            description: "You need more materials to build this.",
+          });
+          return prevGrid;
+        }
+
         // Check if all tiles are available
         for (let dy = 0; dy < footprint.height; dy++) {
           for (let dx = 0; dx < footprint.width; dx++) {
@@ -92,6 +120,12 @@ export function GameUI() {
             if (gx >= GRID_WIDTH || gy >= GRID_HEIGHT) return prevGrid;
             if (newGrid[gy][gx].type !== TileType.Grass && newGrid[gy][gx].type !== TileType.Snow) return prevGrid;
           }
+        }
+
+        // Deduct resources
+        if (building.cost && !gameRef.current?.spendResources(building.cost)) {
+          toast.error("Failed to deduct resources!");
+          return prevGrid;
         }
 
         // Place building
@@ -272,6 +306,36 @@ export function GameUI() {
     }
   }, []);
 
+  // Listen to resource changes from the game scene
+  useEffect(() => {
+    const setupResourceListener = () => {
+      const scene = gameRef.current?.getScene();
+      if (!scene) return;
+
+      const handleResourceChange = (data: { resources: Resources; capacity: Resources }) => {
+        setResources(data.resources);
+        setResourceCapacity(data.capacity);
+
+        // Calculate and update rates
+        const resourceSystem = scene.getResourceSystem();
+        if (resourceSystem) {
+          const rates = resourceSystem.getNetRate();
+          setResourceRates(rates);
+        }
+      };
+
+      scene.events.on('resources:changed', handleResourceChange);
+
+      return () => {
+        scene.events.off('resources:changed', handleResourceChange);
+      };
+    };
+
+    // Delay setup to ensure scene is ready
+    const timeoutId = setTimeout(setupResourceListener, 1000);
+    return () => clearTimeout(timeoutId);
+  }, []);
+
   return (
     <div className="game-container">
       <PhaserGame
@@ -327,6 +391,13 @@ export function GameUI() {
         </div>
       </div>
 
+      {/* Resource Panel */}
+      <ResourcePanel
+        resources={resources}
+        capacity={resourceCapacity}
+        netRate={resourceRates}
+      />
+
       {/* Building Panel with Rotate button */}
       <BuildingPanel
         isOpen={showBuildingPanel}
@@ -375,7 +446,7 @@ export function GameUI() {
       {/* Status bar */}
       <div className="game-status-bar">
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
-          <span>🏙️ Pogicity Clone</span>
+          <span>☢️ Wasteland Rebuilders</span>
           <span className="text-xs">Pan: Right-click | Zoom: Scroll</span>
         </div>
         <div className="text-sm text-muted-foreground">Zoom: {Math.round(zoom * 100)}%</div>
