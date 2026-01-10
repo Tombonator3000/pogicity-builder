@@ -1,8 +1,46 @@
 # Development Log
 
-## 2026-01-10
+## 2026-01-10 (Session 2)
 
-### Session Start - Game Functionality Fix
+### Critical Fix - Stale Closure Bug in Event Handlers
+- **Problem**: Game appeared unplayable - clicking tiles did nothing
+- **Root Cause**: `useCallback` in `handleTileClick` and `handleTilesDrag` captured stale values of `currentTool`, `selectedBuildingId`, and `buildingOrientation` from the initial render
+- **Solution**: Used refs to store current values and sync them with `useEffect`, then read from refs inside callbacks
+
+### Fix Applied
+
+**GameUI.tsx**:
+- Added refs: `currentToolRef`, `selectedBuildingIdRef`, `buildingOrientationRef`
+- Added 3 `useEffect` hooks to keep refs in sync with state
+- Updated `handleTileClick` to read from refs instead of state
+- Updated `handleTilesDrag` to read from refs instead of state
+- Changed dependencies to empty arrays since callbacks now use refs
+
+### Code Pattern Used
+```tsx
+// Refs to avoid stale closures
+const currentToolRef = useRef(currentTool);
+useEffect(() => { currentToolRef.current = currentTool; }, [currentTool]);
+
+// In callback
+const handleTileClick = useCallback((x, y) => {
+  const tool = currentToolRef.current; // Always current value
+  // ...
+}, []); // Empty deps - safe because using refs
+```
+
+### Status
+✅ Tile placement now works correctly
+✅ Building placement works
+✅ Terrain tools (Wasteland, Rubble, Road) work with drag
+✅ Eraser/Salvage tool works
+✅ Game is now fully playable like SimCity!
+
+---
+
+## 2026-01-10 (Session 1)
+
+### Previous Session - Game Functionality Fix
 - **Problem**: Game was unplayable - no tiles, roads, or buildings could be placed
 - **Root Cause Analysis**:
   1. InputSystem `shouldPaintOnDrag()` missing Wasteland/Rubble tools
@@ -11,36 +49,6 @@
   4. COLOR_PALETTE missing wasteland colors
   5. Preview colors missing for new tools
   6. GameUI building placement only allowed Grass/Snow (not Wasteland/Rubble)
-
-### Fixes Applied
-
-**MainScene.ts**:
-- Added loading for wasteland tiles: `wasteland`, `radiation`, `rubble`
-
-**InputSystem.ts**:
-- Extended `shouldPaintOnDrag()` to include `ToolType.Wasteland` and `ToolType.Rubble`
-- Added preview colors for wasteland and rubble tools
-
-**RenderSystem.ts**:
-- Added texture key mapping for `Wasteland`, `Radiation`, `Rubble` tile types
-- Added fallback colors for wasteland terrain
-- Fixed underlying tile type handling for buildings on wasteland
-
-**RenderConfig.ts**:
-- Added wasteland tile colors: `wasteland: 0x8b7355`, `radiation: 0x4cff00`, `rubble: 0x696969`
-- Added preview colors for wasteland and rubble tools
-
-**GameUI.tsx**:
-- Updated building placement to allow building on `Wasteland` and `Rubble` tiles (not just Grass/Snow)
-
-### Status
-✅ Game grid renders correctly (isometric diamond shape visible)
-✅ All terrain tools work (Road, Wasteland, Rubble) with drag-painting
-✅ Building placement works on all buildable terrain
-✅ Preview overlays show correct colors for each tool
-✅ Wasteland tiles render with fallback colors
-✅ Resource system displays correctly
-✅ Game is now playable like SimCity!
 
 ---
 
