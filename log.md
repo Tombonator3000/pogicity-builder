@@ -772,4 +772,68 @@ Cloned and analyzed the official pogicity-demo repository (https://github.com/tw
 
 ---
 
+## 2026-01-10 (Session 4)
+
+### AI-Generated Fallout-Style Sprites
+
+**User Request**: Use Fallout 1/2 sprite sheets from NMA-Fallout website.
+
+**Problem**: The sprites at nma-fallout.com are copyrighted material from Bethesda/Black Isle Studios. Using them in a new game would be copyright infringement.
+
+**Solution**: Generated original AI sprites inspired by Fallout's post-apocalyptic aesthetic using Lovable's image generation tools. All sprites are legally safe to use.
+
+### Sprites Generated (12 new assets)
+
+**Buildings (6)**:
+- `survivor_shack_south.png` - Rusted metal shack (2x2)
+- `water_tower_south.png` - Salvaged barrel water tower (1x1 with large render)
+- `bunker_entrance_south.png` - Stone bunker with sandbags (2x2)
+- `market_tent_south.png` - Colorful trading tent (3x3)
+- `cooling_tower_south.png` - Nuclear cooling tower (3x3)
+- `vault_door_south.png` - Vault-Tec style blast door (2x2)
+
+**Props (4)**:
+- `toxic_barrel_south.png` - Glowing radioactive barrel (1x1)
+- `power_generator_south.png` - Smoking salvaged generator (1x1)
+- `car_wreck2_south.png` - Rusted 50s classic car (2x1)
+- `comm_tower_south.png` - Radio communications tower (2x2)
+
+**Characters (2)**:
+- `wanderer_south.png` - Gas mask survivor character
+- `mutant_creature_south.png` - Mutant brahmin creature
+
+### Files Modified
+
+**wastelandBuildings.ts**:
+- Added 10 new building definitions:
+  - `survivor-shack` (residential)
+  - `water-tower` (infrastructure)
+  - `bunker-entrance` (residential)
+  - `market-tent` (commercial)
+  - `cooling-tower` (infrastructure)
+  - `vault-door` (defense)
+  - `toxic-barrel` (props)
+  - `power-generator-prop` (props)
+  - `car-wreck-2` (props)
+  - `comm-tower` (infrastructure)
+
+### File Locations
+
+Generated sprites saved to:
+- `public/Building/wasteland/` - Building sprites
+- `public/Props/wasteland/` - Prop sprites
+- `src/assets/wasteland/` - Source files (backup)
+
+### Art Style Notes
+
+All sprites follow isometric perspective matching the existing game assets. Color palette uses wasteland theme: rust browns, olive greens, faded blues, radioactive yellows/greens. Style inspired by Fallout but legally original.
+
+### Status
+✅ 12 new sprites generated
+✅ 10 new building definitions added
+✅ All assets legally safe (AI-generated originals)
+✅ Sprites integrated into game
+
+---
+
 *Log format: Date > Section > Changes*
