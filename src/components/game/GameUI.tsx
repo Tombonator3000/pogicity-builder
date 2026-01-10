@@ -15,7 +15,7 @@ import {
   getAffectedSegments,
   canPlaceRoadSegment,
 } from "@/game/roadUtils";
-import { Save, FolderOpen, ZoomIn, ZoomOut, Trash2, Home, MapPin, User, Car, RotateCw, Snowflake, Square, CircleDot } from "lucide-react";
+import { Save, FolderOpen, ZoomIn, ZoomOut, Trash2, Home, MapPin, User, Car, RotateCw, Square, CircleDot, Radiation } from "lucide-react";
 import { toast } from "sonner";
 
 const STORAGE_KEY = "city-builder-save";
@@ -239,17 +239,13 @@ export function GameUI() {
           if (newGrid[y][x].type !== TileType.Grass) {
             newGrid[y][x] = { type: TileType.Grass, x, y, isOrigin: true };
           }
-        } else if (currentTool === ToolType.Snow) {
+        } else if (currentTool === ToolType.Wasteland) {
           if (newGrid[y][x].type === TileType.Grass) {
-            newGrid[y][x].type = TileType.Snow;
+            newGrid[y][x].type = TileType.Wasteland;
           }
-        } else if (currentTool === ToolType.Tile) {
-          if (newGrid[y][x].type === TileType.Grass) {
-            newGrid[y][x].type = TileType.Tile;
-          }
-        } else if (currentTool === ToolType.Asphalt) {
-          if (newGrid[y][x].type === TileType.Grass) {
-            newGrid[y][x].type = TileType.Asphalt;
+        } else if (currentTool === ToolType.Rubble) {
+          if (newGrid[y][x].type === TileType.Grass || newGrid[y][x].type === TileType.Wasteland) {
+            newGrid[y][x].type = TileType.Rubble;
           }
         }
       }
@@ -347,7 +343,7 @@ export function GameUI() {
         onRoadDrag={handleRoadDrag}
       />
 
-      {/* Main Toolbar */}
+      {/* Main Toolbar - Wasteland Tools */}
       <div className="game-toolbar">
         <div className="game-panel flex gap-1 p-2">
           <ToolButton
@@ -358,21 +354,15 @@ export function GameUI() {
           />
           <ToolButton
             icon={<CircleDot className="w-5 h-5" />}
-            label="Asphalt"
-            isActive={currentTool === ToolType.Asphalt}
-            onClick={() => handleToolChange(ToolType.Asphalt)}
+            label="Wasteland"
+            isActive={currentTool === ToolType.Wasteland}
+            onClick={() => handleToolChange(ToolType.Wasteland)}
           />
           <ToolButton
             icon={<Square className="w-5 h-5" />}
-            label="Tile"
-            isActive={currentTool === ToolType.Tile}
-            onClick={() => handleToolChange(ToolType.Tile)}
-          />
-          <ToolButton
-            icon={<Snowflake className="w-5 h-5" />}
-            label="Snow"
-            isActive={currentTool === ToolType.Snow}
-            onClick={() => handleToolChange(ToolType.Snow)}
+            label="Rubble"
+            isActive={currentTool === ToolType.Rubble}
+            onClick={() => handleToolChange(ToolType.Rubble)}
           />
           <div className="w-px bg-border mx-1" />
           <ToolButton
@@ -383,7 +373,7 @@ export function GameUI() {
           />
           <ToolButton
             icon={<Trash2 className="w-5 h-5" />}
-            label="Bulldozer"
+            label="Salvage"
             isActive={currentTool === ToolType.Eraser}
             onClick={() => handleToolChange(ToolType.Eraser)}
             variant="danger"
