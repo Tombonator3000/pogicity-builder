@@ -3,6 +3,7 @@ import { PhaserGame, PhaserGameRef } from "@/game/PhaserGame";
 import { ToolButton } from "./ToolButton";
 import { BuildingPanel } from "./BuildingPanel";
 import { ResourcePanel } from "./ResourcePanel";
+import { MainMenu } from "./MainMenu";
 import { GridCell, TileType, ToolType, GRID_WIDTH, GRID_HEIGHT, BuildingDefinition, Direction, Resources } from "@/game/types";
 import { getBuilding, getBuildingFootprint } from "@/game/buildings";
 import {
@@ -15,7 +16,7 @@ import {
   getAffectedSegments,
   canPlaceRoadSegment,
 } from "@/game/roadUtils";
-import { Save, FolderOpen, ZoomIn, ZoomOut, Trash2, Home, MapPin, User, Car, RotateCw, Square, CircleDot, Radiation } from "lucide-react";
+import { Save, FolderOpen, ZoomIn, ZoomOut, Trash2, Home, MapPin, User, Car, RotateCw, Square, CircleDot, Menu } from "lucide-react";
 import { toast } from "sonner";
 
 const STORAGE_KEY = "city-builder-save";
@@ -33,6 +34,10 @@ function createEmptyGrid(): GridCell[][] {
 }
 
 export function GameUI() {
+  // Menu state
+  const [showMenu, setShowMenu] = useState(true);
+  const [isGameStarted, setIsGameStarted] = useState(false);
+  
   const [grid, setGrid] = useState<GridCell[][]>(createEmptyGrid);
   const [currentTool, setCurrentTool] = useState<ToolType>(ToolType.None);
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
@@ -40,6 +45,9 @@ export function GameUI() {
   const [showBuildingPanel, setShowBuildingPanel] = useState(false);
   const [zoom, setZoom] = useState(1);
   const gameRef = useRef<PhaserGameRef>(null);
+
+  // Check for saved game
+  const hasSavedGame = !!localStorage.getItem(STORAGE_KEY);
 
   // Refs to avoid stale closures in callbacks
   const currentToolRef = useRef(currentTool);
@@ -304,16 +312,35 @@ export function GameUI() {
     }
   };
 
-  useEffect(() => {
+  // Auto-load is now handled by menu choices - removed auto-load on mount
+
+  // Menu handlers
+  const handleNewGame = () => {
+    setGrid(createEmptyGrid());
+    setShowMenu(false);
+    setIsGameStarted(true);
+    toast.success("Welcome to the Wasteland!");
+  };
+
+  const handleLoadGameFromMenu = () => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
         const loadedGrid = JSON.parse(saved);
         setGrid(loadedGrid);
+        setShowMenu(false);
+        setIsGameStarted(true);
         setTimeout(() => gameRef.current?.updateGrid(loadedGrid), 500);
-      } catch {}
+        toast.success("Settlement restored!");
+      } catch {
+        toast.error("Failed to load saved game");
+      }
     }
-  }, []);
+  };
+
+  const handleOpenMenu = () => {
+    setShowMenu(true);
+  };
 
   // Listen to resource changes from the game scene
   useEffect(() => {
@@ -344,6 +371,17 @@ export function GameUI() {
     const timeoutId = setTimeout(setupResourceListener, 1000);
     return () => clearTimeout(timeoutId);
   }, []);
+
+  // Show main menu
+  if (showMenu) {
+    return (
+      <MainMenu
+        onNewGame={handleNewGame}
+        onLoadGame={handleLoadGameFromMenu}
+        hasSavedGame={hasSavedGame}
+      />
+    );
+  }
 
   return (
     <div className="game-container">
@@ -427,6 +465,17 @@ export function GameUI() {
           </div>
         </div>
       )}
+
+      {/* Menu button */}
+      <div className="fixed top-4 left-4 z-50">
+        <div className="game-panel p-1">
+          <ToolButton 
+            icon={<Menu className="w-5 h-5" />} 
+            label="Menu" 
+            onClick={handleOpenMenu}
+          />
+        </div>
+      </div>
 
       {/* Spawn & Save/Load */}
       <div className="save-load-buttons">
