@@ -2,71 +2,77 @@
 @tailwind components;
 @tailwind utilities;
 
-/* City Builder Design System - Warm, inviting colors inspired by classic city builders */
+/* Wasteland Rebuilders Design System - Post-apocalyptic survival colors */
 
 @layer base {
   :root {
-    /* Core surfaces */
-    --background: 210 30% 12%;
-    --foreground: 45 30% 95%;
+    /* Core surfaces - Dark, gritty wasteland */
+    --background: 30 15% 8%;
+    --foreground: 35 20% 85%;
 
-    /* Cards & Panels - warm wood-like tones */
-    --card: 30 25% 18%;
-    --card-foreground: 45 30% 95%;
+    /* Cards & Panels - Rusty metal tones */
+    --card: 25 20% 12%;
+    --card-foreground: 35 20% 85%;
 
-    --popover: 30 25% 15%;
-    --popover-foreground: 45 30% 95%;
+    --popover: 25 20% 10%;
+    --popover-foreground: 35 20% 85%;
 
-    /* Primary - Golden/amber accent */
-    --primary: 45 85% 55%;
-    --primary-foreground: 30 40% 10%;
+    /* Primary - Radioactive amber/orange */
+    --primary: 35 90% 50%;
+    --primary-foreground: 25 30% 8%;
 
-    /* Secondary - Muted earth tones */
-    --secondary: 30 20% 25%;
-    --secondary-foreground: 45 30% 90%;
+    /* Secondary - Rusted metal */
+    --secondary: 25 30% 18%;
+    --secondary-foreground: 35 20% 80%;
 
-    /* Muted - Subtle backgrounds */
-    --muted: 210 15% 20%;
-    --muted-foreground: 210 10% 55%;
+    /* Muted - Ash gray */
+    --muted: 30 10% 15%;
+    --muted-foreground: 30 10% 50%;
 
-    /* Accent - Sky blue for highlights */
-    --accent: 200 70% 50%;
-    --accent-foreground: 200 90% 95%;
+    /* Accent - Radioactive green */
+    --accent: 120 70% 40%;
+    --accent-foreground: 120 90% 95%;
 
-    /* Destructive - Warm red */
-    --destructive: 0 65% 50%;
+    /* Destructive - Blood red */
+    --destructive: 0 75% 45%;
     --destructive-foreground: 0 0% 100%;
 
     /* Borders & Inputs */
-    --border: 30 20% 30%;
-    --input: 30 20% 25%;
-    --ring: 45 85% 55%;
+    --border: 25 20% 22%;
+    --input: 25 20% 18%;
+    --ring: 35 90% 50%;
 
-    --radius: 0.5rem;
+    --radius: 0.375rem;
 
-    /* Game-specific colors */
-    --game-grass: 120 40% 35%;
-    --game-road: 220 10% 30%;
-    --game-water: 200 60% 45%;
-    --game-residential: 45 60% 65%;
-    --game-commercial: 200 50% 55%;
-    --game-civic: 280 40% 55%;
+    /* Game-specific colors - Wasteland palette */
+    --game-wasteland: 35 40% 35%;
+    --game-radiation: 120 80% 40%;
+    --game-rubble: 25 15% 40%;
+    --game-road: 25 10% 25%;
+    --game-contaminated: 80 60% 30%;
+
+    /* Resource colors */
+    --resource-scrap: 30 10% 55%;
+    --resource-food: 35 70% 50%;
+    --resource-water: 200 70% 50%;
+    --resource-power: 50 90% 55%;
+    --resource-medicine: 0 70% 55%;
+    --resource-caps: 120 50% 45%;
 
     /* Tool categories */
-    --tool-build: 120 50% 45%;
-    --tool-road: 35 70% 50%;
-    --tool-zone: 200 60% 50%;
-    --tool-demolish: 0 70% 55%;
+    --tool-build: 35 70% 45%;
+    --tool-terrain: 30 50% 40%;
+    --tool-demolish: 0 70% 50%;
 
     /* Sidebar */
-    --sidebar-background: 30 25% 15%;
-    --sidebar-foreground: 45 30% 90%;
-    --sidebar-primary: 45 85% 55%;
-    --sidebar-primary-foreground: 30 40% 10%;
-    --sidebar-accent: 30 20% 22%;
-    --sidebar-accent-foreground: 45 30% 90%;
-    --sidebar-border: 30 20% 25%;
-    --sidebar-ring: 45 85% 55%;
+    --sidebar-background: 25 20% 10%;
+    --sidebar-foreground: 35 20% 80%;
+    --sidebar-primary: 35 90% 50%;
+    --sidebar-primary-foreground: 25 30% 8%;
+    --sidebar-accent: 25 25% 15%;
+    --sidebar-accent-foreground: 35 20% 80%;
+    --sidebar-border: 25 20% 18%;
+    --sidebar-ring: 35 90% 50%;
   }
 }
 
@@ -87,9 +93,9 @@
     @apply relative w-full h-screen overflow-hidden;
     background: linear-gradient(
       180deg,
-      hsl(200 50% 65%) 0%,
-      hsl(200 40% 80%) 30%,
-      hsl(40 60% 85%) 100%
+      hsl(30 20% 25%) 0%,
+      hsl(35 30% 40%) 40%,
+      hsl(40 25% 55%) 100%
     );
   }
 

@@ -1,6 +1,7 @@
 import { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import Phaser from "phaser";
-import { MainScene, SceneEvents } from "./MainScene";
+import { MainScene } from "./MainScene";
+import { SceneEvents } from "./systems";
 import { GridCell, ToolType, Direction, Resources } from "./types";
 
 interface PhaserGameProps {
