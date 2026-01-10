@@ -199,9 +199,14 @@ export class InputSystem implements GameSystem {
   // ============================================
 
   private shouldPaintOnDrag(): boolean {
-    return [ToolType.Snow, ToolType.Tile, ToolType.Asphalt, ToolType.Eraser].includes(
-      this.selectedTool
-    );
+    return [
+      ToolType.Snow,
+      ToolType.Tile,
+      ToolType.Asphalt,
+      ToolType.Eraser,
+      ToolType.Wasteland,
+      ToolType.Rubble,
+    ].includes(this.selectedTool);
   }
 
   private updatePreview(): void {
@@ -243,6 +248,10 @@ export class InputSystem implements GameSystem {
         return COLOR_PALETTE.preview.building;
       case ToolType.Eraser:
         return COLOR_PALETTE.preview.eraser;
+      case ToolType.Wasteland:
+        return COLOR_PALETTE.preview.wasteland;
+      case ToolType.Rubble:
+        return COLOR_PALETTE.preview.rubble;
       default:
         return COLOR_PALETTE.preview.default;
     }

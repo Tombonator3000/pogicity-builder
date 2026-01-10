@@ -41,6 +41,10 @@ export const COLOR_PALETTE = {
     tile: 0xbdbdbd,
     snow: 0xeceff1,
     building: 0x757575,
+    // Wasteland terrain colors
+    wasteland: 0x8b7355,
+    radiation: 0x4cff00,
+    rubble: 0x696969,
   },
 
   /** Building fallback colors */
@@ -64,6 +68,8 @@ export const COLOR_PALETTE = {
     snow: 0xeceff1,
     building: 0x4caf50,
     eraser: 0xff5252,
+    wasteland: 0x8b7355,
+    rubble: 0x696969,
     default: 0xffffff,
   },
 } as const;
