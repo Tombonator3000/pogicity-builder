@@ -41,6 +41,16 @@ export function GameUI() {
   const [zoom, setZoom] = useState(1);
   const gameRef = useRef<PhaserGameRef>(null);
 
+  // Refs to avoid stale closures in callbacks
+  const currentToolRef = useRef(currentTool);
+  const selectedBuildingIdRef = useRef(selectedBuildingId);
+  const buildingOrientationRef = useRef(buildingOrientation);
+
+  // Keep refs in sync with state
+  useEffect(() => { currentToolRef.current = currentTool; }, [currentTool]);
+  useEffect(() => { selectedBuildingIdRef.current = selectedBuildingId; }, [selectedBuildingId]);
+  useEffect(() => { buildingOrientationRef.current = buildingOrientation; }, [buildingOrientation]);
+
   // Post-apocalyptic resources
   const [resources, setResources] = useState<Resources>({
     scrap: 100,
@@ -90,10 +100,10 @@ export function GameUI() {
   };
 
   const handleTileClick = useCallback((x: number, y: number) => {
-    // Get current state from refs/state
-    const tool = currentTool;
-    const buildingId = selectedBuildingId;
-    const orientation = buildingOrientation;
+    // Use refs to get current values (avoids stale closures)
+    const tool = currentToolRef.current;
+    const buildingId = selectedBuildingIdRef.current;
+    const orientation = buildingOrientationRef.current;
     
     setGrid((prevGrid) => {
       const newGrid = prevGrid.map((row) => row.map((cell) => ({ ...cell })));
@@ -175,7 +185,7 @@ export function GameUI() {
 
       return newGrid;
     });
-  }, [currentTool, selectedBuildingId, buildingOrientation]);
+  }, []); // Empty deps - uses refs instead
 
   const handleRoadDrag = useCallback((segments: Array<{ x: number; y: number }>) => {
     setGrid((prevGrid) => {
@@ -229,6 +239,8 @@ export function GameUI() {
   }, []);
 
   const handleTilesDrag = useCallback((tiles: Array<{ x: number; y: number }>) => {
+    const tool = currentToolRef.current; // Use ref for current tool
+    
     setGrid((prevGrid) => {
       const newGrid = prevGrid.map((row) => row.map((cell) => ({ ...cell })));
 
@@ -236,15 +248,15 @@ export function GameUI() {
         const { x, y } = tile;
         if (x < 0 || x >= GRID_WIDTH || y < 0 || y >= GRID_HEIGHT) continue;
 
-        if (currentTool === ToolType.Eraser) {
+        if (tool === ToolType.Eraser) {
           if (newGrid[y][x].type !== TileType.Grass) {
             newGrid[y][x] = { type: TileType.Grass, x, y, isOrigin: true };
           }
-        } else if (currentTool === ToolType.Wasteland) {
+        } else if (tool === ToolType.Wasteland) {
           if (newGrid[y][x].type === TileType.Grass) {
             newGrid[y][x].type = TileType.Wasteland;
           }
-        } else if (currentTool === ToolType.Rubble) {
+        } else if (tool === ToolType.Rubble) {
           if (newGrid[y][x].type === TileType.Grass || newGrid[y][x].type === TileType.Wasteland) {
             newGrid[y][x].type = TileType.Rubble;
           }
@@ -253,7 +265,7 @@ export function GameUI() {
 
       return newGrid;
     });
-  }, [currentTool]);
+  }, []); // Empty deps - uses refs
 
   const handleZoomIn = () => {
     const newZoom = Math.min(zoom + 0.25, 4);
