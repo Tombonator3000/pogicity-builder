@@ -1,5 +1,47 @@
 # Development Log
 
+## 2026-01-10 (Session 3)
+
+### Main Menu Implementation
+- **User reported**: White screen (possibly cache issue - game actually works)
+- **Feature added**: Full main menu/start screen with wasteland theme
+
+### Files Created
+- `src/components/game/MainMenu.tsx` - Post-apocalyptic themed main menu with:
+  - Animated radiation particle background
+  - "WASTELAND REBUILDERS" title with glow effects
+  - "NEW GAME" button (starts fresh game)
+  - "CONTINUE" button (loads saved game, only shows if save exists)
+  - Sound toggle (placeholder)
+  - Decorative corner borders
+  - Version info footer
+
+### Files Modified
+
+**tailwind.config.ts**:
+- Added wasteland-specific colors: `wasteland`, `radiation`, `amber`
+- Added `resource` color namespace for resource bars
+- Added `tool` color namespace for tool categories
+
+**GameUI.tsx**:
+- Added menu state management (`showMenu`, `isGameStarted`)
+- Added `hasSavedGame` check for conditional "Continue" button
+- Added `handleNewGame` - starts fresh game with empty grid
+- Added `handleLoadGameFromMenu` - loads saved game from menu
+- Added `handleOpenMenu` - reopens menu during game
+- Added Menu button (hamburger icon) in top-left corner
+- Removed auto-load on mount (now menu-driven)
+- Imported `MainMenu` component
+
+### Status
+✅ Main menu displays on game start
+✅ "NEW GAME" starts fresh empty grid
+✅ "CONTINUE" loads saved game (only shows if save exists)
+✅ Menu button allows returning to menu during gameplay
+✅ Wasteland theme consistent throughout
+
+---
+
 ## 2026-01-10 (Session 2)
 
 ### Critical Fix - Stale Closure Bug in Event Handlers

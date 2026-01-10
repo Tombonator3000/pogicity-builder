@@ -47,19 +47,32 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // Game-specific colors
+        // Game-specific colors - Wasteland palette
+        wasteland: {
+          DEFAULT: "hsl(var(--game-wasteland))",
+          bg: "hsl(var(--background))",
+          dark: "hsl(25 20% 6%)",
+        },
+        radiation: "hsl(var(--game-radiation))",
+        amber: "hsl(var(--primary))",
         game: {
-          grass: "hsl(var(--game-grass))",
+          wasteland: "hsl(var(--game-wasteland))",
+          radiation: "hsl(var(--game-radiation))",
+          rubble: "hsl(var(--game-rubble))",
           road: "hsl(var(--game-road))",
-          water: "hsl(var(--game-water))",
-          residential: "hsl(var(--game-residential))",
-          commercial: "hsl(var(--game-commercial))",
-          civic: "hsl(var(--game-civic))",
+          contaminated: "hsl(var(--game-contaminated))",
+        },
+        resource: {
+          scrap: "hsl(var(--resource-scrap))",
+          food: "hsl(var(--resource-food))",
+          water: "hsl(var(--resource-water))",
+          power: "hsl(var(--resource-power))",
+          medicine: "hsl(var(--resource-medicine))",
+          caps: "hsl(var(--resource-caps))",
         },
         tool: {
           build: "hsl(var(--tool-build))",
-          road: "hsl(var(--tool-road))",
-          zone: "hsl(var(--tool-zone))",
+          terrain: "hsl(var(--tool-terrain))",
           demolish: "hsl(var(--tool-demolish))",
         },
         sidebar: {
