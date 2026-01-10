@@ -47,7 +47,7 @@ export class MainScene extends Phaser.Scene {
   }
 
   preload(): void {
-    // Load tile textures
+    // Load tile textures - standard
     this.load.image('grass', getAssetPath('Tiles/1x1grass.png'));
     this.load.image('road', getAssetPath('Tiles/1x1square_tile.png'));
     this.load.image('asphalt', getAssetPath('Tiles/1x1asphalt_tile.png'));
@@ -55,6 +55,11 @@ export class MainScene extends Phaser.Scene {
     this.load.image('snow_2', getAssetPath('Tiles/1x1snow_tile_2.png'));
     this.load.image('snow_3', getAssetPath('Tiles/1x1snow_tile_3.png'));
     this.load.image('tile', getAssetPath('Tiles/1x1square_tile.png'));
+    
+    // Load tile textures - wasteland
+    this.load.image('wasteland', getAssetPath('Tiles/1x1wasteland_tile.png'));
+    this.load.image('radiation', getAssetPath('Tiles/1x1radiation_tile.png'));
+    this.load.image('rubble', getAssetPath('Tiles/1x1rubble_tile.png'));
 
     // Load building textures dynamically from registry
     // Building paths are already resolved via BUILDINGS proxy

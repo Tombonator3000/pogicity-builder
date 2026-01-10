@@ -112,13 +112,14 @@ export function GameUI() {
           return prevGrid;
         }
 
-        // Check if all tiles are available
+        // Check if all tiles are available (can build on grass, wasteland, rubble, snow)
+        const buildableTiles = [TileType.Grass, TileType.Snow, TileType.Wasteland, TileType.Rubble];
         for (let dy = 0; dy < footprint.height; dy++) {
           for (let dx = 0; dx < footprint.width; dx++) {
             const gx = x + dx;
             const gy = y + dy;
             if (gx >= GRID_WIDTH || gy >= GRID_HEIGHT) return prevGrid;
-            if (newGrid[gy][gx].type !== TileType.Grass && newGrid[gy][gx].type !== TileType.Snow) return prevGrid;
+            if (!buildableTiles.includes(newGrid[gy][gx].type)) return prevGrid;
           }
         }
 

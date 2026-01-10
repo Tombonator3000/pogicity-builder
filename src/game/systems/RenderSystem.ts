@@ -166,12 +166,21 @@ export class RenderSystem implements GameSystem {
         return 'tile';
       case TileType.Snow:
         return getSnowTextureKey(x, y);
+      // Wasteland terrain types
+      case TileType.Wasteland:
+        return 'wasteland';
+      case TileType.Radiation:
+        return 'radiation';
+      case TileType.Rubble:
+        return 'rubble';
       case TileType.Building:
         // For buildings, render underlying tile or grass
         if (cell.underlyingTileType) {
-          return cell.underlyingTileType === TileType.Snow
-            ? getSnowTextureKey(x, y)
-            : cell.underlyingTileType;
+          if (cell.underlyingTileType === TileType.Snow) {
+            return getSnowTextureKey(x, y);
+          }
+          // Return the underlying type string directly (works for wasteland, rubble, etc.)
+          return cell.underlyingTileType;
         }
         return 'grass';
       default:
@@ -218,6 +227,13 @@ export class RenderSystem implements GameSystem {
         return COLOR_PALETTE.tiles.snow;
       case TileType.Building:
         return COLOR_PALETTE.tiles.building;
+      // Wasteland fallback colors
+      case TileType.Wasteland:
+        return COLOR_PALETTE.tiles.wasteland ?? 0x8b7355;
+      case TileType.Radiation:
+        return COLOR_PALETTE.tiles.radiation ?? 0x4cff00;
+      case TileType.Rubble:
+        return COLOR_PALETTE.tiles.rubble ?? 0x696969;
       default:
         return COLOR_PALETTE.tiles.grass;
     }
