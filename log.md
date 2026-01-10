@@ -1,5 +1,42 @@
 # Development Log
 
+## 2026-01-10 (Session 4)
+
+### Sprite Transparency Issue
+- **Problem**: AI-generated wasteland sprites have white backgrounds instead of transparent
+- **Root Cause**: Flux image generation models cannot create true PNG transparency - they create "light" backgrounds that appear as solid white in-game
+- **User Request**: Regenerate sprites with transparent backgrounds
+
+### Attempted Solution
+- Regenerated 10 wasteland sprites with prompts explicitly requesting:
+  - "TRANSPARENT BACKGROUND"
+  - "PNG with alpha channel"
+  - "no background, isolated object"
+- Result: Still creates light gray/white backgrounds (model limitation)
+
+### Sprites Regenerated
+1. `2x2survivor_shack_south.png`
+2. `1x1water_tower_south.png`
+3. `2x2bunker_entrance_south.png`
+4. `3x3market_tent_south.png`
+5. `3x3cooling_tower_south.png`
+6. `2x2vault_door_south.png`
+7. `1x1toxic_barrel_south.png`
+8. `1x1power_generator_south.png`
+9. `2x1car_wreck2_south.png`
+10. `2x2comm_tower_south.png`
+
+### Limitation
+**AI image generators (Flux, DALL-E) cannot create true transparency.** The PNG files are saved but the "transparent" areas are rendered as light gray/white.
+
+### Solutions
+1. **Use external tool** - Remove backgrounds using remove.bg, Photoshop, or GIMP
+2. **Use pixel art** - Create simple pixel sprites manually with real transparency
+3. **Use existing sprites** - Continue with the non-wasteland sprites that already have transparency
+4. **Post-process** - Use browser-based background removal on the generated images
+
+---
+
 ## 2026-01-10 (Session 3)
 
 ### Main Menu Implementation
