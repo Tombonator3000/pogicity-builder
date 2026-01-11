@@ -19,6 +19,12 @@ import {
   getAffectedSegments,
   canPlaceRoadSegment,
 } from "@/game/roadUtils";
+import {
+  validateBuildingPlacement,
+  placeBuilding,
+  removeBuilding,
+  eraseTile,
+} from "@/utils/buildingPlacementUtils";
 import { Save, FolderOpen, ZoomIn, ZoomOut, Trash2, Home, MapPin, User, Car, RotateCw, Square, CircleDot, Menu } from "lucide-react";
 import { toast } from "sonner";
 
@@ -128,93 +134,103 @@ export function GameUI() {
     gameRef.current?.setDirection(nextDirection);
   };
 
+  /**
+   * Handles building placement at given coordinates
+   *
+   * @param grid - Current grid state
+   * @param x - Grid X coordinate
+   * @param y - Grid Y coordinate
+   * @param buildingId - Building to place
+   * @param orientation - Building orientation
+   * @returns Updated grid or original grid if placement failed
+   */
+  const handleBuildingPlacement = useCallback(
+    (grid: GridCell[][], x: number, y: number, buildingId: string, orientation: Direction): GridCell[][] => {
+      const building = getBuilding(buildingId);
+      if (!building) return grid;
+
+      const footprint = getBuildingFootprint(building, orientation);
+
+      // Validate placement location
+      const validation = validateBuildingPlacement(grid, x, y, footprint);
+      if (!validation.valid) {
+        toast.error(validation.error || "Invalid placement", {
+          description: validation.errorDescription,
+        });
+        return grid;
+      }
+
+      // Check if player can afford the building
+      if (building.cost && !gameRef.current?.canAffordBuilding(building.cost)) {
+        toast.error("Not enough resources!", {
+          description: "You need more materials to build this.",
+        });
+        return grid;
+      }
+
+      // Deduct resources
+      if (building.cost && !gameRef.current?.spendResources(building.cost)) {
+        toast.error("Failed to deduct resources!");
+        return grid;
+      }
+
+      // Create new grid and place building
+      const newGrid = grid.map((row) => row.map((cell) => ({ ...cell })));
+      placeBuilding(newGrid, x, y, building, orientation, footprint, grid);
+
+      // Feedback
+      gameRef.current?.shakeScreen();
+      toast.success(`Placed ${building.name}`);
+
+      return newGrid;
+    },
+    []
+  );
+
+  /**
+   * Handles building or tile removal at given coordinates
+   *
+   * @param grid - Current grid state
+   * @param x - Grid X coordinate
+   * @param y - Grid Y coordinate
+   * @returns Updated grid or original grid if nothing to remove
+   */
+  const handleErasure = useCallback((grid: GridCell[][], x: number, y: number): GridCell[][] => {
+    const newGrid = grid.map((row) => row.map((cell) => ({ ...cell })));
+    const cell = newGrid[y][x];
+
+    // Try to remove building first
+    if (cell.type === TileType.Building) {
+      const removed = removeBuilding(newGrid, x, y);
+      return removed ? newGrid : grid;
+    }
+
+    // Otherwise erase regular tile
+    const erased = eraseTile(newGrid, x, y);
+    return erased ? newGrid : grid;
+  }, []);
+
+  /**
+   * Main tile click handler - orchestrates tool-specific operations
+   */
   const handleTileClick = useCallback((x: number, y: number) => {
     // Use refs to get current values (avoids stale closures)
     const tool = currentToolRef.current;
     const buildingId = selectedBuildingIdRef.current;
     const orientation = buildingOrientationRef.current;
-    
+
     setGrid((prevGrid) => {
-      const newGrid = prevGrid.map((row) => row.map((cell) => ({ ...cell })));
-
+      // Delegate to appropriate handler based on tool
       if (tool === ToolType.Building && buildingId) {
-        const building = getBuilding(buildingId);
-        if (!building) return prevGrid;
-
-        const footprint = getBuildingFootprint(building, orientation);
-
-        // Check if player can afford the building
-        if (building.cost && !gameRef.current?.canAffordBuilding(building.cost)) {
-          toast.error("Not enough resources!", {
-            description: "You need more materials to build this.",
-          });
-          return prevGrid;
-        }
-
-        // Check if all tiles are available (can build on grass, wasteland, rubble, snow)
-        const buildableTiles = [TileType.Grass, TileType.Snow, TileType.Wasteland, TileType.Rubble];
-        for (let dy = 0; dy < footprint.height; dy++) {
-          for (let dx = 0; dx < footprint.width; dx++) {
-            const gx = x + dx;
-            const gy = y + dy;
-            if (gx >= GRID_WIDTH || gy >= GRID_HEIGHT) return prevGrid;
-            if (!buildableTiles.includes(newGrid[gy][gx].type)) return prevGrid;
-          }
-        }
-
-        // Deduct resources
-        if (building.cost && !gameRef.current?.spendResources(building.cost)) {
-          toast.error("Failed to deduct resources!");
-          return prevGrid;
-        }
-
-        // Place building
-        for (let dy = 0; dy < footprint.height; dy++) {
-          for (let dx = 0; dx < footprint.width; dx++) {
-            const gx = x + dx;
-            const gy = y + dy;
-            newGrid[gy][gx] = {
-              type: TileType.Building,
-              x: gx,
-              y: gy,
-              isOrigin: dx === 0 && dy === 0,
-              originX: x,
-              originY: y,
-              buildingId: building.id,
-              buildingOrientation: orientation,
-              underlyingTileType: prevGrid[gy][gx].type,
-            };
-          }
-        }
-        gameRef.current?.shakeScreen();
-        toast.success(`Placed ${building.name}`);
+        return handleBuildingPlacement(prevGrid, x, y, buildingId, orientation);
       } else if (tool === ToolType.Eraser) {
-        const cell = newGrid[y][x];
-        if (cell.type === TileType.Building) {
-          const originX = cell.originX ?? x;
-          const originY = cell.originY ?? y;
-          const building = getBuilding(cell.buildingId || "");
-          if (building) {
-            const footprint = getBuildingFootprint(building, cell.buildingOrientation);
-            for (let dy = 0; dy < footprint.height; dy++) {
-              for (let dx = 0; dx < footprint.width; dx++) {
-                const gx = originX + dx;
-                const gy = originY + dy;
-                if (gx < GRID_WIDTH && gy < GRID_HEIGHT) {
-                  const underlying = newGrid[gy][gx].underlyingTileType || TileType.Grass;
-                  newGrid[gy][gx] = { type: underlying, x: gx, y: gy, isOrigin: true };
-                }
-              }
-            }
-          }
-        } else if (cell.type !== TileType.Grass) {
-          newGrid[y][x] = { type: TileType.Grass, x, y, isOrigin: true };
-        }
+        return handleErasure(prevGrid, x, y);
       }
 
-      return newGrid;
+      // No operation for other tools
+      return prevGrid;
     });
-  }, []); // Empty deps - uses refs instead
+  }, [handleBuildingPlacement, handleErasure]); // Dependencies on extracted handlers
 
   const handleRoadDrag = useCallback((segments: Array<{ x: number; y: number }>) => {
     setGrid((prevGrid) => {
