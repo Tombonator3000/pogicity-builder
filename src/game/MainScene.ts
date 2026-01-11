@@ -329,6 +329,11 @@ export class MainScene extends Phaser.Scene {
     return this.resourceSystem;
   }
 
+  // Event system methods
+  applyEventChoice(eventId: string, choiceIndex: number): void {
+    this.eventSystem.applyEventChoice(eventId, choiceIndex);
+  }
+
   // ============================================
   // INPUT HANDLERS
   // ============================================
