@@ -3,8 +3,9 @@ import { PhaserGame, PhaserGameRef } from "@/game/PhaserGame";
 import { ToolButton } from "./ToolButton";
 import { BuildingPanel } from "./BuildingPanel";
 import { ResourcePanel } from "./ResourcePanel";
+import { WorkerPanel } from "./WorkerPanel";
 import { MainMenu } from "./MainMenu";
-import { GridCell, TileType, ToolType, GRID_WIDTH, GRID_HEIGHT, BuildingDefinition, Direction, Resources } from "@/game/types";
+import { GridCell, TileType, ToolType, GRID_WIDTH, GRID_HEIGHT, BuildingDefinition, Direction, Resources, WorkerAssignment } from "@/game/types";
 import { getBuilding, getBuildingFootprint } from "@/game/buildings";
 import {
   ROAD_SEGMENT_SIZE,
@@ -84,6 +85,14 @@ export function GameUI() {
   });
   const [resourceRates, setResourceRates] = useState<Partial<Resources>>({});
 
+  // Worker system state
+  const [workerStats, setWorkerStats] = useState({
+    total: 3,
+    assigned: 0,
+    available: 3,
+    understaffed: 0,
+  });
+  const [workerAssignments, setWorkerAssignments] = useState<WorkerAssignment[]>([]);
   const handleGridChange = useCallback((newGrid: GridCell[][]) => {
     setGrid(newGrid);
   }, []);
@@ -348,9 +357,9 @@ export function GameUI() {
     setShowMenu(true);
   };
 
-  // Listen to resource changes from the game scene
+  // Listen to resource and worker changes from the game scene
   useEffect(() => {
-    const setupResourceListener = () => {
+    const setupListeners = () => {
       const scene = gameRef.current?.getScene();
       if (!scene) return;
 
@@ -366,15 +375,25 @@ export function GameUI() {
         }
       };
 
+      const handleWorkerChange = (data: { 
+        stats: { total: number; assigned: number; available: number; understaffed: number };
+        assignments: WorkerAssignment[];
+      }) => {
+        setWorkerStats(data.stats);
+        setWorkerAssignments(data.assignments);
+      };
+
       scene.events.on('resources:changed', handleResourceChange);
+      scene.events.on('workers:changed', handleWorkerChange);
 
       return () => {
         scene.events.off('resources:changed', handleResourceChange);
+        scene.events.off('workers:changed', handleWorkerChange);
       };
     };
 
     // Delay setup to ensure scene is ready
-    const timeoutId = setTimeout(setupResourceListener, 1000);
+    const timeoutId = setTimeout(setupListeners, 1000);
     return () => clearTimeout(timeoutId);
   }, []);
 
@@ -443,6 +462,12 @@ export function GameUI() {
         resources={resources}
         capacity={resourceCapacity}
         netRate={resourceRates}
+      />
+
+      {/* Worker Panel */}
+      <WorkerPanel
+        stats={workerStats}
+        assignments={workerAssignments}
       />
 
       {/* Building Panel with Rotate button */}

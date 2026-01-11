@@ -2,7 +2,13 @@
 
 ## 2026-01-11 (Session 7) - Resource Management System Implementation
 
-### Phase 1: Core Economy Systems
+### Complete SimCity 4-Style Economy System
+
+---
+
+### Phase 1: Core Economy Systems (COMPLETED)
+
+**Goal**: Implement population, happiness, and base resource consumption
 
 **types.ts** - Extended type system:
 - Added `BaseResources` for building costs (scrap, food, water, power, medicine, caps)
@@ -12,30 +18,102 @@
 - Added `CONSUMPTION_PER_CAPITA` and `POPULATION_CONFIG` constants
 
 **PopulationSystem.ts** - New population management:
-- Tracks population, max capacity, and happiness
+- Tracks population, max capacity, and happiness (0-100%)
 - Population consumes food/water/power per capita
 - Happiness affected by resource availability
-- Population death from starvation/dehydration
+- Population death from starvation (20s) / dehydration (15s)
 - Population growth when happiness > 60%
-- Housing capacity from residential buildings
+- Housing capacity calculated from residential buildings
 
 **EventSystem.ts** - Random events:
-- Raids, caravans, radstorms, refugees, disease, discoveries
-- Probability-based event triggering
-- Timed events with duration
-- Rate modifiers during active events
+- 6 event types: raids, caravans, radstorms, refugees, disease, discoveries
+- Probability-based event triggering with cooldowns
+- Timed events with duration and rate modifiers
 - Event choices for player decisions
 
 **ResourcePanel.tsx** - Enhanced UI:
 - Population bar with current/max display
-- Happiness meter with emoji indicators
-- Morale status labels (THRIVING, CONTENT, UNEASY, etc.)
+- Happiness meter with emoji indicators (😊😐😟😢)
+- Morale status labels (THRIVING, CONTENT, UNEASY, UNHAPPY, MISERABLE)
 
 **MainScene.ts** - System integration:
 - Integrated PopulationSystem and EventSystem
 - Population consumption affects resources
 - Event effects applied to resources/population
-- System event listeners for logging
+
+---
+
+### Phase 2: Worker System (COMPLETED)
+
+**Goal**: Buildings require workers to function at full capacity
+
+**WorkerSystem.ts** - Worker allocation:
+- Automatic worker assignment based on priority
+- Priority order: Water → Food → Power → Medicine → Defense → Production
+- Efficiency calculation: assigned/required workers
+- Understaffed buildings produce at reduced rate
+
+**Worker Requirements by Building**:
+| Building | Workers | Priority |
+|----------|---------|----------|
+| Water Purifier | 1 | 1 (Critical) |
+| Hydroponic Farm | 3 | 2 |
+| Generator | 1 | 3 |
+| Solar Array | 0 | - (Automated) |
+| Med Tent | 2 | 4 |
+| Guard Tower | 1 | 5 |
+| Scavenging Station | 2 | 6 |
+| Trading Post | 2 | 7 |
+| Radio Tower | 1 | 8 |
+
+**ResourceSystem.ts** - Updated:
+- Production scaled by worker efficiency
+- Consumption also scaled (understaffed = reduced consumption)
+- Connected to WorkerSystem for efficiency lookups
+
+**WorkerPanel.tsx** - New UI component:
+- Shows total/assigned/idle workers
+- Displays understaffed warning
+- Lists all job assignments with efficiency indicators
+- Fallout terminal styling
+
+**GameUI.tsx** - Integration:
+- Added WorkerPanel component
+- Listens to 'workers:changed' events
+- Displays worker stats in real-time
+
+---
+
+### Phase 3: Event System UI (PLANNED)
+
+**TODO**:
+- EventModal.tsx - Display events with choices
+- EventLog.tsx - Scrollable event history
+- Sound effects for events
+- Toast notifications for critical events
+
+---
+
+### System Architecture
+
+```
+┌─────────────────┐    ┌──────────────────┐
+│ PopulationSystem│───►│  ResourceSystem  │
+│ (growth/death)  │    │ (production/con) │
+└────────┬────────┘    └────────┬─────────┘
+         │                      │
+         │                      ▼
+         │             ┌──────────────────┐
+         └────────────►│   WorkerSystem   │
+                       │ (job allocation) │
+                       └──────────────────┘
+                                │
+                                ▼
+                       ┌──────────────────┐
+                       │   EventSystem    │
+                       │ (random events)  │
+                       └──────────────────┘
+```
 
 ---
 

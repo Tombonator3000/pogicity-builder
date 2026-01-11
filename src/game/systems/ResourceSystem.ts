@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
-import { Resources, ResourceRate, BuildingDefinition, GridCell, BaseResources, POPULATION_CONFIG } from '../types';
+import { Resources, ResourceRate, BuildingDefinition, GridCell, POPULATION_CONFIG, TileType } from '../types';
 import { GameSystem } from './GameSystem';
+import { WorkerSystem } from './WorkerSystem';
 
 /**
  * Resource management system for post-apocalyptic economy
@@ -12,6 +13,7 @@ export class ResourceSystem implements GameSystem {
   private capacity: Resources;
   private grid: GridCell[][] = [];
   private buildingRegistry: Map<string, BuildingDefinition> = new Map();
+  private workerSystem: WorkerSystem | null = null;
 
   // Default starting resources (can be configured)
   private static readonly DEFAULT_RESOURCES: Resources = {
@@ -49,6 +51,13 @@ export class ResourceSystem implements GameSystem {
 
     // Emit initial resource state
     this.emitResourceChange();
+  }
+
+  /**
+   * Sets the worker system reference for efficiency calculations
+   */
+  setWorkerSystem(workerSystem: WorkerSystem): void {
+    this.workerSystem = workerSystem;
   }
 
   /**
@@ -168,6 +177,7 @@ export class ResourceSystem implements GameSystem {
 
   /**
    * Calculates total resource production from all buildings
+   * Now factors in worker efficiency
    */
   private calculateTotalProduction(): ResourceRate {
     const total: ResourceRate = {};
@@ -175,16 +185,21 @@ export class ResourceSystem implements GameSystem {
     // Find all buildings in grid
     const buildings = this.findAllBuildings();
 
-    buildings.forEach(({ buildingId }) => {
+    buildings.forEach(({ buildingId, x, y }) => {
       if (!buildingId) return;
 
       const definition = this.buildingRegistry.get(buildingId);
       if (!definition?.produces) return;
 
-      // Add production rates
+      // Get worker efficiency for this building
+      const efficiency = this.workerSystem 
+        ? this.workerSystem.getBuildingEfficiency(buildingId, x, y)
+        : 1;
+
+      // Add production rates (scaled by worker efficiency)
       const keys = Object.keys(definition.produces) as Array<keyof ResourceRate>;
       keys.forEach(key => {
-        const rate = definition.produces![key] || 0;
+        const rate = (definition.produces![key] || 0) * efficiency;
         total[key] = (total[key] || 0) + rate;
       });
     });
@@ -194,6 +209,7 @@ export class ResourceSystem implements GameSystem {
 
   /**
    * Calculates total resource consumption from all buildings
+   * Consumption still happens even with partial staffing
    */
   private calculateTotalConsumption(): ResourceRate {
     const total: ResourceRate = {};
@@ -201,16 +217,21 @@ export class ResourceSystem implements GameSystem {
     // Find all buildings in grid
     const buildings = this.findAllBuildings();
 
-    buildings.forEach(({ buildingId }) => {
+    buildings.forEach(({ buildingId, x, y }) => {
       if (!buildingId) return;
 
       const definition = this.buildingRegistry.get(buildingId);
       if (!definition?.consumes) return;
 
-      // Add consumption rates
+      // Get worker efficiency - consumption is reduced if understaffed
+      const efficiency = this.workerSystem 
+        ? this.workerSystem.getBuildingEfficiency(buildingId, x, y)
+        : 1;
+
+      // Add consumption rates (scaled by worker efficiency)
       const keys = Object.keys(definition.consumes) as Array<keyof ResourceRate>;
       keys.forEach(key => {
-        const rate = definition.consumes![key] || 0;
+        const rate = (definition.consumes![key] || 0) * efficiency;
         total[key] = (total[key] || 0) + rate;
       });
     });
@@ -228,13 +249,16 @@ export class ResourceSystem implements GameSystem {
     for (let y = 0; y < this.grid.length; y++) {
       for (let x = 0; x < this.grid[y].length; x++) {
         const cell = this.grid[y][x];
-        if (cell.buildingId && !seen.has(cell.buildingId)) {
-          seen.add(cell.buildingId);
-          buildings.push({
-            buildingId: cell.buildingId,
-            x: cell.originX ?? x,
-            y: cell.originY ?? y,
-          });
+        if (cell.type === TileType.Building && cell.buildingId) {
+          const key = `${cell.originX ?? x},${cell.originY ?? y}`;
+          if (!seen.has(key)) {
+            seen.add(key);
+            buildings.push({
+              buildingId: cell.buildingId,
+              x: cell.originX ?? x,
+              y: cell.originY ?? y,
+            });
+          }
         }
       }
     }
