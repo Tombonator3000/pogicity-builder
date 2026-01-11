@@ -172,49 +172,36 @@ export class MainScene extends Phaser.Scene {
     }
   }
 
+  /**
+   * Helper function to initialize a system with the scene and optionally the grid.
+   * Reduces boilerplate code by handling the common initialization pattern.
+   *
+   * @param system - The system instance to initialize
+   * @param needsGrid - Whether this system needs the grid reference (default: true)
+   * @returns The initialized system for method chaining
+   */
+  private initializeSystem<T extends { init: (scene: Phaser.Scene) => void; setGrid?: (grid: any) => void }>(
+    system: T,
+    needsGrid: boolean = true
+  ): T {
+    system.init(this);
+    if (needsGrid && system.setGrid) {
+      system.setGrid(this.grid);
+    }
+    return system;
+  }
+
   private initializeSystems(): void {
-    // Initialize Character System
-    this.characterSystem = new CharacterSystem();
-    this.characterSystem.init(this);
-    this.characterSystem.setGrid(this.grid);
-
-    // Initialize Vehicle System
-    this.vehicleSystem = new VehicleSystem();
-    this.vehicleSystem.init(this);
-    this.vehicleSystem.setGrid(this.grid);
-
-    // Initialize Camera System
-    this.cameraSystem = new CameraSystem();
-    this.cameraSystem.init(this);
-
-    // Initialize Render System
-    this.renderSystem = new RenderSystem();
-    this.renderSystem.init(this);
-    this.renderSystem.setGrid(this.grid);
-
-    // Initialize Input System
-    this.inputSystem = new InputSystem();
-    this.inputSystem.init(this);
-    this.inputSystem.setGrid(this.grid);
-
-    // Initialize Resource System
-    this.resourceSystem = new ResourceSystem();
-    this.resourceSystem.init(this);
-    this.resourceSystem.setGrid(this.grid);
-
-    // Initialize Population System
-    this.populationSystem = new PopulationSystem();
-    this.populationSystem.init(this);
-    this.populationSystem.setGrid(this.grid);
-
-    // Initialize Worker System
-    this.workerSystem = new WorkerSystem();
-    this.workerSystem.init(this);
-    this.workerSystem.setGrid(this.grid);
-
-    // Initialize Event System
-    this.eventSystem = new EventSystem();
-    this.eventSystem.init(this);
+    // Initialize all systems with reduced boilerplate
+    this.characterSystem = this.initializeSystem(new CharacterSystem());
+    this.vehicleSystem = this.initializeSystem(new VehicleSystem());
+    this.cameraSystem = this.initializeSystem(new CameraSystem(), false);
+    this.renderSystem = this.initializeSystem(new RenderSystem());
+    this.inputSystem = this.initializeSystem(new InputSystem());
+    this.resourceSystem = this.initializeSystem(new ResourceSystem());
+    this.populationSystem = this.initializeSystem(new PopulationSystem());
+    this.workerSystem = this.initializeSystem(new WorkerSystem());
+    this.eventSystem = this.initializeSystem(new EventSystem(), false);
 
     // Register all buildings with systems
     for (const building of Object.values(BUILDINGS)) {
