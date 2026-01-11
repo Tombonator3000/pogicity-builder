@@ -161,124 +161,106 @@ export function getSegmentType(connections: number): RoadSegmentType {
   return RoadSegmentType.Intersection;
 }
 
-// Generate the 4x4 tile pattern for a road segment
+/**
+ * Type definition for road pattern predicate functions
+ * Determines if a tile at (dx, dy) should be asphalt based on segment type
+ */
+type RoadPatternPredicate = (
+  dx: number,
+  dy: number,
+  isCenterX: boolean,
+  isCenterY: boolean
+) => boolean;
+
+/**
+ * Road pattern definitions mapping each segment type to its asphalt predicate
+ * This data-driven approach eliminates the need for a massive switch statement
+ *
+ * Pattern Logic:
+ * - Isolated: Only center 2x2 area is asphalt
+ * - Horizontal: Horizontal lanes (rows 1-2) are asphalt
+ * - Vertical: Vertical lanes (columns 1-2) are asphalt
+ * - Intersection: All lanes (both horizontal and vertical) are asphalt
+ * - DeadEnd[Direction]: Lane extends from center towards the specified direction
+ * - Corner[NE/NW/SE/SW]: L-shaped lane connecting two perpendicular directions
+ * - Tee[Direction]: T-shaped intersection with three directions connected
+ */
+const ROAD_PATTERN_DEFINITIONS: Record<RoadSegmentType, RoadPatternPredicate> = {
+  [RoadSegmentType.Isolated]: (dx, dy, isCenterX, isCenterY) =>
+    isCenterX && isCenterY,
+
+  [RoadSegmentType.Horizontal]: (dx, dy, isCenterX, isCenterY) =>
+    isCenterY,
+
+  [RoadSegmentType.Vertical]: (dx, dy, isCenterX, isCenterY) =>
+    isCenterX,
+
+  [RoadSegmentType.Intersection]: (dx, dy, isCenterX, isCenterY) =>
+    isCenterX || isCenterY,
+
+  [RoadSegmentType.DeadEndNorth]: (dx, dy, isCenterX, isCenterY) =>
+    isCenterX && dy < 3,
+
+  [RoadSegmentType.DeadEndSouth]: (dx, dy, isCenterX, isCenterY) =>
+    isCenterX && dy > 0,
+
+  [RoadSegmentType.DeadEndEast]: (dx, dy, isCenterX, isCenterY) =>
+    isCenterY && dx > 0,
+
+  [RoadSegmentType.DeadEndWest]: (dx, dy, isCenterX, isCenterY) =>
+    isCenterY && dx < 3,
+
+  [RoadSegmentType.CornerNE]: (dx, dy, isCenterX, isCenterY) =>
+    (isCenterX && dy <= 2) || (isCenterY && dx >= 1),
+
+  [RoadSegmentType.CornerNW]: (dx, dy, isCenterX, isCenterY) =>
+    (isCenterX && dy <= 2) || (isCenterY && dx <= 2),
+
+  [RoadSegmentType.CornerSE]: (dx, dy, isCenterX, isCenterY) =>
+    (isCenterX && dy >= 1) || (isCenterY && dx >= 1),
+
+  [RoadSegmentType.CornerSW]: (dx, dy, isCenterX, isCenterY) =>
+    (isCenterX && dy >= 1) || (isCenterY && dx <= 2),
+
+  [RoadSegmentType.TeeNorth]: (dx, dy, isCenterX, isCenterY) =>
+    (isCenterX && dy <= 2) || isCenterY,
+
+  [RoadSegmentType.TeeSouth]: (dx, dy, isCenterX, isCenterY) =>
+    (isCenterX && dy >= 1) || isCenterY,
+
+  [RoadSegmentType.TeeEast]: (dx, dy, isCenterX, isCenterY) =>
+    (isCenterY && dx >= 1) || isCenterX,
+
+  [RoadSegmentType.TeeWest]: (dx, dy, isCenterX, isCenterY) =>
+    (isCenterY && dx <= 2) || isCenterX,
+};
+
+/**
+ * Generate the 4x4 tile pattern for a road segment
+ * Uses data-driven pattern definitions instead of switch statement
+ *
+ * @param segmentType - The type of road segment (isolated, horizontal, corner, etc.)
+ * @returns Array of tile positions with their types (Road or Asphalt)
+ *
+ * @example
+ * const pattern = generateRoadPattern(RoadSegmentType.Horizontal);
+ * // Returns 16 tiles: rows 1-2 are Asphalt (driveable lanes), rest are Road (sidewalk)
+ */
 export function generateRoadPattern(
   segmentType: RoadSegmentType
 ): Array<{ dx: number; dy: number; type: TileType }> {
   const pattern: Array<{ dx: number; dy: number; type: TileType }> = [];
+  const predicate = ROAD_PATTERN_DEFINITIONS[segmentType];
 
   for (let dy = 0; dy < ROAD_SEGMENT_SIZE; dy++) {
     for (let dx = 0; dx < ROAD_SEGMENT_SIZE; dx++) {
       const isCenterX = dx === 1 || dx === 2;
       const isCenterY = dy === 1 || dy === 2;
 
-      let type: TileType = TileType.Road;
-
-      switch (segmentType) {
-        case RoadSegmentType.Isolated:
-          if (isCenterX && isCenterY) {
-            type = TileType.Asphalt;
-          }
-          break;
-
-        case RoadSegmentType.Horizontal:
-          if (isCenterY) {
-            type = TileType.Asphalt;
-          }
-          break;
-
-        case RoadSegmentType.Vertical:
-          if (isCenterX) {
-            type = TileType.Asphalt;
-          }
-          break;
-
-        case RoadSegmentType.Intersection:
-          if (isCenterX || isCenterY) {
-            type = TileType.Asphalt;
-          }
-          break;
-
-        case RoadSegmentType.DeadEndNorth:
-          if (isCenterX && dy < 3) {
-            type = TileType.Asphalt;
-          }
-          break;
-
-        case RoadSegmentType.DeadEndSouth:
-          if (isCenterX && dy > 0) {
-            type = TileType.Asphalt;
-          }
-          break;
-
-        case RoadSegmentType.DeadEndEast:
-          if (isCenterY && dx > 0) {
-            type = TileType.Asphalt;
-          }
-          break;
-
-        case RoadSegmentType.DeadEndWest:
-          if (isCenterY && dx < 3) {
-            type = TileType.Asphalt;
-          }
-          break;
-
-        case RoadSegmentType.CornerNE:
-          if ((isCenterX && dy <= 2) || (isCenterY && dx >= 1)) {
-            type = TileType.Asphalt;
-          }
-          break;
-
-        case RoadSegmentType.CornerNW:
-          if ((isCenterX && dy <= 2) || (isCenterY && dx <= 2)) {
-            type = TileType.Asphalt;
-          }
-          break;
-
-        case RoadSegmentType.CornerSE:
-          if ((isCenterX && dy >= 1) || (isCenterY && dx >= 1)) {
-            type = TileType.Asphalt;
-          }
-          break;
-
-        case RoadSegmentType.CornerSW:
-          if ((isCenterX && dy >= 1) || (isCenterY && dx <= 2)) {
-            type = TileType.Asphalt;
-          }
-          break;
-
-        case RoadSegmentType.TeeNorth:
-          if (isCenterX && dy <= 2) {
-            type = TileType.Asphalt;
-          } else if (isCenterY) {
-            type = TileType.Asphalt;
-          }
-          break;
-
-        case RoadSegmentType.TeeSouth:
-          if (isCenterX && dy >= 1) {
-            type = TileType.Asphalt;
-          } else if (isCenterY) {
-            type = TileType.Asphalt;
-          }
-          break;
-
-        case RoadSegmentType.TeeEast:
-          if (isCenterY && dx >= 1) {
-            type = TileType.Asphalt;
-          } else if (isCenterX) {
-            type = TileType.Asphalt;
-          }
-          break;
-
-        case RoadSegmentType.TeeWest:
-          if (isCenterY && dx <= 2) {
-            type = TileType.Asphalt;
-          } else if (isCenterX) {
-            type = TileType.Asphalt;
-          }
-          break;
-      }
+      // Determine tile type using the predicate for this segment type
+      const type = predicate(dx, dy, isCenterX, isCenterY)
+        ? TileType.Asphalt
+        : TileType.Road;
 
       pattern.push({ dx, dy, type });
     }
