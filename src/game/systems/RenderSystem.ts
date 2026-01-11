@@ -281,61 +281,173 @@ export class RenderSystem implements GameSystem {
     }
   }
 
+  /**
+   * Calculates dimensions for building fallback rendering
+   */
+  private calculateBuildingFallbackDimensions(footprint: { width: number; height: number }) {
+    const config = RENDER_CONFIG.buildingFallback;
+    const bWidth = footprint.width * GRID_CONFIG.tileWidth;
+    const bHeight = footprint.height * GRID_CONFIG.tileHeight;
+    const buildingHeight = Math.max(footprint.width, footprint.height) * config.heightMultiplier + config.baseHeight;
+
+    return { bWidth, bHeight, buildingHeight };
+  }
+
+  /**
+   * Calculates base coordinates for building fallback rendering
+   */
+  private calculateBuildingFallbackCoordinates(
+    x: number,
+    y: number,
+    footprint: { width: number; height: number }
+  ) {
+    const screenPos = gridToScreen(x, y);
+    const { width, height } = footprint;
+
+    const baseX = screenPos.x + (width - height) * (GRID_CONFIG.tileWidth / 4);
+    const baseY = screenPos.y + (width + height - 1) * (GRID_CONFIG.tileHeight / 2);
+
+    return { baseX, baseY };
+  }
+
+  /**
+   * Draws the front face of a fallback building
+   */
+  private drawBuildingFrontFace(
+    graphics: Phaser.GameObjects.Graphics,
+    baseX: number,
+    baseY: number,
+    bWidth: number,
+    buildingHeight: number
+  ): void {
+    graphics.fillStyle(COLOR_PALETTE.building.base, 1);
+    graphics.fillRect(
+      baseX - bWidth / 4,
+      baseY - buildingHeight,
+      bWidth / 2,
+      buildingHeight
+    );
+  }
+
+  /**
+   * Draws the left face of a fallback building (3D effect)
+   */
+  private drawBuildingLeftFace(
+    graphics: Phaser.GameObjects.Graphics,
+    baseX: number,
+    baseY: number,
+    bWidth: number,
+    buildingHeight: number
+  ): void {
+    const config = RENDER_CONFIG.buildingFallback;
+
+    graphics.fillStyle(COLOR_PALETTE.building.dark, 1);
+    graphics.beginPath();
+    graphics.moveTo(baseX - bWidth / 4, baseY - buildingHeight);
+    graphics.lineTo(
+      baseX - bWidth / 4 - config.faceDepthOffset,
+      baseY - buildingHeight + config.faceHeightOffset
+    );
+    graphics.lineTo(
+      baseX - bWidth / 4 - config.faceDepthOffset,
+      baseY + config.faceHeightOffset
+    );
+    graphics.lineTo(baseX - bWidth / 4, baseY);
+    graphics.closePath();
+    graphics.fillPath();
+  }
+
+  /**
+   * Draws the top face of a fallback building (3D effect)
+   */
+  private drawBuildingTopFace(
+    graphics: Phaser.GameObjects.Graphics,
+    baseX: number,
+    baseY: number,
+    bWidth: number,
+    buildingHeight: number
+  ): void {
+    const config = RENDER_CONFIG.buildingFallback;
+
+    graphics.fillStyle(COLOR_PALETTE.building.light, 1);
+    graphics.beginPath();
+    graphics.moveTo(baseX - bWidth / 4, baseY - buildingHeight);
+    graphics.lineTo(
+      baseX - bWidth / 4 - config.faceDepthOffset,
+      baseY - buildingHeight + config.faceHeightOffset
+    );
+    graphics.lineTo(
+      baseX + bWidth / 4 - config.faceDepthOffset,
+      baseY - buildingHeight + config.faceHeightOffset
+    );
+    graphics.lineTo(baseX + bWidth / 4, baseY - buildingHeight);
+    graphics.closePath();
+    graphics.fillPath();
+  }
+
+  /**
+   * Draws the icon text for a fallback building
+   */
+  private drawBuildingIcon(
+    x: number,
+    y: number,
+    baseX: number,
+    baseY: number,
+    buildingHeight: number,
+    building: { icon: string },
+    footprint: { width: number; height: number }
+  ): void {
+    const config = RENDER_CONFIG.buildingFallback;
+    const iconX = baseX - config.iconOffset;
+    const iconY = baseY - buildingHeight / 2 - config.iconOffset;
+
+    this.scene.add
+      .text(iconX, iconY, building.icon, {
+        fontSize: `${config.iconFontSize}px`,
+        fontFamily: config.iconFontFamily,
+      })
+      .setDepth(
+        calculateDepth(
+          x + footprint.width - 1,
+          y + footprint.height - 1,
+          RENDER_CONFIG.layers.buildingIcon
+        )
+      );
+  }
+
+  /**
+   * Draws a fallback building representation when texture is not available
+   * Uses a simple 3D box with colored faces and an icon
+   */
   private drawBuildingFallback(
     x: number,
     y: number,
     building: { id: string; name: string; icon: string; footprint: { width: number; height: number } },
     footprint: { width: number; height: number }
   ): void {
-    const screenPos = gridToScreen(x, y);
-    const { width, height } = footprint;
+    // Calculate dimensions and coordinates
+    const { bWidth, buildingHeight } = this.calculateBuildingFallbackDimensions(footprint);
+    const { baseX, baseY } = this.calculateBuildingFallbackCoordinates(x, y, footprint);
 
-    const bWidth = width * GRID_CONFIG.tileWidth;
-    const bHeight = height * GRID_CONFIG.tileHeight;
-    const buildingHeight = Math.max(width, height) * 15 + 10;
-
-    const baseX = screenPos.x + (width - height) * (GRID_CONFIG.tileWidth / 4);
-    const baseY = screenPos.y + (width + height - 1) * (GRID_CONFIG.tileHeight / 2);
-
+    // Create graphics object for drawing
     const graphics = this.scene.add.graphics();
 
-    // Front face
-    graphics.fillStyle(COLOR_PALETTE.building.base, 1);
-    graphics.fillRect(baseX - bWidth / 4, baseY - buildingHeight, bWidth / 2, buildingHeight);
+    // Draw the three visible faces (front, left, top)
+    this.drawBuildingFrontFace(graphics, baseX, baseY, bWidth, buildingHeight);
+    this.drawBuildingLeftFace(graphics, baseX, baseY, bWidth, buildingHeight);
+    this.drawBuildingTopFace(graphics, baseX, baseY, bWidth, buildingHeight);
 
-    // Left face
-    graphics.fillStyle(COLOR_PALETTE.building.dark, 1);
-    graphics.beginPath();
-    graphics.moveTo(baseX - bWidth / 4, baseY - buildingHeight);
-    graphics.lineTo(baseX - bWidth / 4 - 10, baseY - buildingHeight + 5);
-    graphics.lineTo(baseX - bWidth / 4 - 10, baseY + 5);
-    graphics.lineTo(baseX - bWidth / 4, baseY);
-    graphics.closePath();
-    graphics.fillPath();
-
-    // Top face
-    graphics.fillStyle(COLOR_PALETTE.building.light, 1);
-    graphics.beginPath();
-    graphics.moveTo(baseX - bWidth / 4, baseY - buildingHeight);
-    graphics.lineTo(baseX - bWidth / 4 - 10, baseY - buildingHeight + 5);
-    graphics.lineTo(baseX + bWidth / 4 - 10, baseY - buildingHeight + 5);
-    graphics.lineTo(baseX + bWidth / 4, baseY - buildingHeight);
-    graphics.closePath();
-    graphics.fillPath();
-
+    // Set depth for proper isometric sorting
     graphics.setDepth(
-      calculateDepth(x + width - 1, y + height - 1, RENDER_CONFIG.layers.building)
+      calculateDepth(
+        x + footprint.width - 1,
+        y + footprint.height - 1,
+        RENDER_CONFIG.layers.building
+      )
     );
 
-    // Icon
-    this.scene.add
-      .text(baseX - 12, baseY - buildingHeight / 2 - 12, building.icon, {
-        fontSize: '24px',
-        fontFamily: 'Arial',
-      })
-      .setDepth(
-        calculateDepth(x + width - 1, y + height - 1, RENDER_CONFIG.layers.buildingIcon)
-      );
+    // Draw the building icon
+    this.drawBuildingIcon(x, y, baseX, baseY, buildingHeight, building, footprint);
   }
 
   // ============================================
