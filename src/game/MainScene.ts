@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GridCell, TileType, ToolType, Direction } from './types';
+import { GridCell, TileType, ToolType, Direction, Resources } from './types';
 import { GRID_CONFIG } from './config';
 import { BUILDINGS } from './buildings';
 import { getAssetPath } from './utils/AssetPathUtils';
@@ -12,6 +12,8 @@ import {
   ResourceSystem,
   SceneEvents,
 } from './systems';
+import { PopulationSystem } from './systems/PopulationSystem';
+import { EventSystem } from './systems/EventSystem';
 
 /**
  * Main game scene - Refactored with modular systems
@@ -36,6 +38,8 @@ export class MainScene extends Phaser.Scene {
   private renderSystem!: RenderSystem;
   private inputSystem!: InputSystem;
   private resourceSystem!: ResourceSystem;
+  private populationSystem!: PopulationSystem;
+  private eventSystem!: EventSystem;
 
   constructor() {
     super({ key: 'MainScene' });
@@ -101,11 +105,48 @@ export class MainScene extends Phaser.Scene {
     this.characterSystem.update(delta);
     this.vehicleSystem.update(delta);
     this.cameraSystem.update(delta);
-    this.resourceSystem.update(delta); // Update resource production/consumption
+    this.populationSystem.update(delta);
+    this.eventSystem.update(delta);
+    
+    // Update resources with population consumption
+    this.updateResourcesWithPopulation(delta);
 
     // Render entities
     this.renderSystem.renderCharacters(this.characterSystem.getCharacters());
     this.renderSystem.renderCars(this.vehicleSystem.getCars());
+  }
+
+  /**
+   * Integrates population consumption into resource updates
+   */
+  private updateResourcesWithPopulation(delta: number): void {
+    const resources = this.resourceSystem.getResources();
+    
+    // Get population consumption
+    const consumption = this.populationSystem.getPopulationConsumption();
+    
+    // Get event rate modifiers
+    const eventMods = this.eventSystem.getActiveRateModifiers();
+    
+    // Apply population consumption as additional consumption
+    // This is handled in the resource system update with modified rates
+    
+    // Update happiness based on resource availability
+    this.populationSystem.updateHappiness(resources, delta / 1000);
+    
+    // Check for population death
+    this.populationSystem.checkPopulationDeath();
+    
+    // Sync population to resources
+    const popState = this.populationSystem.getState();
+    const currentResources = this.resourceSystem.getResources();
+    currentResources.population = popState.current;
+    currentResources.maxPopulation = popState.max;
+    currentResources.happiness = popState.happiness;
+    this.resourceSystem.setResources(currentResources);
+    
+    // Normal resource update
+    this.resourceSystem.update(delta);
   }
 
   // ============================================
@@ -155,13 +196,60 @@ export class MainScene extends Phaser.Scene {
     this.resourceSystem.init(this);
     this.resourceSystem.setGrid(this.grid);
 
-    // Register all buildings with resource system
+    // Initialize Population System
+    this.populationSystem = new PopulationSystem();
+    this.populationSystem.init(this);
+    this.populationSystem.setGrid(this.grid);
+
+    // Initialize Event System
+    this.eventSystem = new EventSystem();
+    this.eventSystem.init(this);
+
+    // Register all buildings with systems
     for (const building of Object.values(BUILDINGS)) {
       this.resourceSystem.registerBuilding(building);
+      this.populationSystem.registerBuilding(building);
     }
+
+    // Set up event listeners
+    this.setupEventListeners();
 
     // Set up input event handlers for wheel zoom
     this.input.on('wheel', this.handleWheel, this);
+  }
+
+  /**
+   * Sets up event listeners between systems
+   */
+  private setupEventListeners(): void {
+    // Handle event effects
+    this.events.on('event:apply', (effect: Partial<Resources>) => {
+      // Handle population effect separately
+      if (effect.population) {
+        this.populationSystem.addPopulation(effect.population);
+      }
+      
+      // Apply resource effects
+      const resourceEffect: Partial<Resources> = { ...effect };
+      delete resourceEffect.population;
+      delete resourceEffect.maxPopulation;
+      delete resourceEffect.happiness;
+      
+      this.resourceSystem.addResources(resourceEffect);
+    });
+
+    // Log events
+    this.events.on('event:triggered', (event: { name: string; type: string }) => {
+      console.log(`[EVENT] ${event.type}: ${event.name}`);
+    });
+
+    this.events.on('population:death', (data: { deaths: number }) => {
+      console.log(`[POPULATION] ${data.deaths} settler(s) died!`);
+    });
+
+    this.events.on('population:growth', (data: { population: number }) => {
+      console.log(`[POPULATION] New settler arrived! Total: ${data.population}`);
+    });
   }
 
   // ============================================

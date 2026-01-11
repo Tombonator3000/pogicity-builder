@@ -87,16 +87,30 @@ export type BuildingCategory =
   | "infrastructure";
 
 /**
- * Resource types for post-apocalyptic economy
+ * Base resource types (materials/currency) - used for building costs
  */
-export interface Resources {
-  scrap: number;      // Salvaged metal/materials
-  food: number;       // Sustenance for population
-  water: number;      // Clean water (critical)
-  power: number;      // Electricity generation
-  medicine: number;   // Healthcare supplies
-  caps: number;       // Currency/bottlecaps
+export interface BaseResources {
+  scrap: number;
+  food: number;
+  water: number;
+  power: number;
+  medicine: number;
+  caps: number;
 }
+
+/**
+ * Full resources including population state
+ */
+export interface Resources extends BaseResources {
+  population: number;
+  maxPopulation: number;
+  happiness: number;
+}
+
+/**
+ * Building costs use only base resources
+ */
+export type ResourceCost = Partial<BaseResources>;
 
 /**
  * Building resource production/consumption rates (per second)
@@ -108,6 +122,88 @@ export interface ResourceRate {
   power?: number;
   medicine?: number;
   caps?: number;
+}
+
+/**
+ * Population consumption rates per capita per second
+ */
+export const CONSUMPTION_PER_CAPITA = {
+  food: 0.05,
+  water: 0.08,
+  power: 0.02,
+} as const;
+
+/**
+ * Population growth/death thresholds
+ */
+export const POPULATION_CONFIG = {
+  growthInterval: 30,
+  growthHappinessMin: 60,
+  deathNoFoodInterval: 20,
+  deathNoWaterInterval: 15,
+  happinessDecayRate: 2,
+  happinessRecoveryRate: 1,
+  baseHappiness: 70,
+} as const;
+
+/**
+ * Worker assignment for a building instance
+ */
+export interface WorkerAssignment {
+  buildingInstanceId: string;
+  buildingId: string;
+  workersAssigned: number;
+  workersRequired: number;
+  priority: number;
+  x: number;
+  y: number;
+}
+
+/**
+ * Game event types
+ */
+export type GameEventType =
+  | "raid"
+  | "caravan"
+  | "radstorm"
+  | "refugees"
+  | "disease"
+  | "discovery";
+
+/**
+ * Game event definition
+ */
+export interface GameEvent {
+  id: string;
+  type: GameEventType;
+  name: string;
+  description: string;
+  effect: Partial<Resources>;
+  rateEffect?: ResourceRate;
+  duration?: number;
+  choices?: GameEventChoice[];
+  timestamp: number;
+}
+
+/**
+ * Event choice option
+ */
+export interface GameEventChoice {
+  label: string;
+  description: string;
+  effect: Partial<Resources>;
+}
+
+/**
+ * Population state for save/load
+ */
+export interface PopulationState {
+  current: number;
+  max: number;
+  happiness: number;
+  lastGrowthCheck: number;
+  foodDepletedAt?: number;
+  waterDepletedAt?: number;
 }
 
 export interface BuildingDefinition {
@@ -132,11 +228,13 @@ export interface BuildingDefinition {
   supportsRotation?: boolean;
   isDecoration?: boolean;
   // Post-apocalyptic resource system
-  cost?: Resources;              // Resource cost to build
-  produces?: ResourceRate;       // Resources produced per second
-  consumes?: ResourceRate;       // Resources consumed per second
-  storage?: Partial<Resources>;  // Storage capacity increase
-  description?: string;          // Tooltip description
+  cost?: ResourceCost;
+  produces?: ResourceRate;
+  consumes?: ResourceRate;
+  storage?: Partial<BaseResources>;
+  housingCapacity?: number;
+  workersRequired?: number;
+  description?: string;
 }
 
 export interface GameState {
@@ -144,9 +242,12 @@ export interface GameState {
   zoom: number;
   cameraX: number;
   cameraY: number;
-  // Post-apocalyptic resources
   resources?: Resources;
   resourceCapacity?: Resources;
+  populationState?: PopulationState;
+  workerAssignments?: WorkerAssignment[];
+  eventHistory?: GameEvent[];
+  gameTime?: number;
 }
 
 // Isometric constants - matching original repo (44x22)

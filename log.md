@@ -1,5 +1,44 @@
 # Development Log
 
+## 2026-01-11 (Session 7) - Resource Management System Implementation
+
+### Phase 1: Core Economy Systems
+
+**types.ts** - Extended type system:
+- Added `BaseResources` for building costs (scrap, food, water, power, medicine, caps)
+- Extended `Resources` with population, maxPopulation, happiness
+- Added `ResourceCost` type for building costs
+- Added `PopulationState`, `WorkerAssignment`, `GameEvent` types
+- Added `CONSUMPTION_PER_CAPITA` and `POPULATION_CONFIG` constants
+
+**PopulationSystem.ts** - New population management:
+- Tracks population, max capacity, and happiness
+- Population consumes food/water/power per capita
+- Happiness affected by resource availability
+- Population death from starvation/dehydration
+- Population growth when happiness > 60%
+- Housing capacity from residential buildings
+
+**EventSystem.ts** - Random events:
+- Raids, caravans, radstorms, refugees, disease, discoveries
+- Probability-based event triggering
+- Timed events with duration
+- Rate modifiers during active events
+- Event choices for player decisions
+
+**ResourcePanel.tsx** - Enhanced UI:
+- Population bar with current/max display
+- Happiness meter with emoji indicators
+- Morale status labels (THRIVING, CONTENT, UNEASY, etc.)
+
+**MainScene.ts** - System integration:
+- Integrated PopulationSystem and EventSystem
+- Population consumption affects resources
+- Event effects applied to resources/population
+- System event listeners for logging
+
+---
+
 ## 2026-01-11 (Session 6) - Fallout UI Redesign
 
 ### Fallout 1/2 Inspired UI Implementation

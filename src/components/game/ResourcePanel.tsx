@@ -1,5 +1,4 @@
 import { Resources } from "@/game/types";
-import { cn } from "@/lib/utils";
 
 interface ResourcePanelProps {
   resources: Resources;
@@ -12,7 +11,8 @@ interface ResourcePanelProps {
  * Shows current resources with CRT phosphor aesthetic
  */
 export function ResourcePanel({ resources, capacity, netRate }: ResourcePanelProps) {
-  const resourceConfigs = [
+  // Material resources
+  const materialConfigs = [
     { key: "scrap" as keyof Resources, icon: "⚙", label: "SCRAP", color: "hsl(120 40% 50%)" },
     { key: "food" as keyof Resources, icon: "◈", label: "FOOD", color: "hsl(45 80% 55%)" },
     { key: "water" as keyof Resources, icon: "◉", label: "WATER", color: "hsl(180 70% 50%)" },
@@ -21,19 +21,13 @@ export function ResourcePanel({ resources, capacity, netRate }: ResourcePanelPro
     { key: "caps" as keyof Resources, icon: "◎", label: "CAPS", color: "hsl(120 60% 55%)" },
   ];
 
-  /**
-   * Gets color based on resource percentage
-   */
   const getStatusColor = (current: number, max: number): string => {
     const percentage = (current / max) * 100;
-    if (percentage < 20) return "hsl(0 80% 55%)";  // Critical - red
-    if (percentage < 50) return "hsl(45 90% 55%)"; // Warning - amber
-    return "hsl(120 80% 55%)"; // Good - green
+    if (percentage < 20) return "hsl(0 80% 55%)";
+    if (percentage < 50) return "hsl(45 90% 55%)";
+    return "hsl(120 80% 55%)";
   };
 
-  /**
-   * Formats resource value for display
-   */
   const formatValue = (value: number): string => {
     if (value >= 1000) {
       return `${(value / 1000).toFixed(1)}K`;
@@ -41,26 +35,35 @@ export function ResourcePanel({ resources, capacity, netRate }: ResourcePanelPro
     return Math.floor(value).toString().padStart(3, ' ');
   };
 
-  /**
-   * Formats rate with + or - prefix
-   */
   const formatRate = (rate: number): string => {
     const sign = rate >= 0 ? "+" : "";
     return `${sign}${rate.toFixed(1)}/s`;
   };
 
-  /**
-   * Gets rate color
-   */
   const getRateColor = (rate: number): string => {
     if (rate > 0) return "hsl(120 80% 55%)";
     if (rate < 0) return "hsl(0 80% 55%)";
     return "hsl(120 30% 40%)";
   };
 
+  const getHappinessIcon = (happiness: number): string => {
+    if (happiness >= 80) return "😊";
+    if (happiness >= 60) return "😐";
+    if (happiness >= 40) return "😟";
+    return "😢";
+  };
+
+  const getHappinessLabel = (happiness: number): string => {
+    if (happiness >= 80) return "THRIVING";
+    if (happiness >= 60) return "CONTENT";
+    if (happiness >= 40) return "UNEASY";
+    if (happiness >= 20) return "UNHAPPY";
+    return "MISERABLE";
+  };
+
   return (
     <div 
-      className="absolute right-4 top-16 w-56 z-30"
+      className="absolute right-4 top-16 w-60 z-30"
       style={{
         background: 'linear-gradient(180deg, hsl(120 15% 8%) 0%, hsl(120 10% 5%) 100%)',
         border: '2px solid',
@@ -87,7 +90,7 @@ export function ResourcePanel({ resources, capacity, netRate }: ResourcePanelPro
             textShadow: '0 0 8px hsl(120 100% 50% / 0.5)'
           }}
         >
-          RESOURCES
+          SETTLEMENT STATUS
         </h3>
         <div 
           className="w-2 h-2 rounded-full animate-pulse"
@@ -98,12 +101,112 @@ export function ResourcePanel({ resources, capacity, netRate }: ResourcePanelPro
         />
       </div>
 
-      {/* Resource list */}
+      {/* Population & Happiness Section */}
+      <div 
+        className="p-2 border-b"
+        style={{ borderColor: 'hsl(120 20% 15%)' }}
+      >
+        {/* Population */}
+        <div 
+          className="p-2 mb-2"
+          style={{
+            background: 'hsl(120 8% 4%)',
+            border: '1px solid hsl(120 20% 15%)'
+          }}
+        >
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-2">
+              <span style={{ color: 'hsl(120 60% 55%)', textShadow: '0 0 6px hsl(120 60% 55%)' }}>👥</span>
+              <span className="text-[10px] font-bold tracking-wider" style={{ color: 'hsl(120 60% 55%)' }}>
+                POPULATION
+              </span>
+            </div>
+            <span 
+              className="text-sm font-mono font-bold"
+              style={{ 
+                color: 'hsl(120 80% 55%)',
+                textShadow: '0 0 6px hsl(120 80% 55%)'
+              }}
+            >
+              {resources.population}/{resources.maxPopulation}
+            </span>
+          </div>
+          <div 
+            className="relative h-2 overflow-hidden"
+            style={{
+              background: 'hsl(120 10% 6%)',
+              border: '1px solid hsl(120 20% 12%)'
+            }}
+          >
+            <div 
+              className="h-full transition-all duration-300"
+              style={{
+                width: `${Math.min((resources.population / resources.maxPopulation) * 100, 100)}%`,
+                background: 'linear-gradient(90deg, hsl(120 80% 45%) 0%, hsl(120 80% 55%) 100%)',
+                boxShadow: '0 0 8px hsl(120 80% 55%)',
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Happiness */}
+        <div 
+          className="p-2"
+          style={{
+            background: 'hsl(120 8% 4%)',
+            border: '1px solid hsl(120 20% 15%)'
+          }}
+        >
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-2">
+              <span style={{ fontSize: '14px' }}>{getHappinessIcon(resources.happiness)}</span>
+              <span className="text-[10px] font-bold tracking-wider" style={{ color: 'hsl(120 60% 55%)' }}>
+                MORALE
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span 
+                className="text-[9px] uppercase"
+                style={{ color: getStatusColor(resources.happiness, 100) }}
+              >
+                {getHappinessLabel(resources.happiness)}
+              </span>
+              <span 
+                className="text-xs font-mono font-bold"
+                style={{ 
+                  color: getStatusColor(resources.happiness, 100),
+                  textShadow: `0 0 6px ${getStatusColor(resources.happiness, 100)}`
+                }}
+              >
+                {Math.floor(resources.happiness)}%
+              </span>
+            </div>
+          </div>
+          <div 
+            className="relative h-1.5 overflow-hidden"
+            style={{
+              background: 'hsl(120 10% 6%)',
+              border: '1px solid hsl(120 20% 12%)'
+            }}
+          >
+            <div 
+              className="h-full transition-all duration-300"
+              style={{
+                width: `${resources.happiness}%`,
+                background: `linear-gradient(90deg, ${getStatusColor(resources.happiness, 100)} 0%, ${getStatusColor(resources.happiness, 100)} 100%)`,
+                boxShadow: `0 0 8px ${getStatusColor(resources.happiness, 100)}`,
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Material resources */}
       <div className="p-2 space-y-1">
-        {resourceConfigs.map(({ key, icon, label, color }) => {
-          const current = resources[key];
-          const max = capacity[key];
-          const rate = netRate?.[key] ?? 0;
+        {materialConfigs.map(({ key, icon, label, color }) => {
+          const current = resources[key] as number;
+          const max = capacity[key] as number;
+          const rate = (netRate?.[key] as number) ?? 0;
           const percentage = (current / max) * 100;
           const statusColor = getStatusColor(current, max);
 
@@ -116,7 +219,6 @@ export function ResourcePanel({ resources, capacity, netRate }: ResourcePanelPro
                 border: '1px solid hsl(120 20% 15%)'
               }}
             >
-              {/* Icon, label and value row */}
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2">
                   <span 
@@ -149,7 +251,6 @@ export function ResourcePanel({ resources, capacity, netRate }: ResourcePanelPro
                 </div>
               </div>
 
-              {/* Progress bar */}
               <div 
                 className="relative h-1.5 overflow-hidden"
                 style={{
@@ -168,7 +269,6 @@ export function ResourcePanel({ resources, capacity, netRate }: ResourcePanelPro
                 />
               </div>
 
-              {/* Rate indicator */}
               {rate !== 0 && (
                 <div className="mt-1 text-right">
                   <span 
@@ -199,7 +299,7 @@ export function ResourcePanel({ resources, capacity, netRate }: ResourcePanelPro
           className="text-[9px] uppercase tracking-widest"
           style={{ color: 'hsl(120 40% 35%)' }}
         >
-          VAULT-TEC RESOURCE MONITOR
+          VAULT-TEC RESOURCE MONITOR v2.1
         </span>
       </div>
     </div>
