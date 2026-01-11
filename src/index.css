@@ -2,77 +2,106 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Wasteland Rebuilders Design System - Post-apocalyptic survival colors */
+/* ============================================
+   FALLOUT 1/2 INSPIRED DESIGN SYSTEM
+   Post-apocalyptic terminal aesthetic
+   Green phosphor CRT monitor style
+   ============================================ */
+
+/* Import retro monospace font */
+@import url('https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap');
 
 @layer base {
   :root {
-    /* Core surfaces - Dark, gritty wasteland */
-    --background: 30 15% 8%;
-    --foreground: 35 20% 85%;
-
-    /* Cards & Panels - Rusty metal tones */
-    --card: 25 20% 12%;
-    --card-foreground: 35 20% 85%;
-
-    --popover: 25 20% 10%;
-    --popover-foreground: 35 20% 85%;
-
-    /* Primary - Radioactive amber/orange */
-    --primary: 35 90% 50%;
-    --primary-foreground: 25 30% 8%;
-
-    /* Secondary - Rusted metal */
-    --secondary: 25 30% 18%;
-    --secondary-foreground: 35 20% 80%;
-
-    /* Muted - Ash gray */
-    --muted: 30 10% 15%;
-    --muted-foreground: 30 10% 50%;
-
-    /* Accent - Radioactive green */
-    --accent: 120 70% 40%;
-    --accent-foreground: 120 90% 95%;
-
-    /* Destructive - Blood red */
-    --destructive: 0 75% 45%;
+    /* ===== FALLOUT TERMINAL COLOR PALETTE ===== */
+    
+    /* Core CRT terminal colors - Green phosphor */
+    --background: 120 8% 4%;          /* Near black with slight green tint */
+    --foreground: 120 100% 75%;       /* Bright phosphor green */
+    
+    /* Cards & Panels - Dark terminal surfaces */
+    --card: 120 10% 8%;               /* Dark terminal background */
+    --card-foreground: 120 100% 70%;  /* Green text */
+    
+    --popover: 120 12% 6%;
+    --popover-foreground: 120 100% 75%;
+    
+    /* Primary - Pip-Boy amber/green */
+    --primary: 120 100% 55%;          /* Bright phosphor green */
+    --primary-foreground: 120 15% 5%; /* Near black */
+    
+    /* Secondary - Dimmed terminal */
+    --secondary: 120 20% 12%;
+    --secondary-foreground: 120 80% 60%;
+    
+    /* Muted - Faded terminal */
+    --muted: 120 15% 10%;
+    --muted-foreground: 120 40% 40%;
+    
+    /* Accent - Amber warning (Pip-Boy style) */
+    --accent: 45 100% 50%;            /* Amber/gold */
+    --accent-foreground: 45 100% 10%;
+    
+    /* Destructive - Radiation warning red */
+    --destructive: 0 80% 50%;
     --destructive-foreground: 0 0% 100%;
-
-    /* Borders & Inputs */
-    --border: 25 20% 22%;
-    --input: 25 20% 18%;
-    --ring: 35 90% 50%;
-
-    --radius: 0.375rem;
-
-    /* Game-specific colors - Wasteland palette */
+    
+    /* Borders & Inputs - Terminal edges */
+    --border: 120 30% 20%;
+    --input: 120 20% 12%;
+    --ring: 120 100% 50%;
+    
+    --radius: 0.25rem;  /* Sharper corners for retro look */
+    
+    /* ===== FALLOUT GAME SPECIFIC COLORS ===== */
+    
+    /* Terrain colors */
     --game-wasteland: 35 40% 35%;
     --game-radiation: 120 80% 40%;
     --game-rubble: 25 15% 40%;
     --game-road: 25 10% 25%;
     --game-contaminated: 80 60% 30%;
-
-    /* Resource colors */
-    --resource-scrap: 30 10% 55%;
-    --resource-food: 35 70% 50%;
-    --resource-water: 200 70% 50%;
-    --resource-power: 50 90% 55%;
+    
+    /* Resource colors - Terminal style */
+    --resource-scrap: 120 30% 50%;
+    --resource-food: 45 80% 55%;
+    --resource-water: 180 60% 50%;
+    --resource-power: 50 100% 60%;
     --resource-medicine: 0 70% 55%;
-    --resource-caps: 120 50% 45%;
-
+    --resource-caps: 120 60% 50%;
+    
     /* Tool categories */
-    --tool-build: 35 70% 45%;
-    --tool-terrain: 30 50% 40%;
+    --tool-build: 120 70% 45%;
+    --tool-terrain: 45 60% 45%;
     --tool-demolish: 0 70% 50%;
-
-    /* Sidebar */
-    --sidebar-background: 25 20% 10%;
-    --sidebar-foreground: 35 20% 80%;
-    --sidebar-primary: 35 90% 50%;
-    --sidebar-primary-foreground: 25 30% 8%;
-    --sidebar-accent: 25 25% 15%;
-    --sidebar-accent-foreground: 35 20% 80%;
-    --sidebar-border: 25 20% 18%;
-    --sidebar-ring: 35 90% 50%;
+    
+    /* Sidebar - Terminal panel */
+    --sidebar-background: 120 10% 6%;
+    --sidebar-foreground: 120 80% 65%;
+    --sidebar-primary: 120 100% 55%;
+    --sidebar-primary-foreground: 120 15% 5%;
+    --sidebar-accent: 120 25% 12%;
+    --sidebar-accent-foreground: 120 80% 65%;
+    --sidebar-border: 120 30% 18%;
+    --sidebar-ring: 120 100% 50%;
+    
+    /* ===== FALLOUT TERMINAL EFFECTS ===== */
+    --terminal-glow: 120 100% 50%;
+    --terminal-dim: 120 50% 35%;
+    --scanline-opacity: 0.03;
+    --crt-flicker: 0.98;
+  }
+  
+  /* Amber/Orange variant (Fallout New Vegas style) */
+  .theme-amber {
+    --primary: 35 100% 55%;
+    --primary-foreground: 35 30% 5%;
+    --foreground: 35 100% 70%;
+    --card-foreground: 35 100% 65%;
+    --muted-foreground: 35 50% 45%;
+    --border: 35 30% 25%;
+    --ring: 35 100% 50%;
+    --terminal-glow: 35 100% 50%;
   }
 }
 
@@ -80,231 +109,508 @@
   * {
     @apply border-border;
   }
-
+  
   body {
     @apply bg-background text-foreground;
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-family: 'Share Tech Mono', 'VT323', monospace;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: none;  /* Sharper text for retro feel */
+    image-rendering: pixelated;
+  }
+  
+  /* CRT scanline effect overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, var(--scanline-opacity)) 0px,
+      rgba(0, 0, 0, var(--scanline-opacity)) 1px,
+      transparent 1px,
+      transparent 2px
+    );
+  }
+  
+  /* Text glow effect */
+  h1, h2, h3, h4, h5, h6 {
+    text-shadow: 0 0 10px hsl(var(--primary) / 0.5);
   }
 }
 
-/* Game container styles */
+/* ============================================
+   FALLOUT TERMINAL UI COMPONENTS
+   ============================================ */
+
 @layer components {
+  /* Main game container with CRT vignette */
   .game-container {
     @apply relative w-full h-screen overflow-hidden;
-    background: linear-gradient(
-      180deg,
-      hsl(30 20% 25%) 0%,
-      hsl(35 30% 40%) 40%,
-      hsl(40 25% 55%) 100%
+    background: radial-gradient(
+      ellipse at center,
+      hsl(120 10% 8%) 0%,
+      hsl(120 8% 4%) 70%,
+      hsl(120 5% 2%) 100%
     );
   }
-
-  .game-toolbar {
-    @apply absolute top-4 left-4 flex gap-2 z-20;
+  
+  /* CRT vignette overlay */
+  .game-container::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10;
+    background: radial-gradient(
+      ellipse at center,
+      transparent 60%,
+      rgba(0, 0, 0, 0.4) 100%
+    );
   }
-
+  
+  /* Terminal panel - Fallout style beveled frame */
   .game-panel {
-    @apply bg-card/95 backdrop-blur-sm border border-border rounded-lg shadow-2xl;
+    @apply relative;
+    background: linear-gradient(
+      180deg,
+      hsl(120 15% 10%) 0%,
+      hsl(120 10% 6%) 100%
+    );
+    border: 2px solid;
+    border-color: hsl(120 40% 25%) hsl(120 20% 10%) hsl(120 20% 10%) hsl(120 40% 25%);
     box-shadow: 
-      0 4px 6px -1px rgba(0, 0, 0, 0.3),
-      0 2px 4px -2px rgba(0, 0, 0, 0.2),
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+      inset 0 1px 0 0 hsl(120 50% 30% / 0.3),
+      0 0 20px hsl(var(--terminal-glow) / 0.15),
+      0 4px 8px rgba(0, 0, 0, 0.5);
   }
-
+  
+  /* Panel header with glow */
+  .game-panel-header {
+    @apply px-3 py-2 border-b font-bold uppercase tracking-wider text-sm;
+    border-color: hsl(120 30% 20%);
+    text-shadow: 0 0 8px hsl(var(--primary) / 0.6);
+    background: linear-gradient(
+      90deg,
+      hsl(120 20% 8%) 0%,
+      hsl(120 15% 12%) 50%,
+      hsl(120 20% 8%) 100%
+    );
+  }
+  
+  /* Terminal inset panel (for content areas) */
+  .terminal-inset {
+    background: hsl(120 8% 3%);
+    border: 1px solid;
+    border-color: hsl(120 20% 8%) hsl(120 30% 20%) hsl(120 30% 20%) hsl(120 20% 8%);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+  }
+  
+  /* Game toolbar */
+  .game-toolbar {
+    @apply absolute top-16 left-4 flex gap-2 z-20;
+  }
+  
+  /* Tool button - Terminal style */
   .tool-button {
-    @apply relative flex items-center justify-center w-12 h-12 rounded-lg transition-all duration-200;
-    @apply bg-secondary hover:bg-secondary/80 border border-border;
-    @apply hover:scale-105 active:scale-95;
+    @apply relative flex items-center justify-center w-12 h-12 transition-all duration-150;
+    background: linear-gradient(
+      180deg,
+      hsl(120 20% 15%) 0%,
+      hsl(120 15% 10%) 100%
+    );
+    border: 2px solid;
+    border-color: hsl(120 35% 25%) hsl(120 20% 12%) hsl(120 20% 12%) hsl(120 35% 25%);
+    color: hsl(var(--primary));
   }
-
+  
+  .tool-button:hover {
+    background: linear-gradient(
+      180deg,
+      hsl(120 25% 20%) 0%,
+      hsl(120 20% 14%) 100%
+    );
+    box-shadow: 0 0 12px hsl(var(--terminal-glow) / 0.3);
+    color: hsl(120 100% 80%);
+  }
+  
+  .tool-button:active {
+    border-color: hsl(120 20% 12%) hsl(120 35% 25%) hsl(120 35% 25%) hsl(120 20% 12%);
+    transform: translateY(1px);
+  }
+  
   .tool-button.active {
-    @apply bg-primary text-primary-foreground border-primary;
-    box-shadow: 0 0 12px 2px hsl(var(--primary) / 0.4);
+    background: linear-gradient(
+      180deg,
+      hsl(120 30% 18%) 0%,
+      hsl(120 35% 12%) 100%
+    );
+    border-color: hsl(120 50% 35%) hsl(120 30% 15%) hsl(120 30% 15%) hsl(120 50% 35%);
+    box-shadow: 
+      0 0 15px hsl(var(--terminal-glow) / 0.4),
+      inset 0 0 10px hsl(var(--terminal-glow) / 0.1);
+    color: hsl(120 100% 85%);
+    text-shadow: 0 0 8px hsl(var(--primary) / 0.8);
   }
-
+  
   .tool-button-icon {
     @apply text-2xl;
+    filter: drop-shadow(0 0 3px currentColor);
   }
-
+  
+  /* Building grid */
   .building-grid {
     @apply grid grid-cols-3 gap-2 p-3;
   }
-
+  
+  /* Building item - Terminal card */
   .building-item {
-    @apply flex flex-col items-center gap-1 p-2 rounded-lg cursor-pointer;
-    @apply bg-secondary/50 hover:bg-secondary border border-transparent;
-    @apply transition-all duration-150 hover:border-primary/50;
+    @apply flex flex-col items-center gap-1 p-2 cursor-pointer transition-all duration-150;
+    background: hsl(120 10% 6%);
+    border: 1px solid hsl(120 25% 18%);
   }
-
+  
+  .building-item:hover {
+    background: hsl(120 15% 10%);
+    border-color: hsl(120 50% 35%);
+    box-shadow: 0 0 10px hsl(var(--terminal-glow) / 0.2);
+  }
+  
   .building-item.selected {
-    @apply bg-primary/20 border-primary;
+    background: hsl(120 20% 12%);
+    border-color: hsl(120 70% 45%);
+    box-shadow: 
+      0 0 15px hsl(var(--terminal-glow) / 0.3),
+      inset 0 0 8px hsl(var(--terminal-glow) / 0.1);
   }
-
+  
   .building-item-icon {
     @apply text-3xl;
+    filter: drop-shadow(0 0 4px hsl(var(--primary) / 0.5));
   }
-
+  
   .building-item-name {
-    @apply text-xs text-muted-foreground text-center leading-tight;
+    @apply text-xs text-center leading-tight uppercase tracking-wide;
+    color: hsl(120 70% 60%);
   }
-
+  
+  /* Category tabs - Terminal style */
   .category-tab {
-    @apply px-3 py-2 text-sm font-medium rounded-t-lg transition-all;
-    @apply text-muted-foreground hover:text-foreground;
+    @apply px-3 py-2 text-xs font-bold uppercase tracking-wider transition-all;
+    color: hsl(120 40% 45%);
+    border-bottom: 2px solid transparent;
   }
-
+  
+  .category-tab:hover {
+    color: hsl(120 80% 65%);
+    background: hsl(120 15% 10%);
+  }
+  
   .category-tab.active {
-    @apply bg-card text-foreground border-b-2 border-primary;
+    color: hsl(120 100% 70%);
+    border-bottom-color: hsl(120 100% 50%);
+    text-shadow: 0 0 8px hsl(var(--primary) / 0.6);
+    background: linear-gradient(
+      180deg,
+      hsl(120 15% 12%) 0%,
+      transparent 100%
+    );
   }
-
+  
+  /* Status bar - Terminal footer */
   .game-status-bar {
     @apply absolute bottom-0 left-0 right-0 h-10 px-4;
     @apply flex items-center justify-between;
-    @apply bg-card/90 backdrop-blur-sm border-t border-border;
+    background: linear-gradient(
+      0deg,
+      hsl(120 10% 4%) 0%,
+      hsl(120 12% 8%) 100%
+    );
+    border-top: 1px solid hsl(120 30% 20%);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
   }
-
+  
+  /* Zoom controls */
   .zoom-controls {
     @apply absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-20;
   }
-
+  
   .save-load-buttons {
     @apply absolute top-4 right-4 flex gap-2 z-20;
   }
+  
+  /* Resource bar - Terminal gauge */
+  .resource-bar {
+    @apply relative h-2 overflow-hidden;
+    background: hsl(120 10% 5%);
+    border: 1px solid hsl(120 25% 18%);
+  }
+  
+  .resource-bar-fill {
+    @apply h-full transition-all duration-300;
+    background: linear-gradient(
+      90deg,
+      hsl(120 60% 35%) 0%,
+      hsl(120 80% 50%) 100%
+    );
+    box-shadow: 0 0 6px hsl(var(--terminal-glow) / 0.4);
+  }
 }
 
-/* Custom scrollbar for panels */
+/* ============================================
+   TERMINAL TYPOGRAPHY
+   ============================================ */
+
+@layer utilities {
+  .terminal-text {
+    font-family: 'VT323', 'Share Tech Mono', monospace;
+    text-shadow: 0 0 5px hsl(var(--primary) / 0.5);
+  }
+  
+  .terminal-text-glow {
+    text-shadow: 
+      0 0 5px hsl(var(--primary) / 0.8),
+      0 0 10px hsl(var(--primary) / 0.5),
+      0 0 20px hsl(var(--primary) / 0.3);
+  }
+  
+  .terminal-text-dim {
+    color: hsl(var(--terminal-dim));
+    text-shadow: none;
+  }
+  
+  /* Flicker animation for CRT effect */
+  .crt-flicker {
+    animation: crt-flicker 0.15s infinite;
+  }
+  
+  @keyframes crt-flicker {
+    0% { opacity: var(--crt-flicker); }
+    50% { opacity: 1; }
+    100% { opacity: var(--crt-flicker); }
+  }
+  
+  /* Typing cursor effect */
+  .terminal-cursor::after {
+    content: '█';
+    animation: blink 1s step-end infinite;
+  }
+  
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+  
+  /* Scanline hover effect */
+  .scanline-hover:hover::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      hsl(120 100% 50% / 0.03) 50%,
+      transparent 100%
+    );
+    animation: scanline 2s linear infinite;
+    pointer-events: none;
+  }
+  
+  @keyframes scanline {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100%); }
+  }
+}
+
+/* ============================================
+   CUSTOM SCROLLBAR - Terminal Style
+   ============================================ */
+
 @layer utilities {
   .scrollbar-game::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
   }
-
+  
   .scrollbar-game::-webkit-scrollbar-track {
-    @apply bg-muted rounded;
+    background: hsl(120 10% 5%);
+    border: 1px solid hsl(120 20% 15%);
   }
-
+  
   .scrollbar-game::-webkit-scrollbar-thumb {
-    @apply bg-border rounded hover:bg-primary/50;
+    background: linear-gradient(
+      180deg,
+      hsl(120 40% 25%) 0%,
+      hsl(120 30% 18%) 100%
+    );
+    border: 1px solid hsl(120 50% 30%);
+  }
+  
+  .scrollbar-game::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(
+      180deg,
+      hsl(120 50% 35%) 0%,
+      hsl(120 40% 25%) 100%
+    );
+    box-shadow: 0 0 8px hsl(var(--terminal-glow) / 0.3);
   }
 }
 
-/* RCT1-style Retro Game UI */
-:root {
-  /* RCT1 Color Palette */
-  --rct-frame-dark: #4a1a1a;
-  --rct-frame-mid: #6b2a2a;
-  --rct-frame-light: #8b4a4a;
-  --rct-frame-highlight: #ab6a6a;
+/* ============================================
+   FALLOUT BUTTON STYLES
+   ============================================ */
 
-  --rct-panel-dark: #8b7355;
-  --rct-panel-mid: #b49a7c;
-  --rct-panel-light: #d4c4a8;
-  --rct-panel-highlight: #e8dcc8;
-
-  --rct-button-dark: #3a3a3a;
-  --rct-button-mid: #5a5a5a;
-  --rct-button-light: #7a7a7a;
-  --rct-button-highlight: #9a9a9a;
-  --rct-button-active: #2a2a2a;
-
-  --rct-text: #000000;
-  --rct-text-light: #ffffff;
-  --rct-text-shadow: #2a0a0a;
-
-  --rct-grass: #2d4a1f;
-  --rct-status-bg: #1a1a2a;
-
-  /* Blue UI Palette */
-  --rct-blue-face: #6ca6e8;
-  --rct-blue-light: #a3cdf9;
-  --rct-blue-dark: #366ba8;
-  --rct-blue-shadow: #244b7a;
+@layer components {
+  /* Primary terminal button */
+  .fallout-btn {
+    @apply relative px-6 py-3 font-bold uppercase tracking-wider transition-all duration-150;
+    font-family: 'VT323', monospace;
+    font-size: 1.25rem;
+    background: linear-gradient(
+      180deg,
+      hsl(120 25% 15%) 0%,
+      hsl(120 20% 10%) 100%
+    );
+    border: 2px solid;
+    border-color: hsl(120 40% 30%) hsl(120 25% 12%) hsl(120 25% 12%) hsl(120 40% 30%);
+    color: hsl(120 100% 70%);
+    text-shadow: 0 0 8px hsl(var(--primary) / 0.5);
+  }
+  
+  .fallout-btn:hover {
+    background: linear-gradient(
+      180deg,
+      hsl(120 30% 20%) 0%,
+      hsl(120 25% 14%) 100%
+    );
+    box-shadow: 
+      0 0 20px hsl(var(--terminal-glow) / 0.3),
+      inset 0 0 10px hsl(var(--terminal-glow) / 0.1);
+    color: hsl(120 100% 80%);
+    text-shadow: 0 0 12px hsl(var(--primary) / 0.8);
+  }
+  
+  .fallout-btn:active {
+    border-color: hsl(120 25% 12%) hsl(120 40% 30%) hsl(120 40% 30%) hsl(120 25% 12%);
+    transform: translateY(1px);
+  }
+  
+  /* Amber variant */
+  .fallout-btn-amber {
+    background: linear-gradient(
+      180deg,
+      hsl(35 40% 20%) 0%,
+      hsl(35 30% 12%) 100%
+    );
+    border-color: hsl(35 50% 35%) hsl(35 30% 15%) hsl(35 30% 15%) hsl(35 50% 35%);
+    color: hsl(35 100% 65%);
+    text-shadow: 0 0 8px hsl(35 100% 50% / 0.5);
+  }
+  
+  .fallout-btn-amber:hover {
+    background: linear-gradient(
+      180deg,
+      hsl(35 45% 25%) 0%,
+      hsl(35 35% 16%) 100%
+    );
+    box-shadow: 0 0 20px hsl(35 100% 50% / 0.3);
+    color: hsl(35 100% 75%);
+  }
 }
 
-/* RCT1-style beveled button */
+/* ============================================
+   LEGACY RCT STYLES (kept for compatibility)
+   ============================================ */
+
+:root {
+  /* RCT1 Color Palette - Now mapped to Fallout theme */
+  --rct-frame-dark: hsl(120 20% 8%);
+  --rct-frame-mid: hsl(120 20% 12%);
+  --rct-frame-light: hsl(120 30% 20%);
+  --rct-frame-highlight: hsl(120 40% 30%);
+  
+  --rct-panel-dark: hsl(120 15% 8%);
+  --rct-panel-mid: hsl(120 12% 12%);
+  --rct-panel-light: hsl(120 20% 18%);
+  --rct-panel-highlight: hsl(120 25% 25%);
+  
+  --rct-button-dark: hsl(120 15% 8%);
+  --rct-button-mid: hsl(120 18% 12%);
+  --rct-button-light: hsl(120 25% 18%);
+  --rct-button-highlight: hsl(120 30% 25%);
+  --rct-button-active: hsl(120 10% 6%);
+  
+  --rct-text: hsl(120 100% 70%);
+  --rct-text-light: hsl(120 100% 80%);
+  --rct-text-shadow: hsl(120 100% 40%);
+  
+  --rct-grass: hsl(120 40% 25%);
+  --rct-status-bg: hsl(120 10% 5%);
+  
+  --rct-blue-face: hsl(120 50% 40%);
+  --rct-blue-light: hsl(120 60% 55%);
+  --rct-blue-dark: hsl(120 40% 25%);
+  --rct-blue-shadow: hsl(120 30% 15%);
+}
+
 .rct-button {
   background: var(--rct-button-mid);
   border: 1px solid;
-  border-color: var(--rct-button-light) var(--rct-button-dark)
-    var(--rct-button-dark) var(--rct-button-light);
+  border-color: var(--rct-button-light) var(--rct-button-dark) var(--rct-button-dark) var(--rct-button-light);
   padding: 4px 8px;
   cursor: pointer;
-  image-rendering: pixelated;
-  font-family: inherit;
+  font-family: 'VT323', monospace;
   font-size: 14px;
-  color: var(--rct-text-light);
+  color: var(--rct-text);
+  text-shadow: 0 0 5px var(--rct-text-shadow);
 }
 
 .rct-button:hover {
   background: var(--rct-button-highlight);
+  box-shadow: 0 0 10px hsl(var(--terminal-glow) / 0.2);
 }
 
 .rct-button:active,
 .rct-button.active {
-  border-color: var(--rct-button-dark) var(--rct-button-light)
-    var(--rct-button-light) var(--rct-button-dark);
+  border-color: var(--rct-button-dark) var(--rct-button-light) var(--rct-button-light) var(--rct-button-dark);
   background: var(--rct-button-active);
 }
 
-/* Blue Toolbar Button (RCT2/Locomotion style) */
-.rct-blue-button {
-  background: var(--rct-blue-face);
-  border: 2px solid;
-  border-color: var(--rct-blue-light) var(--rct-blue-dark) var(--rct-blue-dark)
-    var(--rct-blue-light);
-  padding: 0;
-  cursor: pointer;
-  image-rendering: pixelated;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  box-shadow: 1px 1px 0px var(--rct-blue-shadow);
-}
-
-.rct-blue-button:hover {
-  filter: brightness(1.1);
-}
-
-.rct-blue-button:active {
-  border-color: var(--rct-blue-dark) var(--rct-blue-light) var(--rct-blue-light)
-    var(--rct-blue-dark);
-  filter: brightness(0.9);
-  box-shadow: inset 1px 1px 0px var(--rct-blue-shadow);
-  transform: translate(1px, 1px);
-}
-
-/* RCT1-style frame (maroon) */
 .rct-frame {
   background: var(--rct-frame-mid);
   border: 1px solid;
-  border-color: var(--rct-frame-light) var(--rct-frame-dark)
-    var(--rct-frame-dark) var(--rct-frame-light);
+  border-color: var(--rct-frame-light) var(--rct-frame-dark) var(--rct-frame-dark) var(--rct-frame-light);
 }
 
-/* RCT1-style panel (tan/cream) */
 .rct-panel {
   background: var(--rct-panel-mid);
   border: 1px solid;
-  border-color: var(--rct-panel-light) var(--rct-panel-dark)
-    var(--rct-panel-dark) var(--rct-panel-light);
+  border-color: var(--rct-panel-light) var(--rct-panel-dark) var(--rct-panel-dark) var(--rct-panel-light);
 }
 
-/* RCT1-style inset panel */
 .rct-inset {
   background: var(--rct-panel-dark);
   border: 1px solid;
-  border-color: var(--rct-panel-dark) var(--rct-panel-light)
-    var(--rct-panel-light) var(--rct-panel-dark);
+  border-color: var(--rct-panel-dark) var(--rct-panel-light) var(--rct-panel-light) var(--rct-panel-dark);
 }
 
-/* Window title bar */
 .rct-titlebar {
   background: var(--rct-frame-mid);
-  color: var(--rct-text-light);
+  color: var(--rct-text);
   font-weight: bold;
   font-size: 18px;
   padding: 6px 10px;
-  text-shadow: 1px 1px 0 var(--rct-text-shadow);
+  text-shadow: 0 0 8px var(--rct-text-shadow);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -313,15 +619,13 @@
   border-bottom: 1px solid var(--rct-frame-dark);
 }
 
-/* Close button */
 .rct-close {
   width: 16px;
   height: 16px;
   background: var(--rct-frame-dark);
   border: 1px solid;
-  border-color: var(--rct-frame-light) var(--rct-frame-dark)
-    var(--rct-frame-dark) var(--rct-frame-light);
-  color: var(--rct-text-light);
+  border-color: var(--rct-frame-light) var(--rct-frame-dark) var(--rct-frame-dark) var(--rct-frame-light);
+  color: var(--rct-text);
   font-size: 10px;
   line-height: 10px;
   text-align: center;
@@ -332,12 +636,8 @@
   background: var(--rct-frame-light);
 }
 
-/* Marquee animation for music player */
+/* Marquee animation */
 @keyframes marquee {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
