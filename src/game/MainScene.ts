@@ -14,6 +14,7 @@ import {
 } from './systems';
 import { PopulationSystem } from './systems/PopulationSystem';
 import { EventSystem } from './systems/EventSystem';
+import { WorkerSystem } from './systems/WorkerSystem';
 
 /**
  * Main game scene - Refactored with modular systems
@@ -40,6 +41,7 @@ export class MainScene extends Phaser.Scene {
   private resourceSystem!: ResourceSystem;
   private populationSystem!: PopulationSystem;
   private eventSystem!: EventSystem;
+  private workerSystem!: WorkerSystem;
 
   constructor() {
     super({ key: 'MainScene' });
@@ -137,7 +139,7 @@ export class MainScene extends Phaser.Scene {
     // Check for population death
     this.populationSystem.checkPopulationDeath();
     
-    // Sync population to resources
+    // Sync population to resources and worker system
     const popState = this.populationSystem.getState();
     const currentResources = this.resourceSystem.getResources();
     currentResources.population = popState.current;
@@ -145,7 +147,11 @@ export class MainScene extends Phaser.Scene {
     currentResources.happiness = popState.happiness;
     this.resourceSystem.setResources(currentResources);
     
-    // Normal resource update
+    // Update worker system with current population (workers = population)
+    this.workerSystem.setTotalWorkers(popState.current);
+    this.workerSystem.update(delta);
+    
+    // Normal resource update (now uses worker efficiency)
     this.resourceSystem.update(delta);
   }
 
@@ -201,6 +207,11 @@ export class MainScene extends Phaser.Scene {
     this.populationSystem.init(this);
     this.populationSystem.setGrid(this.grid);
 
+    // Initialize Worker System
+    this.workerSystem = new WorkerSystem();
+    this.workerSystem.init(this);
+    this.workerSystem.setGrid(this.grid);
+
     // Initialize Event System
     this.eventSystem = new EventSystem();
     this.eventSystem.init(this);
@@ -209,7 +220,11 @@ export class MainScene extends Phaser.Scene {
     for (const building of Object.values(BUILDINGS)) {
       this.resourceSystem.registerBuilding(building);
       this.populationSystem.registerBuilding(building);
+      this.workerSystem.registerBuilding(building);
     }
+
+    // Connect worker system to resource system
+    this.resourceSystem.setWorkerSystem(this.workerSystem);
 
     // Set up event listeners
     this.setupEventListeners();
