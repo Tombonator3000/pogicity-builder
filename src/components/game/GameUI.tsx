@@ -211,6 +211,81 @@ export function GameUI() {
   }, []);
 
   /**
+   * Places road segments on the grid
+   *
+   * @param grid - Grid to place segments on
+   * @param segments - Array of segment origins to place
+   * @returns Number of successfully placed segments
+   */
+  const placeRoadSegmentsOnGrid = useCallback((
+    grid: GridCell[][],
+    segments: Array<{ x: number; y: number }>
+  ): number => {
+    let placedCount = 0;
+
+    for (const seg of segments) {
+      const check = canPlaceRoadSegment(grid, seg.x, seg.y);
+      if (!check.valid) continue;
+
+      // Mark all cells in the 4x4 segment
+      for (let dy = 0; dy < ROAD_SEGMENT_SIZE; dy++) {
+        for (let dx = 0; dx < ROAD_SEGMENT_SIZE; dx++) {
+          const px = seg.x + dx;
+          const py = seg.y + dy;
+          if (px < GRID_WIDTH && py < GRID_HEIGHT) {
+            grid[py][px].isOrigin = dx === 0 && dy === 0;
+            grid[py][px].originX = seg.x;
+            grid[py][px].originY = seg.y;
+            grid[py][px].type = TileType.Road;
+          }
+        }
+      }
+
+      placedCount++;
+    }
+
+    return placedCount;
+  }, []);
+
+  /**
+   * Updates road patterns for all segments affected by placement
+   *
+   * @param grid - Grid to update patterns on
+   * @param segments - Array of newly placed segment origins
+   */
+  const updateRoadPatternsForSegments = useCallback((
+    grid: GridCell[][],
+    segments: Array<{ x: number; y: number }>
+  ): void => {
+    // Collect all affected segments (placed + neighbors)
+    const allAffected = new Set<string>();
+    for (const seg of segments) {
+      for (const affected of getAffectedSegments(seg.x, seg.y)) {
+        allAffected.add(`${affected.x},${affected.y}`);
+      }
+    }
+
+    // Update pattern for each affected segment
+    for (const key of allAffected) {
+      const [sx, sy] = key.split(",").map(Number);
+      if (!hasRoadSegment(grid, sx, sy)) continue;
+
+      const connections = getRoadConnections(grid, sx, sy);
+      const segmentType = getSegmentType(connections);
+      const pattern = generateRoadPattern(segmentType);
+
+      // Apply pattern to grid
+      for (const tile of pattern) {
+        const px = sx + tile.dx;
+        const py = sy + tile.dy;
+        if (px < GRID_WIDTH && py < GRID_HEIGHT) {
+          grid[py][px].type = tile.type;
+        }
+      }
+    }
+  }, []);
+
+  /**
    * Main tile click handler - orchestrates tool-specific operations
    */
   const handleTileClick = useCallback((x: number, y: number) => {
@@ -232,56 +307,27 @@ export function GameUI() {
     });
   }, [handleBuildingPlacement, handleErasure]); // Dependencies on extracted handlers
 
+  /**
+   * Handles road segment placement via drag operation
+   *
+   * Places multiple road segments and updates their patterns based on connections.
+   * Each segment is a 4x4 grid area that connects to neighboring segments.
+   *
+   * @param segments - Array of segment origins (top-left coordinates)
+   */
   const handleRoadDrag = useCallback((segments: Array<{ x: number; y: number }>) => {
     setGrid((prevGrid) => {
       const newGrid = prevGrid.map((row) => row.map((cell) => ({ ...cell })));
 
-      for (const seg of segments) {
-        const check = canPlaceRoadSegment(newGrid, seg.x, seg.y);
-        if (!check.valid) continue;
+      // Phase 1: Place all valid road segments
+      placeRoadSegmentsOnGrid(newGrid, segments);
 
-        for (let dy = 0; dy < ROAD_SEGMENT_SIZE; dy++) {
-          for (let dx = 0; dx < ROAD_SEGMENT_SIZE; dx++) {
-            const px = seg.x + dx;
-            const py = seg.y + dy;
-            if (px < GRID_WIDTH && py < GRID_HEIGHT) {
-              newGrid[py][px].isOrigin = dx === 0 && dy === 0;
-              newGrid[py][px].originX = seg.x;
-              newGrid[py][px].originY = seg.y;
-              newGrid[py][px].type = TileType.Road;
-            }
-          }
-        }
-      }
-
-      // Update road patterns
-      const allAffected = new Set<string>();
-      for (const seg of segments) {
-        for (const affected of getAffectedSegments(seg.x, seg.y)) {
-          allAffected.add(`${affected.x},${affected.y}`);
-        }
-      }
-
-      for (const key of allAffected) {
-        const [sx, sy] = key.split(",").map(Number);
-        if (!hasRoadSegment(newGrid, sx, sy)) continue;
-
-        const connections = getRoadConnections(newGrid, sx, sy);
-        const segmentType = getSegmentType(connections);
-        const pattern = generateRoadPattern(segmentType);
-
-        for (const tile of pattern) {
-          const px = sx + tile.dx;
-          const py = sy + tile.dy;
-          if (px < GRID_WIDTH && py < GRID_HEIGHT) {
-            newGrid[py][px].type = tile.type;
-          }
-        }
-      }
+      // Phase 2: Update road patterns for all affected segments
+      updateRoadPatternsForSegments(newGrid, segments);
 
       return newGrid;
     });
-  }, []);
+  }, [placeRoadSegmentsOnGrid, updateRoadPatternsForSegments]);
 
   const handleTilesDrag = useCallback((tiles: Array<{ x: number; y: number }>) => {
     const tool = currentToolRef.current; // Use ref for current tool
