@@ -27,6 +27,24 @@ export const RENDER_CONFIG = {
 
   /** Preview overlay alpha */
   previewAlpha: 0.4,
+
+  /** Building fallback rendering configuration */
+  buildingFallback: {
+    /** Multiplier for building height based on footprint size */
+    heightMultiplier: 15,
+    /** Base height added to buildings */
+    baseHeight: 10,
+    /** Horizontal offset for left face depth */
+    faceDepthOffset: 10,
+    /** Vertical offset for left face depth */
+    faceHeightOffset: 5,
+    /** Icon offset from center */
+    iconOffset: 12,
+    /** Icon font size */
+    iconFontSize: 24,
+    /** Icon font family */
+    iconFontFamily: 'Arial',
+  },
 } as const;
 
 /**
