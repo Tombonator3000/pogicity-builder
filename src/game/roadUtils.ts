@@ -123,42 +123,53 @@ export function getRoadConnections(
   return connections;
 }
 
-// Determine road segment type from connections
+/**
+ * Lookup table for road segment types based on connection patterns.
+ * Connections is a 4-bit value where each bit represents a direction:
+ * - Bit 0 (1): North
+ * - Bit 1 (2): South
+ * - Bit 2 (4): East
+ * - Bit 3 (8): West
+ *
+ * This provides O(1) lookup instead of nested conditionals.
+ */
+const SEGMENT_TYPE_LOOKUP: Record<number, RoadSegmentType> = {
+  // 0: No connections (0000)
+  0: RoadSegmentType.Isolated,
+
+  // 1 connection (Dead ends)
+  1: RoadSegmentType.DeadEndNorth,  // N (0001)
+  2: RoadSegmentType.DeadEndSouth,  // S (0010)
+  4: RoadSegmentType.DeadEndEast,   // E (0100)
+  8: RoadSegmentType.DeadEndWest,   // W (1000)
+
+  // 2 connections (Straight or Corner)
+  3: RoadSegmentType.Vertical,      // N+S (0011)
+  12: RoadSegmentType.Horizontal,   // E+W (1100)
+  5: RoadSegmentType.CornerNE,      // N+E (0101)
+  9: RoadSegmentType.CornerNW,      // N+W (1001)
+  6: RoadSegmentType.CornerSE,      // S+E (0110)
+  10: RoadSegmentType.CornerSW,     // S+W (1010)
+
+  // 3 connections (T-junctions)
+  13: RoadSegmentType.TeeNorth,     // N+E+W (1101) - missing South
+  11: RoadSegmentType.TeeWest,      // N+S+W (1011) - missing East
+  7: RoadSegmentType.TeeEast,       // N+S+E (0111) - missing West
+  14: RoadSegmentType.TeeSouth,     // S+E+W (1110) - missing North
+
+  // 4 connections (Intersection)
+  15: RoadSegmentType.Intersection, // N+S+E+W (1111)
+};
+
+/**
+ * Determine road segment type from connections using lookup table.
+ * Replaces nested if/else with O(1) table lookup for better performance and clarity.
+ *
+ * @param connections - Bitwise flags representing road connections (RoadConnection enum)
+ * @returns The appropriate road segment type for the connection pattern
+ */
 export function getSegmentType(connections: number): RoadSegmentType {
-  const n = (connections & RoadConnection.North) !== 0;
-  const s = (connections & RoadConnection.South) !== 0;
-  const e = (connections & RoadConnection.East) !== 0;
-  const w = (connections & RoadConnection.West) !== 0;
-
-  const count = (n ? 1 : 0) + (s ? 1 : 0) + (e ? 1 : 0) + (w ? 1 : 0);
-
-  if (count === 0) return RoadSegmentType.Isolated;
-  if (count === 4) return RoadSegmentType.Intersection;
-
-  if (count === 1) {
-    if (n) return RoadSegmentType.DeadEndNorth;
-    if (s) return RoadSegmentType.DeadEndSouth;
-    if (e) return RoadSegmentType.DeadEndEast;
-    if (w) return RoadSegmentType.DeadEndWest;
-  }
-
-  if (count === 2) {
-    if (n && s) return RoadSegmentType.Vertical;
-    if (e && w) return RoadSegmentType.Horizontal;
-    if (n && e) return RoadSegmentType.CornerNE;
-    if (n && w) return RoadSegmentType.CornerNW;
-    if (s && e) return RoadSegmentType.CornerSE;
-    if (s && w) return RoadSegmentType.CornerSW;
-  }
-
-  if (count === 3) {
-    if (!s) return RoadSegmentType.TeeNorth;
-    if (!n) return RoadSegmentType.TeeSouth;
-    if (!w) return RoadSegmentType.TeeEast;
-    if (!e) return RoadSegmentType.TeeWest;
-  }
-
-  return RoadSegmentType.Intersection;
+  return SEGMENT_TYPE_LOOKUP[connections] ?? RoadSegmentType.Isolated;
 }
 
 /**
@@ -294,44 +305,88 @@ export function getAffectedSegments(
   return affected;
 }
 
-// Get the preferred lane direction for a car at a given position
-export function getLaneDirection(
-  x: number,
-  y: number,
-  grid?: GridCell[][]
-): Direction | null {
+/**
+ * Lane position helpers for determining vehicle direction.
+ * In a 4x4 road segment:
+ * - Lanes 1 and 2 are the center lanes (where vehicles travel)
+ * - Lane 1: Down/Left direction
+ * - Lane 2: Up/Right direction
+ */
+interface LanePosition {
+  localX: number;
+  localY: number;
+  isHorizontalLane: boolean;
+  isVerticalLane: boolean;
+}
+
+/**
+ * Calculate lane position within a 4x4 road segment.
+ * Extracted for better clarity and reusability.
+ */
+function calculateLanePosition(x: number, y: number): LanePosition {
   const tileX = Math.floor(x);
   const tileY = Math.floor(y);
   const localX = tileX % ROAD_SEGMENT_SIZE;
   const localY = tileY % ROAD_SEGMENT_SIZE;
 
-  const isHorizontalLane = localY === 1 || localY === 2;
-  const isVerticalLane = localX === 1 || localX === 2;
+  return {
+    localX,
+    localY,
+    isHorizontalLane: localY === 1 || localY === 2,
+    isVerticalLane: localX === 1 || localX === 2,
+  };
+}
 
-  if (!grid) {
-    if (isVerticalLane) {
-      return localX === 1 ? Direction.Down : Direction.Up;
-    }
-    if (isHorizontalLane) {
-      return localY === 1 ? Direction.Left : Direction.Right;
-    }
-    return null;
-  }
+/**
+ * Determine direction based on lane position.
+ * Vertical lanes: localX determines direction (1=Down, 2=Up)
+ * Horizontal lanes: localY determines direction (1=Left, 2=Right)
+ */
+function getDirectionFromLanePosition(position: LanePosition): Direction | null {
+  const { localX, localY, isHorizontalLane, isVerticalLane } = position;
 
-  const cell = grid[tileY]?.[tileX];
-  if (!cell || cell.type !== TileType.Asphalt) {
-    return null;
-  }
-
+  // Pure vertical lane (not at intersection)
   if (isVerticalLane && !isHorizontalLane) {
     return localX === 1 ? Direction.Down : Direction.Up;
   }
 
+  // Pure horizontal lane (not at intersection)
   if (isHorizontalLane && !isVerticalLane) {
     return localY === 1 ? Direction.Left : Direction.Right;
   }
 
+  // Not in a lane or at intersection
   return null;
+}
+
+/**
+ * Get the preferred lane direction for a car at a given position.
+ * Refactored for clarity by extracting position calculation and direction logic.
+ *
+ * @param x - World X coordinate
+ * @param y - World Y coordinate
+ * @param grid - Optional grid for validation (checks if tile is asphalt)
+ * @returns Direction for the lane, or null if not in a valid lane
+ */
+export function getLaneDirection(
+  x: number,
+  y: number,
+  grid?: GridCell[][]
+): Direction | null {
+  const position = calculateLanePosition(x, y);
+
+  // If grid provided, validate the tile is asphalt
+  if (grid) {
+    const tileX = Math.floor(x);
+    const tileY = Math.floor(y);
+    const cell = grid[tileY]?.[tileX];
+
+    if (!cell || cell.type !== TileType.Asphalt) {
+      return null;
+    }
+  }
+
+  return getDirectionFromLanePosition(position);
 }
 
 // Check if position is at an intersection
