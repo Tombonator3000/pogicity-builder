@@ -8,27 +8,27 @@ interface ResourcePanelProps {
 }
 
 /**
- * Resource display panel for post-apocalyptic economy
- * Shows current resources, capacity, and production/consumption rates
+ * Fallout-style terminal resource display panel
+ * Shows current resources with CRT phosphor aesthetic
  */
 export function ResourcePanel({ resources, capacity, netRate }: ResourcePanelProps) {
   const resourceConfigs = [
-    { key: "scrap" as keyof Resources, icon: "🔩", label: "Scrap", color: "text-gray-400" },
-    { key: "food" as keyof Resources, icon: "🍖", label: "Food", color: "text-amber-500" },
-    { key: "water" as keyof Resources, icon: "💧", label: "Water", color: "text-blue-400" },
-    { key: "power" as keyof Resources, icon: "⚡", label: "Power", color: "text-yellow-400" },
-    { key: "medicine" as keyof Resources, icon: "💊", label: "Medicine", color: "text-red-400" },
-    { key: "caps" as keyof Resources, icon: "💰", label: "Caps", color: "text-green-400" },
+    { key: "scrap" as keyof Resources, icon: "⚙", label: "SCRAP", color: "hsl(120 40% 50%)" },
+    { key: "food" as keyof Resources, icon: "◈", label: "FOOD", color: "hsl(45 80% 55%)" },
+    { key: "water" as keyof Resources, icon: "◉", label: "WATER", color: "hsl(180 70% 50%)" },
+    { key: "power" as keyof Resources, icon: "⚡", label: "POWER", color: "hsl(50 100% 60%)" },
+    { key: "medicine" as keyof Resources, icon: "✚", label: "MEDS", color: "hsl(0 70% 55%)" },
+    { key: "caps" as keyof Resources, icon: "◎", label: "CAPS", color: "hsl(120 60% 55%)" },
   ];
 
   /**
-   * Gets color class based on resource percentage
+   * Gets color based on resource percentage
    */
-  const getResourceColor = (current: number, max: number): string => {
+  const getStatusColor = (current: number, max: number): string => {
     const percentage = (current / max) * 100;
-    if (percentage < 20) return "text-red-500";
-    if (percentage < 50) return "text-orange-500";
-    return "text-foreground";
+    if (percentage < 20) return "hsl(0 80% 55%)";  // Critical - red
+    if (percentage < 50) return "hsl(45 90% 55%)"; // Warning - amber
+    return "hsl(120 80% 55%)"; // Good - green
   };
 
   /**
@@ -36,9 +36,9 @@ export function ResourcePanel({ resources, capacity, netRate }: ResourcePanelPro
    */
   const formatValue = (value: number): string => {
     if (value >= 1000) {
-      return `${(value / 1000).toFixed(1)}k`;
+      return `${(value / 1000).toFixed(1)}K`;
     }
-    return Math.floor(value).toString();
+    return Math.floor(value).toString().padStart(3, ' ');
   };
 
   /**
@@ -50,19 +50,52 @@ export function ResourcePanel({ resources, capacity, netRate }: ResourcePanelPro
   };
 
   /**
-   * Gets rate color class
+   * Gets rate color
    */
   const getRateColor = (rate: number): string => {
-    if (rate > 0) return "text-green-400";
-    if (rate < 0) return "text-red-400";
-    return "text-muted-foreground";
+    if (rate > 0) return "hsl(120 80% 55%)";
+    if (rate < 0) return "hsl(0 80% 55%)";
+    return "hsl(120 30% 40%)";
   };
 
   return (
-    <div className="game-panel absolute right-4 top-4 w-64 z-30">
+    <div 
+      className="absolute right-4 top-16 w-56 z-30"
+      style={{
+        background: 'linear-gradient(180deg, hsl(120 15% 8%) 0%, hsl(120 10% 5%) 100%)',
+        border: '2px solid',
+        borderColor: 'hsl(120 35% 22%) hsl(120 20% 10%) hsl(120 20% 10%) hsl(120 35% 22%)',
+        boxShadow: `
+          0 0 20px hsl(120 100% 50% / 0.1),
+          inset 0 0 30px hsl(120 100% 50% / 0.02),
+          0 4px 12px rgba(0, 0, 0, 0.4)
+        `
+      }}
+    >
       {/* Header */}
-      <div className="px-3 py-2 border-b border-border">
-        <h3 className="text-sm font-semibold text-foreground">Resources</h3>
+      <div 
+        className="px-3 py-2 flex items-center justify-between"
+        style={{
+          background: 'linear-gradient(90deg, hsl(120 18% 10%) 0%, hsl(120 22% 13%) 50%, hsl(120 18% 10%) 100%)',
+          borderBottom: '1px solid hsl(120 30% 18%)'
+        }}
+      >
+        <h3 
+          className="text-xs font-bold uppercase tracking-widest"
+          style={{ 
+            color: 'hsl(120 100% 65%)',
+            textShadow: '0 0 8px hsl(120 100% 50% / 0.5)'
+          }}
+        >
+          RESOURCES
+        </h3>
+        <div 
+          className="w-2 h-2 rounded-full animate-pulse"
+          style={{ 
+            background: 'hsl(120 100% 55%)',
+            boxShadow: '0 0 6px hsl(120 100% 50% / 0.6)'
+          }}
+        />
       </div>
 
       {/* Resource list */}
@@ -71,38 +104,103 @@ export function ResourcePanel({ resources, capacity, netRate }: ResourcePanelPro
           const current = resources[key];
           const max = capacity[key];
           const rate = netRate?.[key] ?? 0;
-          const valueColor = getResourceColor(current, max);
+          const percentage = (current / max) * 100;
+          const statusColor = getStatusColor(current, max);
 
           return (
             <div
               key={key}
-              className="flex items-center justify-between p-2 rounded hover:bg-accent/50 transition-colors"
+              className="p-2 transition-colors"
+              style={{
+                background: 'hsl(120 8% 4%)',
+                border: '1px solid hsl(120 20% 15%)'
+              }}
             >
-              {/* Icon and label */}
-              <div className="flex items-center gap-2 flex-1">
-                <span className={cn("text-lg", color)}>{icon}</span>
-                <span className="text-xs font-medium text-foreground">{label}</span>
+              {/* Icon, label and value row */}
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2">
+                  <span 
+                    className="text-sm"
+                    style={{ 
+                      color,
+                      textShadow: `0 0 6px ${color}`,
+                      filter: 'brightness(1.2)'
+                    }}
+                  >
+                    {icon}
+                  </span>
+                  <span 
+                    className="text-[10px] font-bold tracking-wider"
+                    style={{ color: 'hsl(120 60% 55%)' }}
+                  >
+                    {label}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span 
+                    className="text-xs font-mono"
+                    style={{ 
+                      color: statusColor,
+                      textShadow: `0 0 6px ${statusColor}`
+                    }}
+                  >
+                    {formatValue(current)}/{formatValue(max)}
+                  </span>
+                </div>
               </div>
 
-              {/* Value and rate */}
-              <div className="flex flex-col items-end gap-0.5">
-                <span className={cn("text-sm font-mono", valueColor)}>
-                  {formatValue(current)}/{formatValue(max)}
-                </span>
-                {rate !== 0 && (
-                  <span className={cn("text-[10px] font-mono", getRateColor(rate))}>
+              {/* Progress bar */}
+              <div 
+                className="relative h-1.5 overflow-hidden"
+                style={{
+                  background: 'hsl(120 10% 6%)',
+                  border: '1px solid hsl(120 20% 12%)'
+                }}
+              >
+                <div 
+                  className="h-full transition-all duration-300"
+                  style={{
+                    width: `${Math.min(percentage, 100)}%`,
+                    background: `linear-gradient(90deg, ${statusColor} 0%, ${statusColor} 100%)`,
+                    boxShadow: `0 0 8px ${statusColor}`,
+                    opacity: 0.9
+                  }}
+                />
+              </div>
+
+              {/* Rate indicator */}
+              {rate !== 0 && (
+                <div className="mt-1 text-right">
+                  <span 
+                    className="text-[9px] font-mono"
+                    style={{ 
+                      color: getRateColor(rate),
+                      textShadow: `0 0 4px ${getRateColor(rate)}`
+                    }}
+                  >
                     {formatRate(rate)}
                   </span>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           );
         })}
       </div>
 
-      {/* Storage bar visualization (optional, for future) */}
-      <div className="px-3 py-2 border-t border-border text-[10px] text-muted-foreground">
-        Post-Apocalyptic Economy
+      {/* Footer */}
+      <div 
+        className="px-3 py-1.5 text-center"
+        style={{
+          borderTop: '1px solid hsl(120 20% 15%)',
+          background: 'hsl(120 8% 4%)'
+        }}
+      >
+        <span 
+          className="text-[9px] uppercase tracking-widest"
+          style={{ color: 'hsl(120 40% 35%)' }}
+        >
+          VAULT-TEC RESOURCE MONITOR
+        </span>
       </div>
     </div>
   );

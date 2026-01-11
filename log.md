@@ -1,5 +1,56 @@
 # Development Log
 
+## 2026-01-11 (Session 6) - Fallout UI Redesign
+
+### Fallout 1/2 Inspired UI Implementation
+
+**Goal**: Create authentic Fallout 1/2 terminal aesthetic with CRT phosphor glow effects
+
+### Changes Made:
+
+**index.css** - Complete design system overhaul:
+- Green phosphor CRT color palette (hsl 120° base)
+- Scanline overlay effect for authentic CRT look
+- Terminal-style beveled panels and buttons
+- VT323 and Share Tech Mono retro fonts
+- Vignette effect on game container
+- Fallout button styles with glow effects
+- Amber theme variant support
+
+**MainMenu.tsx** - Terminal boot sequence:
+- Animated boot text sequence ("VAULT-TEC INDUSTRIES TERMINAL...")
+- Blinking cursor effect
+- CRT scanlines and vignette overlays
+- ROBCO INDUSTRIES header styling
+- Phosphor glow on all text elements
+- Decorative corner brackets
+
+**ResourcePanel.tsx** - Terminal resource monitor:
+- VAULT-TEC RESOURCE MONITOR branding
+- Progress bars with glow effects
+- Status colors (green/amber/red) based on levels
+- Monospace font for values
+
+**BuildingPanel.tsx** - Construction menu:
+- Terminal-style category tabs
+- Glowing selected state
+- Compact resource cost display
+- CONSTRUCTION MENU header
+
+**ToolButton.tsx** - Terminal buttons:
+- Beveled border styling
+- Phosphor glow on active state
+- Danger variant with red glow
+
+### Visual Style:
+- Primary color: Phosphor green (hsl 120 100% 55%)
+- Background: Near-black with green tint
+- All text has subtle glow effect
+- Scanlines overlay entire UI
+- Beveled 3D button/panel edges
+
+---
+
 ## 2026-01-11 (Session 5)
 
 ### Free Post-Apocalyptic Sprite Resources Found
