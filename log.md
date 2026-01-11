@@ -1,5 +1,210 @@
 # Development Log
 
+## 2026-01-11 (Session 13) - Refactor Complex Code: handleRoadDrag Simplification
+
+### Complex Function Refactoring
+
+**Goal**: Refactor overly complex function for improved clarity and maintainability
+
+### Complexity Analysis
+
+Performed comprehensive codebase analysis to identify complex functions needing refactoring. Top candidates identified:
+1. **GameUI.tsx - handleRoadDrag** (50 lines, deep nesting, multiple responsibilities) ⭐ Selected
+2. PopulationSystem.ts - updateHappiness (35 lines, multiple concerns)
+3. WorkerSystem.ts - recalculateAssignments (40 lines, complex allocation algorithm)
+4. PopulationSystem.ts - recalculateMaxPopulation (26 lines, grid traversal)
+5. ResourceSystem.ts - calculateResourceFlow (29 lines, nested logic)
+
+**Selected Target**: `handleRoadDrag` in GameUI.tsx due to highest complexity and impact
+
+---
+
+### Refactoring: handleRoadDrag Function Decomposition
+
+**Target**: `src/components/game/GameUI.tsx` - `handleRoadDrag()` function
+
+**Original Complexity** (lines 235-284):
+- **50 lines** with deep nesting (3+ levels)
+- **Multiple responsibilities**: placement validation, grid updates, road segment pattern calculation, connection analysis
+- **Nested loops within loops**: segments → tiles → affected segments → pattern tiles
+- **High cyclomatic complexity** with multiple conditional branches
+- Mixed low-level grid manipulation with high-level road network logic
+
+**Issues**:
+- ❌ Single function doing too much (God Method anti-pattern)
+- ❌ Deep nesting makes code hard to follow
+- ❌ Difficult to test individual responsibilities
+- ❌ Poor separation of concerns
+- ❌ Complex state mutation pattern
+
+---
+
+### Refactoring Strategy
+
+Applied **Extract Method** pattern to decompose into focused, single-responsibility functions:
+
+#### 1. Created `placeRoadSegmentsOnGrid()` (35 lines)
+**Responsibility**: Place road segments on grid
+
+```typescript
+const placeRoadSegmentsOnGrid = useCallback((
+  grid: GridCell[][],
+  segments: Array<{ x: number; y: number }>
+): number => {
+  let placedCount = 0;
+
+  for (const seg of segments) {
+    const check = canPlaceRoadSegment(grid, seg.x, seg.y);
+    if (!check.valid) continue;
+
+    // Mark all cells in the 4x4 segment
+    for (let dy = 0; dy < ROAD_SEGMENT_SIZE; dy++) {
+      for (let dx = 0; dx < ROAD_SEGMENT_SIZE; dx++) {
+        const px = seg.x + dx;
+        const py = seg.y + dy;
+        if (px < GRID_WIDTH && py < GRID_HEIGHT) {
+          grid[py][px].isOrigin = dx === 0 && dy === 0;
+          grid[py][px].originX = seg.x;
+          grid[py][px].originY = seg.y;
+          grid[py][px].type = TileType.Road;
+        }
+      }
+    }
+
+    placedCount++;
+  }
+
+  return placedCount;
+}, []);
+```
+
+**Improvements**:
+- ✅ Single responsibility: segment placement only
+- ✅ Returns placement count for potential feedback
+- ✅ Self-documenting with clear name and JSDoc
+- ✅ Testable in isolation
+
+#### 2. Created `updateRoadPatternsForSegments()` (31 lines)
+**Responsibility**: Update road patterns for affected segments
+
+```typescript
+const updateRoadPatternsForSegments = useCallback((
+  grid: GridCell[][],
+  segments: Array<{ x: number; y: number }>
+): void => {
+  // Collect all affected segments (placed + neighbors)
+  const allAffected = new Set<string>();
+  for (const seg of segments) {
+    for (const affected of getAffectedSegments(seg.x, seg.y)) {
+      allAffected.add(`${affected.x},${affected.y}`);
+    }
+  }
+
+  // Update pattern for each affected segment
+  for (const key of allAffected) {
+    const [sx, sy] = key.split(",").map(Number);
+    if (!hasRoadSegment(grid, sx, sy)) continue;
+
+    const connections = getRoadConnections(grid, sx, sy);
+    const segmentType = getSegmentType(connections);
+    const pattern = generateRoadPattern(segmentType);
+
+    // Apply pattern to grid
+    for (const tile of pattern) {
+      const px = sx + tile.dx;
+      const py = sy + tile.dy;
+      if (px < GRID_WIDTH && py < GRID_HEIGHT) {
+        grid[py][px].type = tile.type;
+      }
+    }
+  }
+}, []);
+```
+
+**Improvements**:
+- ✅ Single responsibility: pattern calculation and application
+- ✅ Clear two-phase logic: collect affected → update patterns
+- ✅ Inline comments explain each phase
+- ✅ Uses existing road utility functions (no duplication)
+
+#### 3. Refactored `handleRoadDrag()` (13 lines)
+**New implementation**: Orchestrates the two extracted functions
+
+```typescript
+const handleRoadDrag = useCallback((segments: Array<{ x: number; y: number }>) => {
+  setGrid((prevGrid) => {
+    const newGrid = prevGrid.map((row) => row.map((cell) => ({ ...cell })));
+
+    // Phase 1: Place all valid road segments
+    placeRoadSegmentsOnGrid(newGrid, segments);
+
+    // Phase 2: Update road patterns for all affected segments
+    updateRoadPatternsForSegments(newGrid, segments);
+
+    return newGrid;
+  });
+}, [placeRoadSegmentsOnGrid, updateRoadPatternsForSegments]);
+```
+
+**Improvements**:
+- ✅ **Reduced from 50 to 13 lines** (74% reduction)
+- ✅ Clear two-phase flow with descriptive comments
+- ✅ High-level orchestration only (delegates details)
+- ✅ Self-documenting code (phases explain what's happening)
+- ✅ JSDoc documentation added
+
+---
+
+### Results
+
+**Before Refactoring**:
+```
+handleRoadDrag: 50 lines
+├── Placement logic: nested 3 levels deep
+├── Affected segment collection: nested loops
+└── Pattern updates: nested 3 levels deep
+```
+
+**After Refactoring**:
+```
+handleRoadDrag: 13 lines (orchestrator)
+├── placeRoadSegmentsOnGrid: 35 lines (single responsibility)
+└── updateRoadPatternsForSegments: 31 lines (single responsibility)
+```
+
+**Metrics**:
+- **Lines of code**: 50 → 13 (main function)
+- **Nesting depth**: 3+ levels → 1 level
+- **Function responsibilities**: 3 mixed → 3 separate
+- **Cyclomatic complexity**: High → Low (main function)
+- **Testability**: Difficult → Easy (isolated functions)
+
+**Benefits**:
+1. ✅ **Improved Readability**: Main function is now 13 lines of clear, high-level logic
+2. ✅ **Better Maintainability**: Each function has single responsibility
+3. ✅ **Enhanced Testability**: Helpers can be tested in isolation
+4. ✅ **Reduced Cognitive Load**: Each function is easier to understand
+5. ✅ **Consistent Pattern**: Follows existing GameUI.tsx patterns (handleBuildingPlacement, handleErasure)
+6. ✅ **Documentation**: Added JSDoc comments to all functions
+
+---
+
+### Files Modified
+
+**src/components/game/GameUI.tsx**:
+- Added `placeRoadSegmentsOnGrid()` function (lines 213-248)
+- Added `updateRoadPatternsForSegments()` function (lines 250-286)
+- Refactored `handleRoadDrag()` to use helpers (lines 310-330)
+- Added comprehensive JSDoc documentation
+
+### Technical Notes
+- TypeScript compilation: ✅ No errors
+- Backward compatible: ✅ Maintains identical behavior
+- Follows existing patterns: ✅ Similar to handleBuildingPlacement/handleErasure
+- Performance: ✅ No change (same algorithm, better structure)
+
+---
+
 ## 2026-01-11 (Session 12) - Code Cleanup: Dead Code Removal & DRY Principle Enforcement
 
 ### Quick Wins Refactoring - Phase 1
