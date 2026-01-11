@@ -180,31 +180,7 @@ export class ResourceSystem implements GameSystem {
    * Now factors in worker efficiency
    */
   private calculateTotalProduction(): ResourceRate {
-    const total: ResourceRate = {};
-
-    // Find all buildings in grid
-    const buildings = this.findAllBuildings();
-
-    buildings.forEach(({ buildingId, x, y }) => {
-      if (!buildingId) return;
-
-      const definition = this.buildingRegistry.get(buildingId);
-      if (!definition?.produces) return;
-
-      // Get worker efficiency for this building
-      const efficiency = this.workerSystem 
-        ? this.workerSystem.getBuildingEfficiency(buildingId, x, y)
-        : 1;
-
-      // Add production rates (scaled by worker efficiency)
-      const keys = Object.keys(definition.produces) as Array<keyof ResourceRate>;
-      keys.forEach(key => {
-        const rate = (definition.produces![key] || 0) * efficiency;
-        total[key] = (total[key] || 0) + rate;
-      });
-    });
-
-    return total;
+    return this.calculateResourceFlow('produces');
   }
 
   /**
@@ -212,6 +188,17 @@ export class ResourceSystem implements GameSystem {
    * Consumption still happens even with partial staffing
    */
   private calculateTotalConsumption(): ResourceRate {
+    return this.calculateResourceFlow('consumes');
+  }
+
+  /**
+   * Calculates total resource flow (production or consumption) from all buildings
+   * Factors in worker efficiency for both production and consumption
+   *
+   * @param flowType - Type of resource flow to calculate ('produces' or 'consumes')
+   * @returns ResourceRate object with total rates per resource type
+   */
+  private calculateResourceFlow(flowType: 'produces' | 'consumes'): ResourceRate {
     const total: ResourceRate = {};
 
     // Find all buildings in grid
@@ -221,17 +208,19 @@ export class ResourceSystem implements GameSystem {
       if (!buildingId) return;
 
       const definition = this.buildingRegistry.get(buildingId);
-      if (!definition?.consumes) return;
+      const resourceRates = definition?.[flowType];
 
-      // Get worker efficiency - consumption is reduced if understaffed
-      const efficiency = this.workerSystem 
+      if (!resourceRates) return;
+
+      // Get worker efficiency for this building
+      const efficiency = this.workerSystem
         ? this.workerSystem.getBuildingEfficiency(buildingId, x, y)
         : 1;
 
-      // Add consumption rates (scaled by worker efficiency)
-      const keys = Object.keys(definition.consumes) as Array<keyof ResourceRate>;
+      // Add resource rates (scaled by worker efficiency)
+      const keys = Object.keys(resourceRates) as Array<keyof ResourceRate>;
       keys.forEach(key => {
-        const rate = (definition.consumes![key] || 0) * efficiency;
+        const rate = (resourceRates[key] || 0) * efficiency;
         total[key] = (total[key] || 0) + rate;
       });
     });
