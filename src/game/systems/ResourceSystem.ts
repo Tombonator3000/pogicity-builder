@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { Resources, ResourceRate, BuildingDefinition, GridCell } from '../types';
+import { Resources, ResourceRate, BuildingDefinition, GridCell, BaseResources, POPULATION_CONFIG } from '../types';
 import { GameSystem } from './GameSystem';
 
 /**
@@ -21,6 +21,9 @@ export class ResourceSystem implements GameSystem {
     power: 0,
     medicine: 10,
     caps: 0,
+    population: 3,
+    maxPopulation: 5,
+    happiness: POPULATION_CONFIG.baseHappiness,
   };
 
   // Default storage capacity (can be increased with storage buildings)
@@ -31,6 +34,9 @@ export class ResourceSystem implements GameSystem {
     power: 100,
     medicine: 100,
     caps: 1000,
+    population: 0,
+    maxPopulation: 100,
+    happiness: 100,
   };
 
   constructor() {

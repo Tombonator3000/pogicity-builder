@@ -67,6 +67,9 @@ export function GameUI() {
     power: 0,
     medicine: 10,
     caps: 0,
+    population: 3,
+    maxPopulation: 5,
+    happiness: 70,
   });
   const [resourceCapacity, setResourceCapacity] = useState<Resources>({
     scrap: 500,
@@ -75,6 +78,9 @@ export function GameUI() {
     power: 100,
     medicine: 100,
     caps: 1000,
+    population: 0,
+    maxPopulation: 100,
+    happiness: 100,
   });
   const [resourceRates, setResourceRates] = useState<Partial<Resources>>({});
 
