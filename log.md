@@ -1,5 +1,58 @@
 # Development Log
 
+## 2026-01-11 (Session 5)
+
+### Free Post-Apocalyptic Sprite Resources Found
+
+**Problem**: AI-generated sprites cannot have true transparency. Need CC0/free post-apocalyptic sprites with real PNG transparency.
+
+### Recommended Resources (with real transparency):
+
+#### **Best Options for Isometric Game:**
+
+1. **Isometric Zombie Apocalypse by Monogon** (itch.io)
+   - URL: https://maxparata.itch.io/isometriczombieapocalypse-monogon
+   - Content: 600+ sprites (56 tiles, 408 props, 16 vehicles, 76 buildings, 3 characters)
+   - License: **CC-BY-ND 4.0** (attribution required, no derivatives)
+   - Format: Isometric pixel art with transparency ✅
+   - Price: Free (name your own price)
+
+2. **Voxel Nuclear Survival by Monogon** (itch.io)
+   - URL: https://maxparata.itch.io/nuclearsurvival
+   - Content: 200+ items (60 architecture, 30 decoration, 25 environment, 10 vehicles)
+   - License: **CC-BY-ND 4.0**
+   - Format: Voxel/isometric with transparency ✅
+   - Price: Free
+
+3. **Post-Apocalyptic 16x16 Tileset by CobraLad** (OpenGameArt)
+   - URL: https://opengameart.org/content/post-apocalyptic-16x16-tileset-update1
+   - License: **CC-BY-SA 3.0** (attribution, share-alike)
+   - Format: Top-down 16x16 pixel art
+
+4. **Post-Apocalypse Pixel Art Asset Pack by TheLazyStone** (itch.io)
+   - URL: https://thelazystone.itch.io/post-apocalypse-pixel-art-asset-pack
+   - Content: 3300+ sprites (characters, enemies, UI, tilesets, props)
+   - Format: Top-down pixel art
+   - Price: Free (name your own price)
+
+### License Comparison:
+| Pack | License | Attribution | Commercial | Derivatives |
+|------|---------|-------------|------------|-------------|
+| Monogon Isometric | CC-BY-ND 4.0 | ✅ Required | ✅ Yes | ❌ No |
+| CobraLad 16x16 | CC-BY-SA 3.0 | ✅ Required | ✅ Yes | ✅ Yes (share-alike) |
+| TheLazyStone | Custom | Check pack | ✅ Yes | Check pack |
+
+### Recommended Action:
+1. **Download Monogon's Isometric Zombie Apocalypse pack** - best match for our isometric game
+2. Extract individual PNG sprites from the pack
+3. Replace AI-generated wasteland assets with these transparent sprites
+4. Add attribution to game credits
+
+### Note on File Downloads:
+These assets require manual download from itch.io/OpenGameArt. The files are hosted on external servers (not direct URLs) and require user interaction to download ZIP files.
+
+---
+
 ## 2026-01-10 (Session 4)
 
 ### Sprite Transparency Issue
