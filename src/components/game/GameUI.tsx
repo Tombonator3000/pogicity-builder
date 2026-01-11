@@ -5,7 +5,9 @@ import { BuildingPanel } from "./BuildingPanel";
 import { ResourcePanel } from "./ResourcePanel";
 import { WorkerPanel } from "./WorkerPanel";
 import { MainMenu } from "./MainMenu";
-import { GridCell, TileType, ToolType, GRID_WIDTH, GRID_HEIGHT, BuildingDefinition, Direction, Resources, WorkerAssignment } from "@/game/types";
+import { EventModal } from "./EventModal";
+import { EventLog } from "./EventLog";
+import { GridCell, TileType, ToolType, GRID_WIDTH, GRID_HEIGHT, BuildingDefinition, Direction, Resources, WorkerAssignment, GameEvent } from "@/game/types";
 import { getBuilding, getBuildingFootprint } from "@/game/buildings";
 import {
   ROAD_SEGMENT_SIZE,
@@ -93,6 +95,10 @@ export function GameUI() {
     understaffed: 0,
   });
   const [workerAssignments, setWorkerAssignments] = useState<WorkerAssignment[]>([]);
+  
+  // Event system state
+  const [currentEvent, setCurrentEvent] = useState<GameEvent | null>(null);
+  const [eventHistory, setEventHistory] = useState<GameEvent[]>([]);
   const handleGridChange = useCallback((newGrid: GridCell[][]) => {
     setGrid(newGrid);
   }, []);
@@ -357,7 +363,7 @@ export function GameUI() {
     setShowMenu(true);
   };
 
-  // Listen to resource and worker changes from the game scene
+  // Listen to resource, worker, and event changes from the game scene
   useEffect(() => {
     const setupListeners = () => {
       const scene = gameRef.current?.getScene();
@@ -383,12 +389,24 @@ export function GameUI() {
         setWorkerAssignments(data.assignments);
       };
 
+      const handleEventTriggered = (event: GameEvent) => {
+        // Show modal for events with choices, or important events
+        if (event.choices && event.choices.length > 0) {
+          setCurrentEvent(event);
+        } else {
+          // Add to history immediately for no-choice events
+          setEventHistory(prev => [...prev, event]);
+        }
+      };
+
       scene.events.on('resources:changed', handleResourceChange);
       scene.events.on('workers:changed', handleWorkerChange);
+      scene.events.on('event:triggered', handleEventTriggered);
 
       return () => {
         scene.events.off('resources:changed', handleResourceChange);
         scene.events.off('workers:changed', handleWorkerChange);
+        scene.events.off('event:triggered', handleEventTriggered);
       };
     };
 
@@ -396,6 +414,25 @@ export function GameUI() {
     const timeoutId = setTimeout(setupListeners, 1000);
     return () => clearTimeout(timeoutId);
   }, []);
+
+  // Event handlers
+  const handleEventChoice = useCallback((eventId: string, choiceIndex: number) => {
+    const scene = gameRef.current?.getScene();
+    if (scene) {
+      scene.applyEventChoice(eventId, choiceIndex);
+    }
+    if (currentEvent) {
+      setEventHistory(prev => [...prev, currentEvent]);
+    }
+    setCurrentEvent(null);
+  }, [currentEvent]);
+
+  const handleEventDismiss = useCallback(() => {
+    if (currentEvent) {
+      setEventHistory(prev => [...prev, currentEvent]);
+    }
+    setCurrentEvent(null);
+  }, [currentEvent]);
 
   // Show main menu
   if (showMenu) {
@@ -534,6 +571,16 @@ export function GameUI() {
         </div>
         <div className="text-sm text-muted-foreground">Zoom: {Math.round(zoom * 100)}%</div>
       </div>
+
+      {/* Event Log */}
+      <EventLog events={eventHistory} />
+
+      {/* Event Modal */}
+      <EventModal
+        event={currentEvent}
+        onChoice={handleEventChoice}
+        onDismiss={handleEventDismiss}
+      />
     </div>
   );
 }

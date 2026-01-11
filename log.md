@@ -84,13 +84,37 @@
 
 ---
 
-### Phase 3: Event System UI (PLANNED)
+### Phase 3: Event UI System (COMPLETED)
 
-**TODO**:
-- EventModal.tsx - Display events with choices
-- EventLog.tsx - Scrollable event history
-- Sound effects for events
-- Toast notifications for critical events
+**Goal**: Display events with modals and maintain event history log
+
+**EventModal.tsx** - New event modal component:
+- Draggable modal with Fallout terminal styling
+- Event type icons (raid/caravan/radstorm/refugees/disease/discovery)
+- Severity-based border colors and glow effects
+- Choice buttons for events with player decisions
+- Effect preview display for resource changes
+- Duration indicator for timed events
+- Backdrop overlay to focus attention
+
+**EventLog.tsx** - New event history component:
+- Collapsible event history panel
+- Shows last 5 events (expandable to 15)
+- Color-coded by event type
+- Timestamps for each event
+- Effect summary for most recent event
+- Click to expand/collapse
+
+**GameUI.tsx** - Integration:
+- Added currentEvent and eventHistory state
+- Listening to 'event:triggered' Phaser events
+- handleEventChoice() calls MainScene.applyEventChoice()
+- handleEventDismiss() adds event to history
+- EventModal and EventLog components rendered
+
+**MainScene.ts** - Added applyEventChoice() method:
+- Public API for React to trigger event choices
+- Delegates to EventSystem.applyEventChoice()
 
 ---
 
