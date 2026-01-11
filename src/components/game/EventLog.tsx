@@ -1,62 +1,11 @@
 import { GameEvent } from "@/game/types";
-import { AlertTriangle, Gift, Radiation, Users, Skull, Search, ChevronUp, ChevronDown } from "lucide-react";
+import { ChevronUp, ChevronDown } from "lucide-react";
 import { useState } from "react";
+import { getEventIcon, getEventStyling, formatEventTime } from "@/utils/eventUtils";
 
 interface EventLogProps {
   events: GameEvent[];
   maxDisplay?: number;
-}
-
-/**
- * Get icon for event type (smaller version)
- */
-function getEventIcon(type: string) {
-  const className = "w-3 h-3";
-  switch (type) {
-    case 'raid':
-      return <Skull className={`${className} text-destructive`} />;
-    case 'caravan':
-      return <Gift className={`${className} text-amber-400`} />;
-    case 'radstorm':
-      return <Radiation className={`${className} text-yellow-400`} />;
-    case 'refugees':
-      return <Users className={`${className} text-blue-400`} />;
-    case 'disease':
-      return <AlertTriangle className={`${className} text-red-400`} />;
-    case 'discovery':
-      return <Search className={`${className} text-green-400`} />;
-    default:
-      return <AlertTriangle className={className} />;
-  }
-}
-
-/**
- * Get color class for event type
- */
-function getEventColorClass(type: string): string {
-  switch (type) {
-    case 'raid':
-    case 'disease':
-      return 'text-destructive border-destructive/30';
-    case 'radstorm':
-      return 'text-yellow-400 border-yellow-400/30';
-    case 'caravan':
-    case 'discovery':
-      return 'text-primary border-primary/30';
-    case 'refugees':
-      return 'text-blue-400 border-blue-400/30';
-    default:
-      return 'text-foreground border-border';
-  }
-}
-
-/**
- * Format timestamp to readable time
- */
-function formatTime(timestamp: number): string {
-  const minutes = Math.floor(timestamp / 60);
-  const seconds = Math.floor(timestamp % 60);
-  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 }
 
 export function EventLog({ events, maxDisplay = 5 }: EventLogProps) {
@@ -103,7 +52,7 @@ export function EventLog({ events, maxDisplay = 5 }: EventLogProps) {
           }`}
         >
           {recentEvents.map((event, index) => {
-            const colorClass = getEventColorClass(event.type);
+            const colorClass = getEventStyling(event.type, 'text');
             return (
               <div 
                 key={event.id}
@@ -113,7 +62,7 @@ export function EventLog({ events, maxDisplay = 5 }: EventLogProps) {
               >
                 <div className="flex items-start gap-2">
                   <div className="mt-0.5">
-                    {getEventIcon(event.type)}
+                    {getEventIcon(event.type, 'small', false)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
@@ -121,7 +70,7 @@ export function EventLog({ events, maxDisplay = 5 }: EventLogProps) {
                         {event.name}
                       </span>
                       <span className="text-xs text-muted-foreground flex-shrink-0">
-                        {formatTime(event.timestamp)}
+                        {formatEventTime(event.timestamp)}
                       </span>
                     </div>
                     {/* Show effect summary on hover or for most recent */}

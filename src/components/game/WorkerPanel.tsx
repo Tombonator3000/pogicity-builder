@@ -1,4 +1,5 @@
 import { WorkerAssignment } from "@/game/types";
+import { getBuilding } from "@/game/buildings";
 
 interface WorkerPanelProps {
   stats: {
@@ -19,21 +20,6 @@ export function WorkerPanel({ stats, assignments }: WorkerPanelProps) {
     if (ratio >= 1) return "hsl(120 80% 55%)";
     if (ratio >= 0.5) return "hsl(45 90% 55%)";
     return "hsl(0 80% 55%)";
-  };
-
-  const getBuildingName = (buildingId: string): string => {
-    const names: Record<string, string> = {
-      'scavenging-station': 'Scavenger',
-      'water-purifier': 'Purifier',
-      'hydroponic-farm': 'Farm',
-      'generator': 'Generator',
-      'solar-array': 'Solar',
-      'med-tent': 'Med Tent',
-      'guard-tower': 'Guard',
-      'trading-post': 'Trading',
-      'radio-tower': 'Radio',
-    };
-    return names[buildingId] || buildingId;
   };
 
   // Sort assignments by priority
@@ -163,11 +149,11 @@ export function WorkerPanel({ stats, assignments }: WorkerPanelProps) {
                   border: '1px solid hsl(120 20% 15%)'
                 }}
               >
-                <span 
+                <span
                   className="text-[9px] uppercase tracking-wide"
                   style={{ color: 'hsl(120 50% 50%)' }}
                 >
-                  {getBuildingName(assignment.buildingId)}
+                  {getBuilding(assignment.buildingId)?.name || assignment.buildingId}
                 </span>
                 <div className="flex items-center gap-1">
                   <span 

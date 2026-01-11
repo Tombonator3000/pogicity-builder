@@ -1,54 +1,13 @@
 import { useState, useRef, useCallback, MouseEvent } from "react";
 import { GameEvent, GameEventChoice } from "@/game/types";
 import { playClickSound, playDoubleClickSound } from "@/utils/sounds";
-import { AlertTriangle, Gift, Radiation, Users, Skull, Search } from "lucide-react";
+import { Radiation } from "lucide-react";
+import { getEventIcon, getEventStyling } from "@/utils/eventUtils";
 
 interface EventModalProps {
   event: GameEvent | null;
   onChoice: (eventId: string, choiceIndex: number) => void;
   onDismiss: () => void;
-}
-
-/**
- * Get icon for event type
- */
-function getEventIcon(type: string) {
-  switch (type) {
-    case 'raid':
-      return <Skull className="w-6 h-6 text-destructive animate-pulse" />;
-    case 'caravan':
-      return <Gift className="w-6 h-6 text-amber-400" />;
-    case 'radstorm':
-      return <Radiation className="w-6 h-6 text-yellow-400 animate-pulse" />;
-    case 'refugees':
-      return <Users className="w-6 h-6 text-blue-400" />;
-    case 'disease':
-      return <AlertTriangle className="w-6 h-6 text-red-400 animate-pulse" />;
-    case 'discovery':
-      return <Search className="w-6 h-6 text-green-400" />;
-    default:
-      return <AlertTriangle className="w-6 h-6" />;
-  }
-}
-
-/**
- * Get severity color based on event type
- */
-function getSeverityClass(type: string): string {
-  switch (type) {
-    case 'raid':
-    case 'disease':
-      return 'border-destructive/50 shadow-[0_0_20px_hsl(var(--destructive)/0.3)]';
-    case 'radstorm':
-      return 'border-yellow-500/50 shadow-[0_0_20px_rgba(234,179,8,0.3)]';
-    case 'caravan':
-    case 'discovery':
-      return 'border-primary/50 shadow-[0_0_20px_hsl(var(--primary)/0.3)]';
-    case 'refugees':
-      return 'border-blue-500/50 shadow-[0_0_20px_rgba(59,130,246,0.3)]';
-    default:
-      return 'border-border';
-  }
 }
 
 export function EventModal({ event, onChoice, onDismiss }: EventModalProps) {
@@ -101,7 +60,7 @@ export function EventModal({ event, onChoice, onDismiss }: EventModalProps) {
   if (!event) return null;
 
   const hasChoices = event.choices && event.choices.length > 0;
-  const severityClass = getSeverityClass(event.type);
+  const severityClass = getEventStyling(event.type, 'modal');
 
   return (
     <>
@@ -130,7 +89,7 @@ export function EventModal({ event, onChoice, onDismiss }: EventModalProps) {
           onMouseDown={handleMouseDown}
         >
           <div className="flex items-center gap-2">
-            {getEventIcon(event.type)}
+            {getEventIcon(event.type, 'large', true)}
             <span className="text-lg text-foreground tracking-wide uppercase">
               ⚠ {event.name}
             </span>
