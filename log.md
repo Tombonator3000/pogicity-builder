@@ -1,5 +1,194 @@
 # Development Log
 
+## 2026-01-12 (Session 17) - Phase 1: Core Systems - Zoning System Implementation
+
+### Overview
+Implemented the foundation of SimCity-style zoning system as part of Phase 1: Core Systems. This is the first major step in transforming Wasteland Rebuilders into a true SimCity-like experience.
+
+### What Was Implemented
+
+#### 1. **Type Definitions** (`src/game/types.ts`)
+Added comprehensive zoning types:
+- `ZoneType` enum: Residential, Commercial, Industrial
+- `ZoneDensity` enum: Low, Medium, High (for future expansion)
+- `ZoneDemand` interface: Tracks RCI demand (-100 to +100)
+- `ZoneStats` interface: Statistics per zone type
+- Updated `GridCell` to include zone data:
+  - `zoneType`: Which zone type (RCI)
+  - `zoneDensity`: Density level
+  - `zoneDevelopmentLevel`: Progress toward building growth (0-100)
+- Updated `TileType` to include `Zone`
+- Added zoning tools to `ToolType`: `ZoneResidential`, `ZoneCommercial`, `ZoneIndustrial`, `Dezone`
+- Updated `GameState` to include `zoneDemand` and `zoneStats`
+
+#### 2. **ZoningSystem** (`src/game/systems/ZoningSystem.ts`)
+New modular system for zone management:
+
+**Features:**
+- **Zone Placement/Removal**:
+  - `placeZone()`: Place zones on grass/wasteland tiles
+  - `removeZone()`: Remove zones, restore underlying terrain
+
+- **Demand Calculation**:
+  - `calculateZoneDemand()`: SimCity-style RCI demand algorithm
+  - Based on population ratio, resource needs, existing zones
+  - Returns values from -100 (oversupply) to +100 (high demand)
+  - Includes organic randomness (-5 to +5)
+
+- **Automatic Building Growth**:
+  - `checkForGrowth()`: Checks zones for development
+  - Growth probability based on demand level
+  - Development level increases by 10% per check
+  - At 100%, zone triggers building placement
+  - `findSuitableBuildingForZone()`: Randomly selects appropriate building type
+
+- **Zone Statistics**:
+  - `updateZoneStats()`: Tracks zone metrics
+  - Total zones, developed/undeveloped, average development level
+  - Per-zone-type statistics
+
+**Configuration:**
+- Demand update interval: 5 seconds
+- Growth check interval: 10 seconds
+- Growth chance: 10% per check (modified by demand)
+
+**Wasteland Theme Integration:**
+- Residential = Shantytown settlements
+- Commercial = Trading posts/markets
+- Industrial = Scrap yards/production facilities
+
+#### 3. **MainScene Integration** (`src/game/MainScene.ts`)
+- Added `zoningSystem` property
+- Initialized in `initializeSystems()`
+- Added `updateZoningSystem()` method:
+  - Calculates demand based on current game state
+  - Checks for automatic building growth
+  - Logs growth events (TODO: actual building placement)
+- Added public API:
+  - `getZoneDemand()`: Get current RCI demand
+  - `getZoneStats()`: Get zone statistics
+- Updated `update()` loop to call zoning system
+
+#### 4. **InputSystem Support** (`src/game/systems/InputSystem.ts`)
+- Added zoning tools to `shouldPaintOnDrag()`:
+  - Supports drag-painting zones like terrain tools
+  - Tools: ZoneResidential, ZoneCommercial, ZoneIndustrial, Dezone
+- Added preview colors to `getPreviewColor()`:
+  - Residential: Green
+  - Commercial: Blue
+  - Industrial: Yellow/orange
+  - Dezone: Red
+
+#### 5. **Zone Rendering** (`src/game/systems/RenderSystem.ts`)
+- Updated `getTileTextureKey()` to handle `TileType.Zone`
+  - Zones render their underlying terrain (grass/wasteland)
+- Added `renderZoneOverlay()` method:
+  - Draws semi-transparent colored overlay (25% alpha)
+  - Color-coded by zone type (RCI)
+  - Includes zone border for emphasis
+  - Proper depth sorting
+- Zones automatically rendered in `renderTile()`
+
+#### 6. **Color Configuration** (`src/game/config/RenderConfig.ts`)
+Added zone colors to `COLOR_PALETTE`:
+- `preview.zoneResidential`: 0x4caf50 (Green)
+- `preview.zoneCommercial`: 0x2196f3 (Blue)
+- `preview.zoneIndustrial`: 0xffc107 (Yellow)
+- `preview.dezone`: 0xff5252 (Red)
+- New `zones` section for rendered zone colors
+
+#### 7. **System Exports** (`src/game/systems/index.ts`)
+- Exported `ZoningSystem` for use across the project
+
+### Architecture Highlights
+
+**Modular Design:**
+- ZoningSystem is completely independent
+- Uses event-driven architecture
+- Follows existing system patterns
+- Configurable parameters
+
+**Data-Driven:**
+- Zone demand calculated from game state
+- Building selection based on zone type
+- Statistics tracked automatically
+
+**Performance:**
+- Periodic updates (5s demand, 10s growth)
+- Efficient grid scanning
+- No per-frame overhead
+
+### What Still Needs to Be Done
+
+1. **UI Component for Zone Demand Indicators**
+   - RCI bars showing demand
+   - Visual feedback for players
+   - Integration with game UI
+
+2. **Automatic Building Placement**
+   - Currently logs growth events
+   - Need to implement actual building placement logic
+   - Handle resource costs for zone-grown buildings
+
+3. **Zone Tool UI**
+   - Add zoning tools to BuildingPanel or new ZonePanel
+   - Tool selection for RCI zones
+   - Dezone tool
+
+4. **Save/Load Integration**
+   - Zone data persistence
+   - Load zone demand/stats from save
+
+5. **Testing**
+   - Manual testing of zone placement
+   - Verify zone rendering
+   - Test demand calculation
+   - Test automatic growth
+
+### Technical Details
+
+**Zone Demand Algorithm:**
+```
+Residential Demand:
+- High population ratio (>80%) = +demand (need housing)
+- Low population ratio (<30%) = -demand (oversupply)
+
+Commercial Demand:
+- High population per commercial zone (>20) = +demand
+- Low population per commercial zone (<10) = -demand
+
+Industrial Demand:
+- High population per industrial zone (>15) = +demand
+- Low population per industrial zone (<8) = -demand
+```
+
+**Development Level:**
+- Starts at 0 when zone placed
+- Increases by 10 per growth check (if demand positive)
+- Reaches 100 = trigger building placement
+- Growth probability = base_chance × (demand / 100)
+
+### Files Modified
+1. `src/game/types.ts` - Added zone types and interfaces
+2. `src/game/systems/ZoningSystem.ts` - New system (432 lines)
+3. `src/game/systems/index.ts` - Export ZoningSystem
+4. `src/game/MainScene.ts` - Integrate ZoningSystem
+5. `src/game/systems/InputSystem.ts` - Add zoning tool support
+6. `src/game/systems/RenderSystem.ts` - Add zone rendering
+7. `src/game/config/RenderConfig.ts` - Add zone colors
+
+### Compilation Status
+✅ TypeScript compilation successful (npx tsc --noEmit)
+
+### Next Steps (Phase 1 Continuation)
+- Create zone demand UI component
+- Integrate zone tools with GameUI
+- Complete automatic building placement
+- Test and iterate on zone demand algorithm
+- Move to Phase 1.2: Budget & Tax System
+
+---
+
 ## 2026-01-12 (Session 16) - Fix Vite Config Base Path Issue
 
 ### Problem
