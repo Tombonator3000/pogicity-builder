@@ -370,6 +370,190 @@ export interface BuildingDefinition {
   description?: string;
 }
 
+/**
+ * Road types with different traffic capacities
+ */
+export enum RoadType {
+  Basic = "basic",       // Low capacity: 100 cars/day
+  Avenue = "avenue",     // Medium capacity: 300 cars/day
+  Highway = "highway",   // High capacity: 1000 cars/day
+}
+
+/**
+ * Road capacity configuration
+ */
+export const ROAD_CAPACITY: Record<RoadType, number> = {
+  [RoadType.Basic]: 100,
+  [RoadType.Avenue]: 300,
+  [RoadType.Highway]: 1000,
+};
+
+/**
+ * Congestion levels based on traffic volume / capacity ratio
+ */
+export enum CongestionLevel {
+  None = "none",           // 0-25%
+  Light = "light",         // 25-50%
+  Medium = "medium",       // 50-75%
+  Heavy = "heavy",         // 75-100%
+  Gridlock = "gridlock",   // 100%+
+}
+
+/**
+ * Commuter state machine
+ */
+export enum CommuterState {
+  AtHome = "atHome",
+  TravelingToWork = "travelingToWork",
+  AtWork = "atWork",
+  TravelingHome = "travelingHome",
+}
+
+/**
+ * A commuter (sim) that travels between residential and work zones
+ */
+export interface Commuter {
+  id: string;
+  homeX: number;          // Residential zone location
+  homeY: number;
+  workX: number;          // Commercial/Industrial zone location
+  workY: number;
+  currentX: number;       // Current position on path
+  currentY: number;
+  state: CommuterState;
+  path?: { x: number; y: number }[]; // Current pathfinding route
+  pathIndex?: number;     // Progress along path
+  usingTransit?: boolean; // Using mass transit instead of roads
+}
+
+/**
+ * Traffic data for a single road tile
+ */
+export interface TrafficData {
+  x: number;
+  y: number;
+  roadType: RoadType;
+  volume: number;         // Number of cars using this road
+  capacity: number;       // Max cars based on road type
+  congestion: number;     // 0-100+ (percentage of capacity)
+  congestionLevel: CongestionLevel;
+}
+
+/**
+ * Mass transit types
+ */
+export enum MassTransitType {
+  Bus = "bus",
+  Subway = "subway",
+  Train = "train",
+}
+
+/**
+ * Mass transit stop/station
+ */
+export interface TransitStop {
+  id: string;
+  type: MassTransitType;
+  x: number;
+  y: number;
+  ridership: number;      // Number of commuters using this stop
+  routeIds: string[];     // Routes serving this stop
+}
+
+/**
+ * Mass transit route
+ */
+export interface TransitRoute {
+  id: string;
+  type: MassTransitType;
+  stops: string[];        // Stop IDs in order
+  capacity: number;       // Max commuters per day
+  cost: number;           // Monthly maintenance cost
+  ridership: number;      // Current commuters using route
+}
+
+/**
+ * Pollution types
+ */
+export enum PollutionType {
+  Air = "air",         // From industry, power, traffic
+  Water = "water",     // From sewage, industry
+  Ground = "ground",   // From landfills, toxic waste
+  Radiation = "radiation", // Wasteland-specific (already exists in overlay)
+}
+
+/**
+ * Pollution source definition
+ */
+export interface PollutionSource {
+  x: number;
+  y: number;
+  type: PollutionType;
+  amount: number;      // Pollution units per update
+  radius: number;      // Spread radius
+  buildingId?: string; // Source building (if any)
+}
+
+/**
+ * Pollution data for a grid cell
+ */
+export interface PollutionData {
+  x: number;
+  y: number;
+  airPollution: number;     // 0-100+
+  waterPollution: number;   // 0-100+
+  groundPollution: number;  // 0-100+
+  totalPollution: number;   // Sum of all types
+}
+
+/**
+ * Advisor types (SimCity-style city advisors)
+ */
+export enum AdvisorType {
+  Financial = "financial",       // Budget, taxes, loans
+  Safety = "safety",             // Police, fire, disasters
+  Utilities = "utilities",       // Power, water, sewage
+  Transportation = "transportation", // Traffic, roads, transit
+  Environmental = "environmental", // Pollution, parks
+}
+
+/**
+ * Advisor message severity
+ */
+export enum AdvisorSeverity {
+  Info = "info",         // General information
+  Warning = "warning",   // Attention needed
+  Critical = "critical", // Urgent action required
+}
+
+/**
+ * Advisor message
+ */
+export interface AdvisorMessage {
+  id: string;
+  advisorType: AdvisorType;
+  severity: AdvisorSeverity;
+  title: string;
+  message: string;
+  timestamp: number;
+  location?: { x: number; y: number }; // Optional location reference
+  dismissed?: boolean;
+}
+
+/**
+ * Petition from citizens (requested changes)
+ */
+export interface CitizenPetition {
+  id: string;
+  type: 'park' | 'service' | 'infrastructure' | 'policy';
+  title: string;
+  description: string;
+  location?: { x: number; y: number };
+  supportLevel: number; // 0-100 (percentage of citizens supporting)
+  timestamp: number;
+  resolved?: boolean;
+}
+
 export interface GameState {
   grid: GridCell[][];
   zoom: number;
@@ -392,6 +576,17 @@ export interface GameState {
   activeOverlay?: OverlayType;
   // Historical data for graphs
   historicalData?: HistoricalDataPoint[];
+  // Traffic system state
+  commuters?: Commuter[];
+  trafficData?: Map<string, TrafficData>; // Key: "x,y"
+  transitStops?: TransitStop[];
+  transitRoutes?: TransitRoute[];
+  // Pollution system state
+  pollutionData?: Map<string, PollutionData>; // Key: "x,y"
+  pollutionSources?: PollutionSource[];
+  // Advisor system state
+  advisorMessages?: AdvisorMessage[];
+  citizenPetitions?: CitizenPetition[];
 }
 
 // Isometric constants - matching original repo (44x22)

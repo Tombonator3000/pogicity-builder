@@ -203,11 +203,20 @@ export class OverlaySystem implements GameSystem {
 
   /**
    * Calculate radiation level for a cell (0-100, higher = worse)
+   * Uses PollutionSystem data if available, otherwise falls back to tile-based calculation
    */
   private calculateRadiationLevel(grid: GridCell[][], x: number, y: number): number {
-    const cell = grid[y][x];
+    // Try to get pollution data from PollutionSystem
+    const pollutionSystem = (this.scene as any).pollutionSystem;
+    if (pollutionSystem) {
+      const airPollution = pollutionSystem.getAirPollution?.(x, y);
+      if (airPollution !== undefined) {
+        return Math.min(100, airPollution);
+      }
+    }
 
-    // Base radiation from tile type
+    // Fallback: Base radiation from tile type
+    const cell = grid[y][x];
     let radiation = 0;
     if (cell.type === 'radiation') {
       radiation = 100;
@@ -358,6 +367,7 @@ export class OverlaySystem implements GameSystem {
 
   /**
    * Calculate traffic density for a cell (0-100)
+   * Uses TrafficSystem data if available, otherwise falls back to estimation
    */
   private calculateTrafficDensity(grid: GridCell[][], x: number, y: number): number {
     const cell = grid[y][x];
@@ -367,7 +377,16 @@ export class OverlaySystem implements GameSystem {
       return 0;
     }
 
-    // Count nearby buildings (more buildings = more traffic)
+    // Try to get traffic data from TrafficSystem
+    const trafficSystem = (this.scene as any).trafficSystem;
+    if (trafficSystem) {
+      const congestion = trafficSystem.getTrafficCongestion?.(x, y);
+      if (congestion !== undefined) {
+        return Math.min(100, congestion);
+      }
+    }
+
+    // Fallback: Count nearby buildings (more buildings = more traffic)
     let nearbyBuildings = 0;
     const checkRadius = 8;
 
