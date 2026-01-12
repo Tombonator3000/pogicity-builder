@@ -24,7 +24,8 @@ import { GRID_WIDTH, GRID_HEIGHT } from "../types";
  * - Commercial = Trading posts/markets
  * - Industrial = Scrap yards/production facilities
  */
-export class ZoningSystem extends GameSystem {
+export class ZoningSystem implements GameSystem {
+  private scene!: Phaser.Scene;
   private zoneDemand: ZoneDemand = {
     residential: 0,
     commercial: 0,
@@ -45,14 +46,19 @@ export class ZoningSystem extends GameSystem {
   private readonly GROWTH_CHECK_INTERVAL = 10000; // Check for growth every 10 seconds
   private readonly GROWTH_CHANCE = 0.1; // 10% chance per check for zone to develop
 
-  constructor(scene: Phaser.Scene) {
-    super(scene);
-
+  constructor() {
     this.zoneStats = {
       residential: this.createEmptyStats("residential"),
       commercial: this.createEmptyStats("commercial"),
       industrial: this.createEmptyStats("industrial"),
     };
+  }
+
+  /**
+   * Initialize the zoning system
+   */
+  init(scene: Phaser.Scene): void {
+    this.scene = scene;
   }
 
   private createEmptyStats(zoneType: ZoneType): ZoneStats {
