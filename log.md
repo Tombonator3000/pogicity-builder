@@ -3475,3 +3475,155 @@ This helps diagnose issues like:
 ---
 
 *Log format: Date > Section > Changes*
+
+---
+
+## 2026-01-12 - Diagnostic Page for GitHub Pages White Screen
+
+### Issue
+User reports white screen when accessing the game via GitHub Pages. Browser console shows:
+```
+Failed to load resource: the server responded with a status of 404 ()
+main.tsx:1
+```
+
+This error indicates the browser is trying to load the SOURCE file `main.tsx` instead of the built JavaScript bundle, suggesting either:
+- Browser cache serving old files
+- Wrong `index.html` being served (source instead of built)
+- GitHub Pages deployment not completed after recent fixes
+
+### Investigation
+
+#### Local Build Verification ✅
+- Ran `npm run build:github` successfully
+- Verified `dist/index.html` contains correct paths:
+  - JavaScript: `/pogicity-builder/assets/index-CqUmVFpv.js` ✅
+  - CSS: `/pogicity-builder/assets/index-DxGn7gWI.css` ✅
+  - Favicon: `/pogicity-builder/favicon.ico` ✅
+- Confirmed `.nojekyll` file present in dist ✅
+- All asset paths use `/pogicity-builder/` base path ✅
+
+#### Git Status
+- Current branch: `claude/fix-game-startup-screen-MRfvD`
+- Branch is synchronized with `origin/main`
+- No uncommitted changes before adding debug page
+- Recent fixes on main:
+  - `dbc157c` - Vite config base path override fix
+  - `e527f5d` - .nojekyll and NotFound routing fix
+  - `ce5558e` - BrowserRouter basename fix
+
+### Solution: Diagnostic Page
+
+Created `/public/debug.html` to help diagnose deployment issues.
+
+**Features:**
+1. ✅ Confirms GitHub Pages is serving files
+2. 📍 Shows current URL and expected paths
+3. 🔧 Provides troubleshooting steps:
+   - Clear browser cache instructions
+   - Hard refresh commands (Ctrl+F5 / Cmd+Shift+R)
+   - Incognito mode suggestion
+   - DevTools debugging guidance
+4. 📋 Lists expected files in working deployment
+5. 🚨 Documents common issues:
+   - Browser cache with old files
+   - Wrong index.html (source vs built)
+   - Incomplete GitHub Actions deployment
+   - Base path mismatch
+6. 🔗 Links to GitHub Actions and repository
+7. 🖥️ Displays browser information
+8. 🌐 Tests connectivity to main page
+
+**Access:**
+- URL: `https://tombonator3000.github.io/pogicity-builder/debug.html`
+
+### Troubleshooting Steps for User
+
+1. **Visit debug page first:** 
+   - Go to `/pogicity-builder/debug.html`
+   - If this loads, GitHub Pages is working
+   - Check console messages and connectivity test
+
+2. **Clear browser cache:**
+   - Press `Ctrl+Shift+Delete` (or `Cmd+Shift+Delete` on Mac)
+   - Select "Cached images and files"
+   - Clear for "All time"
+   - Click "Clear data"
+
+3. **Hard refresh main page:**
+   - Navigate to `/pogicity-builder/`
+   - Press `Ctrl+F5` (Windows/Linux) or `Cmd+Shift+R` (Mac)
+   - This bypasses cache and forces fresh download
+
+4. **Try incognito/private mode:**
+   - Open new private/incognito window
+   - Navigate to game URL
+   - This ensures no cache interference
+
+5. **Verify DevTools console:**
+   - Open DevTools (F12)
+   - Check Console for errors
+   - Check Network tab to see which files load
+   - Look for 404 errors on asset files
+
+6. **Check GitHub Actions:**
+   - Visit repository Actions tab
+   - Verify "Deploy to GitHub Pages" workflow completed
+   - Check workflow ran after latest commit (342af36)
+   - Review logs if deployment failed
+
+### Expected Behavior After Fix
+
+When properly deployed, the browser should:
+- Load `/pogicity-builder/index.html` (built version)
+- Fetch `/pogicity-builder/assets/index-*.js` (bundled JavaScript)
+- Fetch `/pogicity-builder/assets/index-*.css` (bundled CSS)
+- Load assets from `/pogicity-builder/Building/`, `/pogicity-builder/Props/`, etc.
+- **NOT** try to load `/src/main.tsx` or any source files
+
+### Technical Details
+
+**Vite Configuration:**
+- Build command: `vite build --mode production --base=/pogicity-builder/`
+- Base path correctly set for GitHub Pages
+- Assets referenced with absolute paths including base
+
+**GitHub Actions Workflow:**
+- Triggers on push to `main` branch
+- Runs `npm run build:github`
+- Uploads `dist` folder as artifact
+- Deploys to GitHub Pages
+
+**BrowserRouter Configuration:**
+```tsx
+const basename = import.meta.env.BASE_URL; // "/pogicity-builder/"
+<BrowserRouter basename={basename}>
+```
+
+### Files Modified
+
+1. `public/debug.html` - NEW
+   - Diagnostic page with troubleshooting guide
+   - Connectivity tests
+   - Browser information display
+
+### Next Steps
+
+1. ✅ Commit debug page
+2. ⏳ Push to trigger GitHub Actions
+3. ⏳ Wait for deployment to complete
+4. ⏳ Test on actual GitHub Pages URL
+5. ⏳ If still white screen, check debug page
+6. ⏳ Review browser cache and DevTools
+
+### Prevention
+
+To avoid similar issues in future:
+- Always verify GitHub Actions completed successfully after merging
+- Test in incognito mode to rule out cache issues
+- Use debug page to quickly diagnose deployment problems
+- Document base path requirements for team members
+
+---
+
+*Log format: Date > Section > Changes*

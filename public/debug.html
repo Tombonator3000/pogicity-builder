@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Info - Pogicity Builder</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 { color: #00ff00; }
+        .info { margin: 10px 0; padding: 10px; background: #2a2a2a; border-left: 3px solid #00ff00; }
+        .error { border-left-color: #ff0000; color: #ff6b6b; }
+        .success { border-left-color: #00ff00; }
+        code { background: #000; padding: 2px 5px; border-radius: 3px; }
+        a { color: #4a9eff; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Pogicity Builder - Debug Information</h1>
+
+    <div class="info success">
+        <strong>✅ This page loaded successfully!</strong>
+        <p>This means GitHub Pages is working and serving files from the correct location.</p>
+    </div>
+
+    <div class="info">
+        <strong>📍 Current URL:</strong>
+        <p><code id="currentUrl"></code></p>
+    </div>
+
+    <div class="info">
+        <strong>🌐 Expected paths:</strong>
+        <ul>
+            <li>Base path: <code>/pogicity-builder/</code></li>
+            <li>Main game: <a href="/pogicity-builder/">/pogicity-builder/</a></li>
+            <li>This debug page: <a href="/pogicity-builder/debug.html">/pogicity-builder/debug.html</a></li>
+        </ul>
+    </div>
+
+    <div class="info">
+        <strong>🔧 Troubleshooting steps:</strong>
+        <ol>
+            <li><strong>Clear browser cache:</strong> Press Ctrl+Shift+Delete (or Cmd+Shift+Delete on Mac) and clear cached images and files</li>
+            <li><strong>Hard refresh:</strong> Press Ctrl+F5 (or Cmd+Shift+R on Mac) on the main game page</li>
+            <li><strong>Try incognito/private mode:</strong> Open the game in a private browsing window</li>
+            <li><strong>Check deployment:</strong> Verify that the latest GitHub Actions workflow completed successfully</li>
+        </ol>
+    </div>
+
+    <div class="info">
+        <strong>❓ If you see a white screen:</strong>
+        <ul>
+            <li>Open browser DevTools (F12)</li>
+            <li>Go to Console tab</li>
+            <li>Look for errors related to:
+                <ul>
+                    <li>404 errors (missing files)</li>
+                    <li>CORS errors (cross-origin issues)</li>
+                    <li>JavaScript errors</li>
+                </ul>
+            </li>
+            <li>Go to Network tab</li>
+            <li>Refresh the page</li>
+            <li>Check which files are being loaded and if any fail</li>
+        </ul>
+    </div>
+
+    <div class="info">
+        <strong>📋 Expected files in a working deployment:</strong>
+        <ul>
+            <li><code>/pogicity-builder/index.html</code> - Should reference built JS/CSS files, NOT <code>/src/main.tsx</code></li>
+            <li><code>/pogicity-builder/assets/*.js</code> - Compiled JavaScript bundles</li>
+            <li><code>/pogicity-builder/assets/*.css</code> - Compiled CSS files</li>
+            <li><code>/pogicity-builder/.nojekyll</code> - Prevents Jekyll processing</li>
+            <li><code>/pogicity-builder/favicon.ico</code></li>
+        </ul>
+    </div>
+
+    <div class="info error">
+        <strong>🚨 Common issues:</strong>
+        <ul>
+            <li><strong>Browser cache:</strong> Old files cached - solution: clear cache + hard refresh</li>
+            <li><strong>Wrong index.html:</strong> If console shows "main.tsx:1 404", the source index.html is being served instead of built version</li>
+            <li><strong>Deployment not complete:</strong> GitHub Actions may still be running or failed</li>
+            <li><strong>Base path mismatch:</strong> App built with wrong base path - should be <code>/pogicity-builder/</code></li>
+        </ul>
+    </div>
+
+    <div class="info">
+        <strong>🔗 Useful links:</strong>
+        <ul>
+            <li><a href="https://github.com/Tombonator3000/pogicity-builder/actions">GitHub Actions (check deployment status)</a></li>
+            <li><a href="https://github.com/Tombonator3000/pogicity-builder">Repository</a></li>
+            <li><a href="/pogicity-builder/">Back to game</a></li>
+        </ul>
+    </div>
+
+    <script>
+        document.getElementById('currentUrl').textContent = window.location.href;
+
+        // Check if we can reach the main page
+        fetch('/pogicity-builder/')
+            .then(response => {
+                const status = document.createElement('div');
+                status.className = 'info ' + (response.ok ? 'success' : 'error');
+                status.innerHTML = `
+                    <strong>${response.ok ? '✅' : '❌'} Main page HTTP status: ${response.status}</strong>
+                    <p>${response.ok ? 'The main page is reachable!' : 'The main page returned an error.'}</p>
+                `;
+                document.body.appendChild(status);
+            })
+            .catch(error => {
+                const status = document.createElement('div');
+                status.className = 'info error';
+                status.innerHTML = `
+                    <strong>❌ Failed to reach main page</strong>
+                    <p>Error: ${error.message}</p>
+                `;
+                document.body.appendChild(status);
+            });
+
+        // Display some browser info
+        const browserInfo = document.createElement('div');
+        browserInfo.className = 'info';
+        browserInfo.innerHTML = `
+            <strong>🖥️ Browser information:</strong>
+            <ul>
+                <li>User Agent: <code>${navigator.userAgent}</code></li>
+                <li>Language: <code>${navigator.language}</code></li>
+                <li>Online: <code>${navigator.onLine}</code></li>
+            </ul>
+        `;
+        document.body.appendChild(browserInfo);
+    </script>
+</body>
+</html>
