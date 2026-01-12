@@ -1,5 +1,250 @@
 # Development Log
 
+## 2026-01-12 (Session 18) - Phase 2: Feedback Systems - Overlays, Query Tool & Historical Data
+
+### Overview
+Implemented comprehensive feedback systems to give players visibility into city dynamics. This phase focuses on data visualization and information tools - critical for SimCity-like gameplay.
+
+### What Was Implemented
+
+#### 1. **Overlay System** (Data Maps & Heatmaps)
+**File:** `src/game/systems/OverlaySystem.ts`
+
+**11 Overlay Types:**
+- **Power**: Power coverage visualization (green = powered, red = no power)
+- **Water**: Water coverage visualization (blue = water, red = no water)
+- **Radiation**: Radiation level heatmap (wasteland theme)
+- **Crime**: Crime/threat level from raiders (green = safe, red = dangerous)
+- **Fire**: Fire hazard level (green = protected, red = high risk)
+- **Happiness**: Population happiness distribution
+- **Population**: Population density heatmap
+- **Land Value**: Land/salvage value (affects zone development)
+- **Zone Demand**: Shows which zones are needed (RCI visualization)
+- **Traffic**: Traffic congestion on roads (green = clear, red = congested)
+- **Employment**: Job availability (green = jobs available, red = unemployment)
+
+**Features:**
+- Radius-based service coverage calculations
+- Real-time heatmap visualization with color gradients
+- Isometric diamond overlay rendering
+- Issue detection system for buildings
+- Efficient circular buffer design
+- Proper depth sorting (above zones, below buildings)
+
+**Service Coverage:**
+- Power: 8 tile radius
+- Water: 6 tile radius
+- Security: 10 tile radius
+- Fire: 8 tile radius
+- Medical: 7 tile radius
+- Radiation: 5 tile radius (negative effect)
+
+**Color System:**
+- "Good" overlays (power, water, happiness): Red → Yellow → Green (0-100)
+- "Bad" overlays (radiation, crime, fire): Green → Yellow → Red (0-100)
+- Alpha: 0.4 for clear visibility
+- Update interval: 2 seconds (performance optimized)
+
+#### 2. **Query Tool** (Cell Inspection)
+**File:** `src/game/systems/InputSystem.ts`
+
+**Features:**
+- Click-to-inspect any tile on the map
+- Shows comprehensive information about buildings and zones
+- Displays all overlay data for the cell
+- Lists issues (no power, high radiation, understaffed, etc.)
+- Cyan preview cursor (0x00bcd4)
+- onQueryCell event for React integration
+
+**Query Results Include:**
+- Tile type and coordinates
+- Building info: name, category, production, consumption
+- Worker assignment: assigned vs required
+- Zone info: type, density, development level
+- Overlay data: all 11 overlay values
+- Status: "Operating normally" or list of issues
+
+#### 3. **Historical Data System** (Graphs & Charts)
+**File:** `src/game/systems/HistorySystem.ts`
+
+**Features:**
+- Automatic data sampling every 10 seconds
+- Tracks all key metrics over time
+- Circular buffer with 1000 data point capacity (~2.7 hours)
+- Time range queries: 1h, 6h, 24h, 7d, all
+- Statistical analysis: min, max, average, current
+- Chart-ready export format for React/Recharts
+- Memory-efficient data management
+
+**Data Tracked:**
+- Population count over time
+- Happiness levels
+- All resources: scrap, food, water, power, medicine, caps
+- Zone demand (RCI bars) fluctuations
+- Ready for future budget tracking (income/expenses)
+
+**API Methods:**
+- `recordDataPoint()`: Called every 10 seconds from MainScene
+- `getTimeRangeData()`: Get data for specific time ranges
+- `exportForCharts()`: Format data for charting libraries
+- `getMetricStats()`: Statistical analysis for trends
+- `getResourceStats()`: Per-resource statistics
+
+#### 4. **Type Definitions** (`src/game/types.ts`)
+Added comprehensive types for feedback systems:
+- `OverlayType` enum: All 11 overlay types
+- `OverlayData` interface: Per-cell overlay values
+- `QueryResult` interface: Query tool results
+- `HistoricalDataPoint` interface: Time-series data
+- `ToolType.Query`: Query tool type
+
+#### 5. **RenderSystem Integration** (`src/game/systems/RenderSystem.ts`)
+Added overlay rendering capabilities:
+- `renderDataOverlay()`: Heatmap visualization
+- `setOverlaySystem()`: System reference
+- Isometric diamond rendering for overlays
+- Efficient graphics object reuse
+- Proper cleanup in destroy()
+
+#### 6. **MainScene Integration** (`src/game/MainScene.ts`)
+Full integration of feedback systems:
+- `updateOverlaySystem()`: Updates overlay data when active
+- `recordHistoricalData()`: Samples data every 10s
+- `setOverlay()`: API for UI control
+- `queryCell()`: Returns detailed cell information
+- `getBuildingStatus()`: Checks for issues
+- `getHistorySystem()`: Access to historical data
+- `getHistoricalData()`: Time range data export
+
+### Technical Details
+
+**Performance Optimizations:**
+- Overlay update interval: 2 seconds (not every frame)
+- History sampling: 10 seconds (low overhead)
+- Graphics object reuse: No memory leaks
+- Circular buffer: Automatic old data purging
+- Conditional rendering: Only active overlays rendered
+
+**Memory Management:**
+- Max 1000 historical data points
+- Automatic FIFO purging when full
+- Efficient data structures
+- No render cost for inactive overlays
+
+**Integration Points:**
+- OverlaySystem ↔ RenderSystem: Visual rendering
+- OverlaySystem ↔ MainScene: Data calculations
+- HistorySystem ↔ MainScene: Periodic sampling
+- InputSystem ↔ MainScene: Query events
+
+### What Still Needs Work
+
+**React UI Components (Phase 2 UI):**
+1. **Overlay Controls:**
+   - Toolbar with overlay toggle buttons
+   - Active overlay indicator
+   - Keyboard shortcuts (optional)
+
+2. **Query Info Panel:**
+   - Display QueryResult data
+   - Building details: production, workers, status
+   - Zone details: type, density, development
+   - Overlay data visualization
+   - Issue warnings (red text)
+
+3. **Graph/Chart UI:**
+   - Time range selector (1h, 6h, 24h, 7d, all)
+   - Multiple chart types: line, area, bar
+   - Metric selector (population, happiness, resources)
+   - Recharts integration
+   - Legend and tooltips
+
+### Code Quality
+
+**Type Safety:**
+- ✅ Full TypeScript typing
+- ✅ No `any` types
+- ✅ Proper interface definitions
+- ✅ Enum-based overlay types
+
+**Architecture:**
+- ✅ Modular system design
+- ✅ Clear separation of concerns
+- ✅ Efficient data structures
+- ✅ Proper cleanup in destroy()
+
+**Testing:**
+- ✅ TypeScript compilation passes
+- ✅ No runtime errors
+- ⏳ UI testing needed (React components)
+
+### Progress Summary
+
+**Phase 2: Feedback Systems - Status:**
+- ✅ Data Maps & Overlays (8-10h) - **COMPLETE**
+- ✅ Query Tool (4-6h) - **COMPLETE**
+- ✅ Historical Data System (6-8h) - **COMPLETE**
+- ⏳ React UI Components - **TODO** (separate session)
+
+**Commits:**
+1. `6250792` - feat: Implement Phase 2.1 - Data Maps & Overlay System
+2. `66ab708` - feat: Implement Phase 2.2 - Query Tool & Historical Data System
+
+**Files Changed:**
+- `src/game/types.ts` - Added overlay, query, and history types
+- `src/game/systems/OverlaySystem.ts` - NEW (600+ lines)
+- `src/game/systems/HistorySystem.ts` - NEW (250+ lines)
+- `src/game/systems/RenderSystem.ts` - Added overlay rendering
+- `src/game/systems/InputSystem.ts` - Added query tool support
+- `src/game/systems/index.ts` - Exported new systems
+- `src/game/MainScene.ts` - Integrated all feedback systems
+
+**Total Implementation:**
+- ~1200 lines of new code
+- 11 overlay types with full calculations
+- Complete historical data tracking
+- Query tool with issue detection
+- Full SimCity-style feedback system
+
+### Next Steps
+
+**Immediate (React UI):**
+1. Create OverlayControl component (toolbar)
+2. Create QueryPanel component (info display)
+3. Create GraphPanel component (charts with Recharts)
+4. Wire up MainScene APIs to React state
+5. Add keyboard shortcuts (1-9 for overlays, Q for query)
+
+**Future Enhancements:**
+- Budget system integration (income/expenses tracking)
+- Notification system (alerts when issues detected)
+- Mini-map with overlay visualization
+- Advanced filtering (show only high-priority issues)
+- Export historical data to CSV/JSON
+
+### Notes
+
+**Wasteland Theme Integration:**
+- Radiation overlay replaces pollution (classic SimCity)
+- Crime represents raider threats
+- Land value = salvage value
+- Happiness reflects post-apocalyptic survival
+
+**Performance:**
+- 10s sampling = minimal CPU usage
+- 2s overlay updates = smooth visualization
+- Circular buffer = no memory leaks
+- Efficient calculations = scales to large cities
+
+**Comparison to SimCity:**
+- ✅ Data maps (power, water, etc.) - IMPLEMENTED
+- ✅ Query tool (?) - IMPLEMENTED
+- ✅ Historical graphs - IMPLEMENTED
+- ⏳ Budget window - TODO (Phase 3)
+- ⏳ Advisors/notifications - TODO (Future)
+
+---
+
 ## 2026-01-12 (Session 17) - Phase 1: Core Systems - Zoning System Implementation
 
 ### Overview
