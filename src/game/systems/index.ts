@@ -11,3 +11,4 @@ export * from './InputSystem';
 export * from './ResourceSystem';
 export * from './ZoningSystem';
 export * from './OverlaySystem';
+export * from './HistorySystem';

@@ -14,6 +14,7 @@ export interface SceneEvents {
   onTileHover: (x: number | null, y: number | null) => void;
   onTilesDrag?: (tiles: Array<{ x: number; y: number }>) => void;
   onRoadDrag?: (segments: Array<{ x: number; y: number }>) => void;
+  onQueryCell?: (x: number, y: number) => void;
 }
 
 /**
@@ -154,6 +155,12 @@ export class InputSystem implements GameSystem {
     if (this.selectedTool === ToolType.None) return;
 
     if (this.hoverTile) {
+      // Query tool - special handling
+      if (this.selectedTool === ToolType.Query) {
+        this.events.onQueryCell?.(this.hoverTile.x, this.hoverTile.y);
+        return;
+      }
+
       if (this.shouldPaintOnDrag() || this.selectedTool === ToolType.RoadNetwork) {
         this.isDragging = true;
         this.dragTiles.clear();
@@ -266,6 +273,8 @@ export class InputSystem implements GameSystem {
         return COLOR_PALETTE.preview.wasteland;
       case ToolType.Rubble:
         return COLOR_PALETTE.preview.rubble;
+      case ToolType.Query:
+        return 0x00bcd4; // Cyan color for query tool
       default:
         return COLOR_PALETTE.preview.default;
     }

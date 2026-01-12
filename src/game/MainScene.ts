@@ -13,6 +13,7 @@ import {
   SceneEvents,
   ZoningSystem,
   OverlaySystem,
+  HistorySystem,
 } from './systems';
 import { PopulationSystem } from './systems/PopulationSystem';
 import { EventSystem } from './systems/EventSystem';
@@ -46,6 +47,7 @@ export class MainScene extends Phaser.Scene {
   private workerSystem!: WorkerSystem;
   private zoningSystem!: ZoningSystem;
   private overlaySystem!: OverlaySystem;
+  private historySystem!: HistorySystem;
 
   constructor() {
     super({ key: 'MainScene' });
@@ -115,6 +117,7 @@ export class MainScene extends Phaser.Scene {
     this.eventSystem.update(delta);
     this.zoningSystem.update(_time, delta);
     this.overlaySystem.update(delta);
+    this.historySystem.update(delta);
 
     // Update resources with population consumption
     this.updateResourcesWithPopulation(delta);
@@ -124,6 +127,9 @@ export class MainScene extends Phaser.Scene {
 
     // Update overlay system with current game state
     this.updateOverlaySystem();
+
+    // Record historical data
+    this.recordHistoricalData(_time);
 
     // Render entities
     this.renderSystem.renderCharacters(this.characterSystem.getCharacters());
@@ -220,6 +226,24 @@ export class MainScene extends Phaser.Scene {
     this.renderSystem.renderGrid();
   }
 
+  /**
+   * Records historical data for graphs
+   */
+  private recordHistoricalData(gameTime: number): void {
+    const resources = this.resourceSystem.getResources();
+    const popState = this.populationSystem.getState();
+    const zoneDemand = this.zoningSystem.getZoneDemand();
+
+    this.historySystem.recordDataPoint(
+      gameTime / 1000, // Convert to seconds
+      popState.current,
+      popState.happiness,
+      resources,
+      zoneDemand
+      // TODO: Add income/expenses when budget system is implemented
+    );
+  }
+
   // ============================================
   // INITIALIZATION
   // ============================================
@@ -269,6 +293,7 @@ export class MainScene extends Phaser.Scene {
     this.eventSystem = this.initializeSystem(new EventSystem(), false);
     this.zoningSystem = this.initializeSystem(new ZoningSystem(), false);
     this.overlaySystem = this.initializeSystem(new OverlaySystem(), false);
+    this.historySystem = this.initializeSystem(new HistorySystem(), false);
 
     // Register all buildings with systems
     for (const building of Object.values(BUILDINGS)) {
@@ -481,6 +506,25 @@ export class MainScene extends Phaser.Scene {
     }
 
     return issues.length > 0 ? issues.join(', ') : 'Operating normally';
+  }
+
+  // ============================================
+  // HISTORY & GRAPHS API
+  // ============================================
+
+  /**
+   * Get history system for graph data
+   */
+  getHistorySystem(): HistorySystem {
+    return this.historySystem;
+  }
+
+  /**
+   * Get historical data for a time range
+   */
+  getHistoricalData(range: '1h' | '6h' | '24h' | '7d' | 'all'): any[] {
+    const gameTime = this.time.now;
+    return this.historySystem.exportForCharts(range, gameTime / 1000);
   }
 
   getCharacterCount(): number {
