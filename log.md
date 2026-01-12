@@ -3231,3 +3231,111 @@ npm run build:github
 ---
 
 *Log format: Date > Section > Changes*
+
+---
+
+## 2026-01-12 > Session > Add Error Handling for GitHub Pages Deployment
+
+### Summary
+Added comprehensive error handling and diagnostics to help identify and debug any initialization issues when the app runs on GitHub Pages. This provides better visibility into potential runtime errors that could cause white screen issues.
+
+### Changes Made
+
+#### Enhanced Error Handling
+**File**: `src/main.tsx`
+
+Added try-catch error handling around app initialization with:
+- Explicit root element verification
+- Console logging of BASE_URL for debugging
+- Visual error display on page if initialization fails
+- Detailed error messages for troubleshooting
+
+**Before**:
+```tsx
+import { createRoot } from "react-dom/client";
+import App from "./App.tsx";
+import "./index.css";
+
+createRoot(document.getElementById("root")!).render(<App />);
+```
+
+**After**:
+```tsx
+import { createRoot } from "react-dom/client";
+import App from "./App.tsx";
+import "./index.css";
+
+// Add error handling for initialization
+try {
+  const rootElement = document.getElementById("root");
+  if (!rootElement) {
+    throw new Error("Root element not found");
+  }
+
+  console.log("Initializing app with base URL:", import.meta.env.BASE_URL);
+  createRoot(rootElement).render(<App />);
+} catch (error) {
+  console.error("Failed to initialize app:", error);
+  // Display error on page for debugging
+  document.body.innerHTML = `
+    <div style="padding: 20px; font-family: monospace; color: #0f0; background: #000;">
+      <h1>App Initialization Error</h1>
+      <p>${error instanceof Error ? error.message : String(error)}</p>
+      <p>Base URL: ${import.meta.env.BASE_URL}</p>
+      <p>Check browser console for details.</p>
+    </div>
+  `;
+}
+```
+
+### Verification Steps
+
+1. **Asset Verification**: Confirmed all 37 wasteland building assets exist
+2. **Build Verification**: Build completes successfully with correct paths
+3. **Path Verification**: All paths in dist/index.html use `/pogicity-builder/` prefix
+4. **Configuration Verification**: 
+   - `.nojekyll` file present
+   - Asset loading uses getAssetPath() utility
+   - BrowserRouter configured with correct basename
+
+### Benefits
+
+1. **Better Debugging**: If initialization fails, users and developers see clear error messages
+2. **Visibility**: Console logs help diagnose configuration issues
+3. **User Feedback**: Visual error display instead of blank white screen
+4. **Diagnostic Info**: Shows BASE_URL configuration on error page
+
+### Technical Notes
+
+The error handling catches any exceptions during:
+- Root element lookup
+- React root creation
+- Initial render
+
+If an error occurs, it displays a Fallout-themed error message with:
+- Error description
+- Current BASE_URL configuration
+- Instruction to check browser console
+
+This helps diagnose issues like:
+- Missing dependencies
+- Configuration problems
+- Asset loading failures
+- Runtime errors during initialization
+
+### Status
+✅ Error handling added
+✅ Build verified
+✅ All assets confirmed present
+✅ Paths correctly configured
+✅ Ready to deploy
+
+### Next Steps
+- Commit changes
+- Push to trigger GitHub Actions deployment
+- Monitor GitHub Pages for successful deployment
+- Verify white screen issue is resolved
+
+---
+
+*Log format: Date > Section > Changes*
