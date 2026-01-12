@@ -5,11 +5,9 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  // Configure base path for GitHub Pages deployment
-  // For Lovable: base = '/'
-  // For GitHub Pages: base = '/pogicity-builder/'
-  // Use VITE_BASE_PATH env variable or default to '/'
-  base: process.env.VITE_BASE_PATH || '/',
+  // Base path defaults to '/' for development
+  // For GitHub Pages deployment, pass --base flag via CLI
+  // Example: vite build --base=/pogicity-builder/
 
   server: {
     host: "::",

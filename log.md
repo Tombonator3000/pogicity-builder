@@ -1,5 +1,141 @@
 # Development Log
 
+## 2026-01-12 (Session 16) - Fix Vite Config Base Path Issue
+
+### Problem
+Game still showing white screen on GitHub Pages despite previous fixes. Browser console showed:
+```
+GET https://tombonator3000.github.io/src/main.tsx net::ERR_ABORTED 404 (Not Found)
+```
+
+This indicated that the **source** `index.html` was being deployed instead of the **built** version from `dist/`.
+
+### Root Cause Analysis
+
+**The Issue:**
+The Vite configuration in `vite.config.ts` was overriding the CLI `--base` flag:
+
+```typescript
+// BEFORE (broken):
+export default defineConfig(({ mode }) => ({
+  base: process.env.VITE_BASE_PATH || '/',  // This overrides CLI --base flag!
+  // ...
+}));
+```
+
+**Why it failed:**
+1. Package.json had: `"build:github": "vite build --mode production --base=/pogicity-builder/"`
+2. But vite.config.ts was checking `process.env.VITE_BASE_PATH` which was **not set**
+3. So it defaulted to `'/'` instead of using the CLI flag `/pogicity-builder/`
+4. This caused Vite to build with wrong base path
+5. Result: Built HTML referenced `/src/main.tsx` instead of `/pogicity-builder/assets/index-[hash].js`
+
+**Technical Details:**
+- When `base` is explicitly set in config, Vite ignores the CLI `--base` flag
+- The environment variable `VITE_BASE_PATH` was never set in the GitHub Actions workflow
+- Local builds appeared to work because paths still resolved relatively in some contexts
+- But absolute paths (like script src) failed on GitHub Pages
+
+### Solution
+
+**1. Fixed vite.config.ts:**
+Removed the `base` override to allow CLI flag to work:
+
+```typescript
+// AFTER (fixed):
+export default defineConfig(({ mode }) => ({
+  // Base path defaults to '/' for development
+  // For GitHub Pages deployment, pass --base flag via CLI
+  // Example: vite build --base=/pogicity-builder/
+
+  // No base property - let CLI flag work!
+  server: { /* ... */ },
+  // ...
+}));
+```
+
+**2. Fixed CSS import order:**
+Moved `@import` statement before `@tailwind` directives in `src/index.css`:
+
+```css
+/* BEFORE (warning): */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@import url('...');  /* ❌ @import must come first */
+
+/* AFTER (fixed): */
+@import url('...');  /* ✅ @import first */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+```
+
+### Verification
+
+**Build test:**
+```bash
+npm run build:github
+```
+
+**Results:**
+```html
+<!-- ✅ Correct output in dist/index.html: -->
+<script type="module" crossorigin src="/pogicity-builder/assets/index-[hash].js"></script>
+<link rel="stylesheet" crossorigin href="/pogicity-builder/assets/index-[hash].css">
+```
+
+**Before fix:**
+- Script tag: `<script type="module" src="/src/main.tsx"></script>` ❌
+- Paths missing `/pogicity-builder/` prefix ❌
+
+**After fix:**
+- Script tag: `<script type="module" src="/pogicity-builder/assets/index-[hash].js"></script>` ✅
+- All paths correctly prefixed with `/pogicity-builder/` ✅
+
+### Files Modified
+- `vite.config.ts` - Removed `base` config override to allow CLI flag to work
+- `src/index.css` - Fixed `@import` placement to remove build warning
+
+### Key Learnings
+
+1. **Vite CLI flag precedence:** When `base` is set in config, CLI `--base` flag is ignored
+2. **Environment variables:** Using `process.env.VITE_BASE_PATH` requires the variable to actually be set
+3. **CSS import rules:** `@import` must come before all other CSS rules except `@charset`
+4. **GitHub Pages debugging:** Check browser console network tab to see actual requested URLs
+5. **Source vs built files:** Verify that `dist/` contents match expected output, not just that build succeeds
+
+### How This Works Now
+
+**Development (Lovable):**
+```bash
+npm run dev
+# Uses default base: '/'
+# Loads from: http://localhost:8080/
+```
+
+**Build for Lovable:**
+```bash
+npm run build:lovable
+# Uses default base: '/'
+# Deploys to: https://your-app.lovable.app/
+```
+
+**Build for GitHub Pages:**
+```bash
+npm run build:github
+# CLI flag: --base=/pogicity-builder/
+# Deploys to: https://tombonator3000.github.io/pogicity-builder/
+```
+
+### Status
+✅ Vite configuration fixed - CLI flag now works correctly
+✅ Build verified locally - all paths correct
+✅ CSS warning eliminated
+⏳ Ready for commit and GitHub deployment
+
+---
+
 ## 2026-01-12 (Session 15) - Fix GitHub Pages White Screen
 
 ### Problem
