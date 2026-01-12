@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GridCell, TileType, ToolType, Direction, Resources } from './types';
+import { GridCell, TileType, ToolType, Direction, Resources, OverlayType, QueryResult } from './types';
 import { GRID_CONFIG } from './config';
 import { BUILDINGS } from './buildings';
 import { getAssetPath } from './utils/AssetPathUtils';
@@ -12,6 +12,7 @@ import {
   ResourceSystem,
   SceneEvents,
   ZoningSystem,
+  OverlaySystem,
 } from './systems';
 import { PopulationSystem } from './systems/PopulationSystem';
 import { EventSystem } from './systems/EventSystem';
@@ -44,6 +45,7 @@ export class MainScene extends Phaser.Scene {
   private eventSystem!: EventSystem;
   private workerSystem!: WorkerSystem;
   private zoningSystem!: ZoningSystem;
+  private overlaySystem!: OverlaySystem;
 
   constructor() {
     super({ key: 'MainScene' });
@@ -112,12 +114,16 @@ export class MainScene extends Phaser.Scene {
     this.populationSystem.update(delta);
     this.eventSystem.update(delta);
     this.zoningSystem.update(_time, delta);
+    this.overlaySystem.update(delta);
 
     // Update resources with population consumption
     this.updateResourcesWithPopulation(delta);
 
     // Update zoning system with current game state
     this.updateZoningSystem(_time);
+
+    // Update overlay system with current game state
+    this.updateOverlaySystem();
 
     // Render entities
     this.renderSystem.renderCharacters(this.characterSystem.getCharacters());
@@ -195,6 +201,25 @@ export class MainScene extends Phaser.Scene {
     }
   }
 
+  /**
+   * Updates the overlay system with current game state
+   */
+  private updateOverlaySystem(): void {
+    const activeOverlay = this.overlaySystem.getActiveOverlay();
+    if (activeOverlay === OverlayType.None) {
+      return;
+    }
+
+    const resources = this.resourceSystem.getResources();
+    const zoneDemand = this.zoningSystem.getZoneDemand();
+
+    // Calculate overlay data for all cells
+    this.overlaySystem.calculateOverlayData(this.grid, resources, zoneDemand);
+
+    // Trigger re-render with overlay
+    this.renderSystem.renderGrid();
+  }
+
   // ============================================
   // INITIALIZATION
   // ============================================
@@ -243,6 +268,7 @@ export class MainScene extends Phaser.Scene {
     this.workerSystem = this.initializeSystem(new WorkerSystem());
     this.eventSystem = this.initializeSystem(new EventSystem(), false);
     this.zoningSystem = this.initializeSystem(new ZoningSystem(), false);
+    this.overlaySystem = this.initializeSystem(new OverlaySystem(), false);
 
     // Register all buildings with systems
     for (const building of Object.values(BUILDINGS)) {
@@ -253,6 +279,9 @@ export class MainScene extends Phaser.Scene {
 
     // Connect worker system to resource system
     this.resourceSystem.setWorkerSystem(this.workerSystem);
+
+    // Connect overlay system to render system
+    this.renderSystem.setOverlaySystem(this.overlaySystem);
 
     // Set up event listeners
     this.setupEventListeners();
@@ -350,6 +379,108 @@ export class MainScene extends Phaser.Scene {
 
   getZoneStats() {
     return this.zoningSystem.getZoneStats();
+  }
+
+  // ============================================
+  // OVERLAY API
+  // ============================================
+
+  /**
+   * Set the active overlay type for data visualization
+   */
+  setOverlay(overlayType: OverlayType): void {
+    this.overlaySystem.setActiveOverlay(overlayType);
+    // Immediately update and render with new overlay
+    this.updateOverlaySystem();
+  }
+
+  /**
+   * Get the currently active overlay type
+   */
+  getActiveOverlay(): OverlayType {
+    return this.overlaySystem.getActiveOverlay();
+  }
+
+  /**
+   * Query information about a specific cell
+   */
+  queryCell(x: number, y: number): QueryResult | null {
+    if (x < 0 || x >= GRID_CONFIG.width || y < 0 || y >= GRID_CONFIG.height) {
+      return null;
+    }
+
+    const cell = this.grid[y][x];
+    const result: QueryResult = {
+      x,
+      y,
+      tileType: cell.type,
+      overlayData: cell.overlayData,
+      issues: this.overlaySystem.getIssues(cell),
+    };
+
+    // Add building info if present
+    if (cell.buildingId && cell.isOrigin) {
+      const building = BUILDINGS[cell.buildingId];
+      if (building) {
+        const workerAssignment = this.workerSystem.getWorkerAssignments().find(
+          w => w.x === x && w.y === y
+        );
+
+        result.building = {
+          id: building.id,
+          name: building.name,
+          category: building.category,
+          produces: building.produces,
+          consumes: building.consumes,
+          workersAssigned: workerAssignment?.workersAssigned || 0,
+          workersRequired: building.workersRequired || 0,
+          status: this.getBuildingStatus(cell, workerAssignment),
+        };
+      }
+    }
+
+    // Add zone info if present
+    if (cell.zoneType) {
+      result.zone = {
+        type: cell.zoneType,
+        density: cell.zoneDensity || 'low' as any,
+        developmentLevel: cell.zoneDevelopmentLevel || 0,
+      };
+    }
+
+    return result;
+  }
+
+  /**
+   * Get building status string for query results
+   */
+  private getBuildingStatus(cell: GridCell, workerAssignment?: { workersAssigned: number; workersRequired: number }): string {
+    const issues: string[] = [];
+
+    // Check worker staffing
+    if (workerAssignment && workerAssignment.workersRequired > 0) {
+      const efficiency = (workerAssignment.workersAssigned / workerAssignment.workersRequired) * 100;
+      if (efficiency < 50) {
+        issues.push('Severely understaffed');
+      } else if (efficiency < 100) {
+        issues.push('Understaffed');
+      }
+    }
+
+    // Check overlay issues
+    if (cell.overlayData) {
+      if (cell.overlayData.power !== undefined && cell.overlayData.power < 50) {
+        issues.push('No power');
+      }
+      if (cell.overlayData.water !== undefined && cell.overlayData.water < 50) {
+        issues.push('No water');
+      }
+      if (cell.overlayData.radiation !== undefined && cell.overlayData.radiation > 50) {
+        issues.push('High radiation');
+      }
+    }
+
+    return issues.length > 0 ? issues.join(', ') : 'Operating normally';
   }
 
   getCharacterCount(): number {

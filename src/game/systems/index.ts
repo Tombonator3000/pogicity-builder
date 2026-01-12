@@ -10,3 +10,4 @@ export * from './RenderSystem';
 export * from './InputSystem';
 export * from './ResourceSystem';
 export * from './ZoningSystem';
+export * from './OverlaySystem';
