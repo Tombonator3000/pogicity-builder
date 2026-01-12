@@ -11,6 +11,7 @@ import {
   InputSystem,
   ResourceSystem,
   SceneEvents,
+  ZoningSystem,
 } from './systems';
 import { PopulationSystem } from './systems/PopulationSystem';
 import { EventSystem } from './systems/EventSystem';
@@ -42,6 +43,7 @@ export class MainScene extends Phaser.Scene {
   private populationSystem!: PopulationSystem;
   private eventSystem!: EventSystem;
   private workerSystem!: WorkerSystem;
+  private zoningSystem!: ZoningSystem;
 
   constructor() {
     super({ key: 'MainScene' });
@@ -109,9 +111,13 @@ export class MainScene extends Phaser.Scene {
     this.cameraSystem.update(delta);
     this.populationSystem.update(delta);
     this.eventSystem.update(delta);
-    
+    this.zoningSystem.update(_time, delta);
+
     // Update resources with population consumption
     this.updateResourcesWithPopulation(delta);
+
+    // Update zoning system with current game state
+    this.updateZoningSystem(_time);
 
     // Render entities
     this.renderSystem.renderCharacters(this.characterSystem.getCharacters());
@@ -123,22 +129,22 @@ export class MainScene extends Phaser.Scene {
    */
   private updateResourcesWithPopulation(delta: number): void {
     const resources = this.resourceSystem.getResources();
-    
+
     // Get population consumption
     const consumption = this.populationSystem.getPopulationConsumption();
-    
+
     // Get event rate modifiers
     const eventMods = this.eventSystem.getActiveRateModifiers();
-    
+
     // Apply population consumption as additional consumption
     // This is handled in the resource system update with modified rates
-    
+
     // Update happiness based on resource availability
     this.populationSystem.updateHappiness(resources, delta / 1000);
-    
+
     // Check for population death
     this.populationSystem.checkPopulationDeath();
-    
+
     // Sync population to resources and worker system
     const popState = this.populationSystem.getState();
     const currentResources = this.resourceSystem.getResources();
@@ -146,13 +152,47 @@ export class MainScene extends Phaser.Scene {
     currentResources.maxPopulation = popState.max;
     currentResources.happiness = popState.happiness;
     this.resourceSystem.setResources(currentResources);
-    
+
     // Update worker system with current population (workers = population)
     this.workerSystem.setTotalWorkers(popState.current);
     this.workerSystem.update(delta);
-    
+
     // Normal resource update (now uses worker efficiency)
     this.resourceSystem.update(delta);
+  }
+
+  /**
+   * Updates the zoning system with current game state
+   */
+  private updateZoningSystem(time: number): void {
+    const resources = this.resourceSystem.getResources();
+    const popState = this.populationSystem.getState();
+
+    // Calculate zone demand periodically
+    const demand = this.zoningSystem.calculateZoneDemand(
+      this.grid,
+      popState.current,
+      popState.max,
+      resources
+    );
+
+    // Check for automatic building growth in zones
+    const growthLocations = this.zoningSystem.checkForGrowth(
+      this.grid,
+      demand,
+      Object.values(BUILDINGS)
+    );
+
+    // Place buildings in zones that are ready for development
+    for (const location of growthLocations) {
+      if (location.building) {
+        // TODO: Implement automatic building placement
+        // For now, just mark the zone as developed
+        console.log(
+          `[ZONING] Zone at (${location.x}, ${location.y}) ready for ${location.zoneType} development`
+        );
+      }
+    }
   }
 
   // ============================================
@@ -202,6 +242,7 @@ export class MainScene extends Phaser.Scene {
     this.populationSystem = this.initializeSystem(new PopulationSystem());
     this.workerSystem = this.initializeSystem(new WorkerSystem());
     this.eventSystem = this.initializeSystem(new EventSystem(), false);
+    this.zoningSystem = this.initializeSystem(new ZoningSystem(), false);
 
     // Register all buildings with systems
     for (const building of Object.values(BUILDINGS)) {
@@ -297,6 +338,18 @@ export class MainScene extends Phaser.Scene {
 
   spawnCar(): void {
     this.vehicleSystem.spawnCar();
+  }
+
+  // ============================================
+  // ZONING API
+  // ============================================
+
+  getZoneDemand() {
+    return this.zoningSystem.getZoneDemand();
+  }
+
+  getZoneStats() {
+    return this.zoningSystem.getZoneStats();
   }
 
   getCharacterCount(): number {

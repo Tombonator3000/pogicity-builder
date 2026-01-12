@@ -9,3 +9,4 @@ export * from './CameraSystem';
 export * from './RenderSystem';
 export * from './InputSystem';
 export * from './ResourceSystem';
+export * from './ZoningSystem';

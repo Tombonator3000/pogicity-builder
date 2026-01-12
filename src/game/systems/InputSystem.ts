@@ -206,6 +206,11 @@ export class InputSystem implements GameSystem {
       ToolType.Eraser,
       ToolType.Wasteland,
       ToolType.Rubble,
+      // Zoning tools support drag painting
+      ToolType.ZoneResidential,
+      ToolType.ZoneCommercial,
+      ToolType.ZoneIndustrial,
+      ToolType.Dezone,
     ].includes(this.selectedTool);
   }
 
@@ -248,6 +253,15 @@ export class InputSystem implements GameSystem {
         return COLOR_PALETTE.preview.building;
       case ToolType.Eraser:
         return COLOR_PALETTE.preview.eraser;
+      // Zoning tools
+      case ToolType.ZoneResidential:
+        return COLOR_PALETTE.preview.zoneResidential;
+      case ToolType.ZoneCommercial:
+        return COLOR_PALETTE.preview.zoneCommercial;
+      case ToolType.ZoneIndustrial:
+        return COLOR_PALETTE.preview.zoneIndustrial;
+      case ToolType.Dezone:
+        return COLOR_PALETTE.preview.dezone;
       case ToolType.Wasteland:
         return COLOR_PALETTE.preview.wasteland;
       case ToolType.Rubble:

@@ -11,6 +11,29 @@ export enum TileType {
   Contaminated = "contaminated",
   Rubble = "rubble",
   DeadForest = "deadForest",
+  // Zone types (SimCity-style)
+  Zone = "zone",
+}
+
+/**
+ * Zone types for SimCity-style zoning system
+ * Residential = Housing (Shantytown settlements)
+ * Commercial = Trading posts (Market camps)
+ * Industrial = Production facilities (Scrap yards, factories)
+ */
+export enum ZoneType {
+  Residential = "residential",
+  Commercial = "commercial",
+  Industrial = "industrial",
+}
+
+/**
+ * Zone density levels - affects building size and capacity
+ */
+export enum ZoneDensity {
+  Low = "low",
+  Medium = "medium",
+  High = "high",
 }
 
 export enum ToolType {
@@ -24,6 +47,11 @@ export enum ToolType {
   // Post-apocalyptic tools
   Wasteland = "wasteland",
   Rubble = "rubble",
+  // Zoning tools
+  ZoneResidential = "zoneResidential",
+  ZoneCommercial = "zoneCommercial",
+  ZoneIndustrial = "zoneIndustrial",
+  Dezone = "dezone",
 }
 
 export interface GridCell {
@@ -36,6 +64,10 @@ export interface GridCell {
   buildingId?: string;
   buildingOrientation?: Direction;
   underlyingTileType?: TileType;
+  // Zoning data
+  zoneType?: ZoneType;
+  zoneDensity?: ZoneDensity;
+  zoneDevelopmentLevel?: number; // 0-100, affects automatic building growth
 }
 
 export enum Direction {
@@ -206,6 +238,29 @@ export interface PopulationState {
   waterDepletedAt?: number;
 }
 
+/**
+ * Zone demand tracking (RCI bars in SimCity)
+ * Values range from -100 (no demand) to +100 (high demand)
+ */
+export interface ZoneDemand {
+  residential: number; // Demand for housing
+  commercial: number; // Demand for shops/trading
+  industrial: number; // Demand for production facilities
+}
+
+/**
+ * Zone statistics for a specific zone type
+ */
+export interface ZoneStats {
+  zoneType: ZoneType;
+  totalZones: number; // Total zoned tiles
+  developedZones: number; // Zones with buildings
+  undevelopedZones: number; // Empty zones waiting for growth
+  totalPopulation?: number; // For residential zones
+  totalJobs?: number; // For commercial/industrial zones
+  averageDevelopmentLevel: number; // Average development progress (0-100)
+}
+
 export interface BuildingDefinition {
   id: string;
   name: string;
@@ -248,6 +303,13 @@ export interface GameState {
   workerAssignments?: WorkerAssignment[];
   eventHistory?: GameEvent[];
   gameTime?: number;
+  // Zoning system state
+  zoneDemand?: ZoneDemand;
+  zoneStats?: {
+    residential: ZoneStats;
+    commercial: ZoneStats;
+    industrial: ZoneStats;
+  };
 }
 
 // Isometric constants - matching original repo (44x22)

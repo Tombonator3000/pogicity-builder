@@ -148,6 +148,11 @@ export class RenderSystem implements GameSystem {
 
     sprite.setDepth(calculateDepth(x, y, RENDER_CONFIG.layers.tile));
 
+    // Render zone overlay if this is a zone tile
+    if (cell.type === TileType.Zone && cell.zoneType) {
+      this.renderZoneOverlay(x, y, cell);
+    }
+
     // Render building if this is the origin
     if (cell.type === TileType.Building && cell.isOrigin && cell.buildingId) {
       this.renderBuilding(x, y, cell);
@@ -173,6 +178,15 @@ export class RenderSystem implements GameSystem {
         return 'radiation';
       case TileType.Rubble:
         return 'rubble';
+      // Zone tiles render underlying terrain
+      case TileType.Zone:
+        if (cell.underlyingTileType) {
+          if (cell.underlyingTileType === TileType.Snow) {
+            return getSnowTextureKey(x, y);
+          }
+          return cell.underlyingTileType;
+        }
+        return 'grass';
       case TileType.Building:
         // For buildings, render underlying tile or grass
         if (cell.underlyingTileType) {
@@ -237,6 +251,61 @@ export class RenderSystem implements GameSystem {
       default:
         return COLOR_PALETTE.tiles.grass;
     }
+  }
+
+  // ============================================
+  // PRIVATE METHODS - ZONE RENDERING
+  // ============================================
+
+  /**
+   * Renders a semi-transparent zone overlay on top of a zoned tile
+   */
+  private renderZoneOverlay(x: number, y: number, cell: GridCell): void {
+    if (!cell.zoneType) return;
+
+    const screenPos = gridToScreen(x, y);
+    const graphics = this.scene.add.graphics();
+
+    // Define isometric tile diamond shape
+    const points = [
+      { x: screenPos.x, y: screenPos.y - GRID_CONFIG.tileHeight / 2 },
+      { x: screenPos.x + GRID_CONFIG.tileWidth / 2, y: screenPos.y },
+      { x: screenPos.x, y: screenPos.y + GRID_CONFIG.tileHeight / 2 },
+      { x: screenPos.x - GRID_CONFIG.tileWidth / 2, y: screenPos.y },
+    ];
+
+    // Get zone color based on type
+    let zoneColor: number;
+    switch (cell.zoneType) {
+      case 'residential':
+        zoneColor = COLOR_PALETTE.zones.residential;
+        break;
+      case 'commercial':
+        zoneColor = COLOR_PALETTE.zones.commercial;
+        break;
+      case 'industrial':
+        zoneColor = COLOR_PALETTE.zones.industrial;
+        break;
+      default:
+        zoneColor = 0xffffff;
+    }
+
+    // Draw semi-transparent colored overlay
+    graphics.fillStyle(zoneColor, 0.25);
+    graphics.beginPath();
+    graphics.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) {
+      graphics.lineTo(points[i].x, points[i].y);
+    }
+    graphics.closePath();
+    graphics.fillPath();
+
+    // Draw zone border for emphasis
+    graphics.lineStyle(1, zoneColor, 0.6);
+    graphics.strokePath();
+
+    // Set proper depth
+    graphics.setDepth(calculateDepth(x, y, RENDER_CONFIG.layers.tile + 0.01));
   }
 
   // ============================================

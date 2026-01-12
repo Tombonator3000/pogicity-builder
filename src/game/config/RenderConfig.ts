@@ -88,6 +88,18 @@ export const COLOR_PALETTE = {
     eraser: 0xff5252,
     wasteland: 0x8b7355,
     rubble: 0x696969,
+    // Zone tool colors (RCI)
+    zoneResidential: 0x4caf50, // Green for housing
+    zoneCommercial: 0x2196f3, // Blue for commercial
+    zoneIndustrial: 0xffc107, // Yellow/orange for industrial
+    dezone: 0xff5252, // Red for removing zones
     default: 0xffffff,
+  },
+
+  /** Zone overlay colors (for developed zones) */
+  zones: {
+    residential: 0x4caf50, // Green
+    commercial: 0x2196f3, // Blue
+    industrial: 0xffc107, // Yellow/orange
   },
 } as const;
