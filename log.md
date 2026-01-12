@@ -2727,4 +2727,114 @@ All sprites follow isometric perspective matching the existing game assets. Colo
 
 ---
 
+## 2026-01-11 (Session 5 - Continued)
+
+### Code Refactoring - Vehicle Movement System
+
+**Task**: Continue refactoring complex code for improved clarity and maintainability.
+
+**Approach**: Refactored `updateSingleCar()` in VehicleSystem using the **Separation of Concerns** pattern.
+
+---
+
+### 4. `updateSingleCar()` - VehicleSystem.ts (Lines 118-177)
+
+**Problem**:
+- 60 lines with complex nested logic (3-4 levels deep)
+- Mixed responsibilities: teleportation + direction changes + movement
+- Difficult to test individual behaviors
+- Complex conditional branches for lane following and obstacle avoidance
+- High cyclomatic complexity (~9 decision points)
+
+**Solution**: **Separation of Concerns Pattern**
+
+Extracted three focused helper methods:
+
+1. **`handleOffGridTeleport(car: Car)`** (20 lines)
+   - Handles teleportation logic for cars off the road network
+   - Returns teleported car or null if on valid road
+   - Clear single responsibility
+
+2. **`calculateDirectionChange(car, tileX, tileY, nearCenter)`** (25 lines)
+   - Determines new direction based on lane direction and obstacles
+   - Returns object with `{ direction, snapToCenter }`
+   - Encapsulates all direction logic in one place
+
+3. **`applyCarMovement(car, newDirection, snapToCenter)`** (18 lines)
+   - Applies movement to car position
+   - Handles optional snapping to tile center for turns
+   - Pure movement logic
+
+**Refactored Main Function** (26 lines, reduced from 60):
+```typescript
+private updateSingleCar(car: Car): Car {
+  // 1. Handle cars off the road network
+  const teleportedCar = this.handleOffGridTeleport(car);
+  if (teleportedCar) return teleportedCar;
+
+  // 2. Calculate position and proximity to tile center
+  const tileX = Math.floor(car.x);
+  const tileY = Math.floor(car.y);
+  const nearCenter = /* ... */;
+
+  // 3. Determine direction change
+  const { direction, snapToCenter } = this.calculateDirectionChange(
+    car, tileX, tileY, nearCenter
+  );
+
+  // 4. Apply movement
+  return this.applyCarMovement(car, direction, snapToCenter);
+}
+```
+
+**Benefits**:
+- **Code Size**: 60 lines → 26 lines (57% reduction in main function)
+- **Single Responsibility**: Each function has one clear purpose
+- **Testability**: Helper functions can be unit tested independently
+- **Readability**: Clear sequential flow: check teleport → calculate direction → apply movement
+- **Maintainability**: Easy to modify individual concerns without affecting others
+- **Documentation**: Added comprehensive JSDoc comments explaining each function's purpose
+
+---
+
+### Technical Impact
+
+**Files Modified**:
+- `src/game/systems/VehicleSystem.ts` - Refactored `updateSingleCar()` method
+
+**Metrics**:
+- Main function lines reduced: 60 → 26 (57% reduction)
+- Cyclomatic complexity: High (9) → Low (3) for main function
+- TypeScript compilation: ✅ No errors
+- Behavior: 100% preserved (same car movement logic)
+
+**Code Quality Improvements**:
+- ✅ Improved readability and understandability
+- ✅ Reduced cognitive load for developers
+- ✅ Enhanced testability with focused helper methods
+- ✅ Better maintainability through separation of concerns
+- ✅ Added comprehensive JSDoc documentation
+- ✅ Followed SRP (Single Responsibility Principle)
+
+---
+
+### Refactoring Patterns Applied
+
+1. **Separation of Concerns** - Each helper method handles one specific aspect
+2. **Extract Method** - Break down complex function into focused helpers
+3. **Single Responsibility Principle** - One function, one purpose
+4. **Documentation** - JSDoc comments for all extracted methods
+5. **Return Early Pattern** - Teleport check returns immediately if applicable
+
+---
+
+### Status
+✅ Vehicle movement system refactored
+✅ All TypeScript compilation checks passed
+✅ Code behavior preserved (backward compatible)
+✅ Significant improvement in code quality and maintainability
+✅ Ready for commit and code review
+
+---
+
 *Log format: Date > Section > Changes*
