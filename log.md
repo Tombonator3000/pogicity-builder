@@ -1,5 +1,76 @@
 # Development Log
 
+## 2026-01-12 (Session 15) - Fix GitHub Pages White Screen
+
+### Problem
+Game was showing only a white screen when deployed to GitHub Pages at `https://tombonator3000.github.io/pogicity-builder/`
+
+**Console Errors:**
+- CORS errors
+- 404 errors for resources
+- Router not handling base path correctly
+
+### Root Cause
+The `BrowserRouter` component in `src/App.tsx` was missing the `basename` prop, which is required for React Router to work correctly when the app is deployed to a subpath (like `/pogicity-builder/` on GitHub Pages).
+
+**Technical Details:**
+- React Router expects all routes to be relative to the document root by default
+- Without `basename`, the router tries to match routes starting from `/` instead of `/pogicity-builder/`
+- This causes the router to fail to match any routes, resulting in a white screen
+- Asset loading was working correctly (Vite's BASE_URL), but routing was broken
+
+### Solution
+Added `basename` prop to `BrowserRouter` using Vite's `import.meta.env.BASE_URL`:
+
+```typescript
+const App = () => {
+  // Use Vite's BASE_URL for router basename (needed for GitHub Pages)
+  const basename = import.meta.env.BASE_URL;
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter basename={basename}>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
+```
+
+**How it works:**
+- `import.meta.env.BASE_URL` is set by Vite from the `base` config option
+- For Lovable deployment: `BASE_URL = '/'`
+- For GitHub Pages: `BASE_URL = '/pogicity-builder/'`
+- The router now correctly handles routes relative to the base path
+
+### Files Modified
+- `src/App.tsx` - Added basename prop to BrowserRouter
+
+### Testing
+- ✅ Build successful: `npm run build:github`
+- ✅ Assets correctly prefixed with `/pogicity-builder/`
+- ✅ Router now configured for base path
+- ⏳ Awaiting deployment to verify fix on GitHub Pages
+
+### Deployment
+- Committed changes to branch `claude/fix-game-independence-ZWRU1`
+- Pushed to remote for PR creation
+- Once merged to `main`, GitHub Actions will auto-deploy
+
+### Status
+✅ Fix implemented and committed
+✅ Router now platform-agnostic (works on both Lovable and GitHub Pages)
+✅ Game should now load correctly on GitHub Pages
+
+---
+
 ## 2026-01-12 (Session 14) - Platform Independence & GitHub Actions CI/CD
 
 ### Goal
