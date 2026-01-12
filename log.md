@@ -3627,3 +3627,1326 @@ To avoid similar issues in future:
 ---
 
 *Log format: Date > Section > Changes*
+
+---
+
+## 2026-01-12 - COMPREHENSIVE AUDIT: Making Wasteland Rebuilders More Like SimCity
+
+### Executive Summary
+
+**Current State**: "Wasteland Rebuilders" is a Fallout-inspired post-apocalyptic settlement builder focused on survival and resource management. It has approximately **28% feature overlap** with SimCity's core city-building systems.
+
+**Goal**: Transform the game to be more like SimCity while maintaining the wasteland theme.
+
+---
+
+## 📊 CURRENT GAME ANALYSIS
+
+### What We Have (✅)
+
+#### 1. **Core Game Mechanics**
+- **Isometric Grid System**: 48x48 tiles with 44x22 pixel isometric rendering
+- **Building Placement**: 30+ buildings with rotation support (N/S/E/W)
+- **Terrain Tools**: Grass, wasteland, rubble terrain painting
+- **Smart Road System**: 4x4 segment-based network with automatic connections (straight, corners, T-junctions, intersections)
+- **Building Removal**: "Salvage" tool for demolition
+- **Camera Controls**: Pan (right-click drag), zoom (scroll wheel)
+- **Save/Load System**: localStorage persistence
+
+#### 2. **Resource Management System**
+- **6 Resource Types**: Scrap, Food, Water, Power, Medicine, Caps (currency)
+- **Production/Consumption**: Real-time per-second resource flow
+- **Storage Capacity**: Max limits per resource type
+- **Building Costs**: Resource requirements for construction
+- **Live UI Updates**: Real-time resource bars with net rates (+/- per second)
+
+#### 3. **Population & Worker Systems**
+- **Population Dynamics**:
+  - Happiness-based growth (60%+ happiness, 30s check interval)
+  - Death from starvation (20s without food) and dehydration (15s without water)
+  - Happiness scale (0-100%) affecting morale (Thriving → Miserable)
+- **Housing System**: Buildings provide population capacity (3-10 people per building)
+- **Worker Allocation**:
+  - Priority-based auto-assignment (priority 1-10)
+  - Efficiency scaling based on staffing ratio
+  - Understaffing alerts in UI
+
+#### 4. **Building Systems**
+- **30+ Buildings** across 6 categories:
+  - **Residential** (5): Scrap Shack, Bunker, Survivor Apartments, etc.
+  - **Production** (4): Scavenging Station, Hydroponic Farm, Water Purifier, Trading Post
+  - **Infrastructure** (7): Solar Array, Generator, Med Tent, Radio Tower, Water Tower, Cooling Tower
+  - **Defense** (3): Guard Tower, Barricade, Vault Door
+  - **Commercial** (2): Trading Post, Market Tent
+  - **Props/Decoration** (12+): Campfire, wrecks, barrels, etc.
+
+#### 5. **Event System**
+- **6 Random Event Types**:
+  - **Raid**: Resources stolen
+  - **Caravan**: Supply delivery
+  - **Radstorm**: Production halted (45s duration)
+  - **Refugees**: Population increase (player choice)
+  - **Disease**: Medicine consumption spike
+  - **Discovery**: Random resource windfall
+- **Event Mechanics**: Choice-based decisions, timed effects, cooldown system (60s per type)
+
+#### 6. **UI Systems**
+- **Resource Panel**: Terminal-style display with phosphor glow, capacity bars, color-coded status
+- **Worker Panel**: Labor allocation display with efficiency indicators
+- **Building Panel**: Categorized menu with costs and size info
+- **Event Log**: Scrollable history (last 15 events)
+- **Event Modal**: Draggable popup for choices
+- **Tool Palette**: Road, Wasteland, Rubble, Build, Salvage tools
+- **Save/Load Interface**: Manual save/load buttons
+
+#### 7. **Visual Entities**
+- **Pedestrians**: Characters that walk on roads/tiles
+- **Vehicles**: Cars that drive on asphalt with lane logic
+- **No Simulation**: Entities are visual only, don't affect gameplay
+
+---
+
+## ❌ MISSING SIMCITY FEATURES
+
+### Critical Gaps
+
+#### 1. **Zoning System** (0% implemented)
+**SimCity Has:**
+- RCI zones (Residential, Commercial, Industrial)
+- Zone density levels (low, medium, high)
+- Automatic building growth in zones based on demand
+- Zone demand indicators (RCI bars showing need)
+- Desirability calculations affecting development
+- Land value affecting zone quality
+
+**We Have:**
+- Manual building placement only
+- No automatic growth
+- No zone types
+
+**Gap Impact**: ⭐⭐⭐⭐⭐ CRITICAL - This is core SimCity gameplay
+
+---
+
+#### 2. **Budget & Tax System** (0% implemented)
+**SimCity Has:**
+- Monthly budget cycle
+- Income from taxes (residential, commercial, industrial)
+- Expenses (services, infrastructure maintenance)
+- Tax rate sliders affecting happiness and income
+- Loans and bonds
+- Budget deficit/surplus tracking
+
+**We Have:**
+- Abstract resource system (caps as currency)
+- No tax collection
+- No monthly expenses
+- No budget management
+
+**Gap Impact**: ⭐⭐⭐⭐⭐ CRITICAL - Core economic gameplay loop
+
+---
+
+#### 3. **Service Coverage Systems** (10% implemented)
+**SimCity Has:**
+- **Police**: Crime reduction, coverage radius
+- **Fire**: Fire prevention/response, coverage radius
+- **Education**: Schools (elementary, high school, college/university)
+- **Health**: Hospitals and clinics with coverage radius
+- **Parks**: Recreation and land value boost
+- **Libraries**: Education and culture
+
+**We Have:**
+- Med Tent (medicine production, no coverage)
+- Guard Tower (defense, no crime simulation)
+- Radio Tower (attracts settlers, no coverage mechanic)
+
+**Gap Impact**: ⭐⭐⭐⭐⭐ CRITICAL - Essential city services
+
+---
+
+#### 4. **Utility Network Infrastructure** (20% implemented)
+**SimCity Has:**
+- **Power Grid**: Power plants, power lines/poles, zone coverage
+- **Water System**: Pumps, treatment plants, water pipes, zone coverage
+- **Sewage**: Treatment plants, pipe network
+- **Coverage Maps**: Visual overlay showing utility reach
+
+**We Have:**
+- Abstract power resource (production/consumption)
+- Abstract water resource (production/consumption)
+- No physical network (lines, pipes, poles)
+- No zone coverage mechanics
+
+**Gap Impact**: ⭐⭐⭐⭐ HIGH - Major SimCity feature
+
+---
+
+#### 5. **Data Overlays & Maps** (0% implemented)
+**SimCity Has:**
+- **11+ Overlay Types**:
+  - Power coverage
+  - Water coverage
+  - Pollution levels
+  - Crime density
+  - Fire hazard
+  - Traffic congestion
+  - Land value
+  - Population density
+  - Zone demand
+  - Education level
+  - Health coverage
+- **Color-Coded Visualization**: Heatmaps showing problem areas
+
+**We Have:**
+- No overlay system
+- No data visualization beyond resource bars
+
+**Gap Impact**: ⭐⭐⭐⭐⭐ CRITICAL - Core SimCity management tool
+
+---
+
+#### 6. **Traffic Simulation** (10% implemented)
+**SimCity Has:**
+- Congestion calculation based on road capacity
+- Commuter pathfinding (home → work)
+- Traffic density affecting city function
+- Mass transit systems (bus, subway, train)
+- Highway/freeway systems
+- Traffic overlay showing problem areas
+
+**We Have:**
+- Visual vehicles (jeeps, taxis) driving on roads
+- Lane direction logic
+- No congestion simulation
+- No impact on gameplay
+
+**Gap Impact**: ⭐⭐⭐⭐ HIGH - Important feedback mechanism
+
+---
+
+#### 7. **Advisors & Guidance** (0% implemented)
+**SimCity Has:**
+- **4-5 Advisor Characters**:
+  - Financial Advisor (budget, taxes)
+  - Public Safety Advisor (police, fire)
+  - Utilities Advisor (power, water)
+  - Transportation Advisor (traffic, transit)
+- **Proactive Advice**: Warnings about problems
+- **Petitions**: Citizen requests
+- **Personality**: Each advisor has distinct voice
+
+**We Have:**
+- No advisor system
+- Event log shows problems but no guidance
+
+**Gap Impact**: ⭐⭐⭐ MEDIUM - Helpful but not essential
+
+---
+
+#### 8. **Graphs & Charts** (0% implemented)
+**SimCity Has:**
+- **Population Graph**: Growth over time
+- **Income Graph**: Revenue trends
+- **Traffic Graph**: Congestion levels
+- **Pollution Graph**: Environmental trends
+- **Crime Graph**: Safety trends
+- **Comparative Analysis**: City vs neighbors
+
+**We Have:**
+- No graphing system
+- No historical data tracking
+
+**Gap Impact**: ⭐⭐⭐ MEDIUM - Good for feedback, not essential
+
+---
+
+#### 9. **Query/Inspection Tool** (0% implemented)
+**SimCity Has:**
+- **Click Any Building**: See detailed stats
+- **Building Info**:
+  - Current status
+  - Power/water usage
+  - Employee count
+  - Service coverage
+  - Complaints/issues
+- **Land Info**: Zone type, land value, traffic level
+
+**We Have:**
+- No inspection tool
+- Building panel shows costs before placement only
+
+**Gap Impact**: ⭐⭐⭐⭐ HIGH - Important for understanding city state
+
+---
+
+#### 10. **Scenarios & Objectives** (20% implemented)
+**SimCity Has:**
+- **Goal-Based Challenges**: Population targets, income goals
+- **Disaster Scenarios**: Recover from earthquake, fire, etc.
+- **Win/Lose Conditions**: Success criteria
+- **Mayoral Rating**: Performance score (0-100)
+- **Achievements**: Unlockable milestones
+
+**We Have:**
+- Random events (no goals)
+- No win/lose conditions
+- No scoring system
+- No achievements
+
+**Gap Impact**: ⭐⭐⭐ MEDIUM - Adds structure and replayability
+
+---
+
+#### 11. **Pollution & Environment** (0% implemented)
+**SimCity Has:**
+- **Pollution Types**: Air, water, ground
+- **Pollution Sources**: Industrial zones, power plants, traffic
+- **Health Impact**: Pollution reduces population health
+- **Pollution Cleanup**: Parks, trees, ordinances
+
+**We Have:**
+- No pollution system
+- Radstorms are temporary events, not ongoing pollution
+
+**Gap Impact**: ⭐⭐⭐ MEDIUM - Adds strategic complexity
+
+---
+
+#### 12. **Disasters** (30% implemented)
+**SimCity Has:**
+- **Natural Disasters**: Earthquake, tornado, flood, fire, meteor
+- **Disaster Management**: Fire/police response
+- **Recovery Costs**: Rebuilding expenses
+- **Frequency Settings**: Player-controlled disaster rate
+
+**We Have:**
+- Random events (raids, radstorms, disease)
+- Events are less catastrophic
+- No disaster management gameplay
+
+**Gap Impact**: ⭐⭐ LOW - Events fill this role somewhat
+
+---
+
+#### 13. **Mass Transit** (0% implemented)
+**SimCity Has:**
+- **Bus System**: Bus stops, routes, ridership
+- **Subway**: Underground rail network
+- **Train**: Passenger and freight rail
+- **Airports**: Air travel for goods/people
+- **Seaports**: Maritime trade
+
+**We Have:**
+- Road network only
+- No transit options
+
+**Gap Impact**: ⭐⭐⭐ MEDIUM - Important for large cities
+
+---
+
+#### 14. **Neighboring Cities** (0% implemented)
+**SimCity Has:**
+- **Region View**: Multiple cities in region
+- **Resource Sharing**: Power, water between cities
+- **Trade**: Buy/sell utilities to neighbors
+- **Comparison**: Rank cities by population, income
+
+**We Have:**
+- Single isolated settlement
+- No regional gameplay
+
+**Gap Impact**: ⭐⭐ LOW - Advanced feature, not core
+
+---
+
+#### 15. **Ordinances/Policies** (0% implemented)
+**SimCity Has:**
+- **City Policies**: Laws affecting gameplay
+  - Legalize gambling (income boost, crime increase)
+  - Energy conservation (power reduction)
+  - Pollution controls (industry slowdown)
+  - Education programs (school funding)
+- **Costs**: Monthly budget impact
+- **Effects**: Tradeoffs in city stats
+
+**We Have:**
+- No policy system
+- No adjustable city rules
+
+**Gap Impact**: ⭐⭐⭐ MEDIUM - Adds strategic depth
+
+---
+
+## 📋 COMPREHENSIVE IMPLEMENTATION PLAN
+
+### Phase 1: Core SimCity Systems (Foundation) - CRITICAL PRIORITY
+
+#### 1.1 Zoning System Implementation
+**Goal**: Replace manual building placement with RCI zone-based auto-growth
+
+**Tasks**:
+- [ ] Create zone types: Residential, Commercial, Industrial
+- [ ] Add zone density levels: Low, Medium, High
+- [ ] Implement zone painting tool (like terrain painting)
+- [ ] Build zone demand calculation system
+  - Track employment (jobs vs workers)
+  - Track goods demand (population needs commerce)
+  - Track housing demand (population needs homes)
+- [ ] Create zone demand UI indicators (RCI bars)
+- [ ] Implement desirability/land value system
+  - Calculate based on: pollution, crime, services, parks, neighbors
+  - Store land value per grid tile
+- [ ] Build automatic zone development system
+  - Check zones periodically (every 1-5 seconds)
+  - Grow buildings in high-demand zones with good desirability
+  - Randomly select building type from zone category
+  - Start with low-density, upgrade to medium/high over time
+- [ ] Create visual zone overlays (colored grid squares)
+- [ ] Add building abandonment system (zones lose buildings if desirability drops)
+
+**New Files**:
+- `src/game/zones/ZoneTypes.ts` - Zone definitions
+- `src/game/zones/ZoneDemand.ts` - Demand calculation logic
+- `src/game/zones/ZoneGrowth.ts` - Auto-growth system
+- `src/game/zones/LandValue.ts` - Desirability calculations
+- `src/components/game/ZonePanel.tsx` - Zone selection UI
+- `src/components/game/DemandIndicator.tsx` - RCI bars UI
+
+**Modified Files**:
+- `src/game/MainScene.ts` - Add zone rendering and update logic
+- `src/game/types.ts` - Add zone types
+- `src/components/game/GameUI.tsx` - Integrate zone panel
+
+**Estimated Complexity**: ⭐⭐⭐⭐⭐ Very High (8-12 hours)
+
+---
+
+#### 1.2 Budget & Tax System
+**Goal**: Add monthly budget cycle with income from taxes and expenses from services
+
+**Tasks**:
+- [ ] Create budget data structure
+  - Income sources (residential tax, commercial tax, industrial tax)
+  - Expense categories (services, infrastructure, maintenance)
+  - Monthly balance (income - expenses)
+- [ ] Implement monthly budget cycle
+  - Timer for 1 game month (configurable, e.g., 1 real minute = 1 game month)
+  - Calculate income from zones (tax rate × zone count × population/jobs)
+  - Calculate expenses from buildings (maintenance costs per building type)
+  - Update treasury (caps) with monthly balance
+- [ ] Add tax rate sliders (residential, commercial, industrial)
+  - Range: 0% to 20%
+  - Higher taxes = more income but lower happiness
+  - Lower taxes = less income but higher happiness
+- [ ] Create budget UI window
+  - Income breakdown (by tax type)
+  - Expense breakdown (by category)
+  - Monthly balance (surplus/deficit)
+  - Current treasury
+  - Tax rate sliders
+- [ ] Add loan system
+  - Borrow caps when treasury is negative
+  - Interest rate (e.g., 10% per year)
+  - Repayment schedule
+  - Maximum loan limit based on city size
+- [ ] Implement bankruptcy condition
+  - Trigger if debt exceeds limit and can't pay expenses
+  - Game over or forced austerity measures
+
+**New Files**:
+- `src/game/economy/Budget.ts` - Budget calculations
+- `src/game/economy/TaxSystem.ts` - Tax collection logic
+- `src/game/economy/LoanSystem.ts` - Loan management
+- `src/components/game/BudgetWindow.tsx` - Budget UI
+- `src/components/game/TaxSliders.tsx` - Tax rate controls
+
+**Modified Files**:
+- `src/game/MainScene.ts` - Add budget update loop
+- `src/game/types.ts` - Add budget types
+- `src/components/game/GameUI.tsx` - Add budget window toggle
+
+**Estimated Complexity**: ⭐⭐⭐⭐ High (6-8 hours)
+
+---
+
+#### 1.3 Service Coverage System
+**Goal**: Add police, fire, education, health services with radius-based coverage
+
+**Tasks**:
+- [ ] Create service building types
+  - **Police Station**: Reduces crime in radius
+  - **Fire Station**: Prevents/responds to fires in radius
+  - **Elementary School**: Educates children in radius
+  - **High School**: Educates teens in radius
+  - **Hospital**: Provides healthcare in radius
+  - **Park**: Increases land value in radius
+- [ ] Implement coverage radius system
+  - Each service building has coverage radius (e.g., 10 tiles)
+  - Store coverage data per grid tile (covered by which services)
+  - Visualize coverage with overlay (green = covered, red = not covered)
+- [ ] Add crime simulation
+  - Crime rate increases in zones without police coverage
+  - Higher crime = lower residential desirability
+  - Crime affects happiness
+- [ ] Add fire hazard system
+  - Fire risk increases in dense zones without fire coverage
+  - Random fire events destroy buildings
+  - Fire stations dispatch trucks to fight fires
+- [ ] Add education system
+  - Schools increase industrial desirability (educated workforce)
+  - Education level affects tax income (educated = higher income)
+  - No schools = slower industrial growth
+- [ ] Add health system
+  - Hospitals reduce death rate
+  - No health coverage = population health decreases
+  - Health affects happiness and life expectancy
+- [ ] Create service demand feedback
+  - Advisors warn about areas lacking coverage
+  - UI shows % of city covered by each service
+
+**New Files**:
+- `src/game/services/ServiceTypes.ts` - Service building definitions
+- `src/game/services/CoverageSystem.ts` - Radius calculation and storage
+- `src/game/services/CrimeSystem.ts` - Crime simulation
+- `src/game/services/FireSystem.ts` - Fire hazard and response
+- `src/game/services/EducationSystem.ts` - Education tracking
+- `src/game/services/HealthSystem.ts` - Health tracking
+- `src/components/game/ServicePanel.tsx` - Service building menu
+- `src/components/overlays/CoverageOverlay.tsx` - Coverage visualization
+
+**Modified Files**:
+- `src/game/MainScene.ts` - Add service update loops
+- `src/game/zones/LandValue.ts` - Factor in services for desirability
+- `src/game/buildings.ts` - Add service buildings
+
+**Estimated Complexity**: ⭐⭐⭐⭐⭐ Very High (10-14 hours)
+
+---
+
+#### 1.4 Utility Network Infrastructure
+**Goal**: Replace abstract power/water with physical networks (lines, pipes, coverage zones)
+
+**Tasks**:
+- [ ] Create power network system
+  - **Power Plants**: Generate power (coal, solar, nuclear, wind)
+  - **Power Lines**: Transmit power from plants to zones
+  - **Substations**: Extend power coverage
+  - **Coverage Calculation**: Zones need power connection to function
+  - **Network Pathfinding**: Trace power from plant to zones via lines
+- [ ] Create water network system
+  - **Water Pumps**: Extract water from ground/rivers
+  - **Water Treatment**: Clean water for city use
+  - **Water Pipes**: Distribute water to zones
+  - **Water Towers**: Storage and pressure regulation
+  - **Coverage Calculation**: Zones need water connection to function
+- [ ] Add sewage system
+  - **Sewage Pipes**: Collect waste from zones
+  - **Treatment Plants**: Process sewage
+  - **Pollution**: Untreated sewage pollutes water/land
+- [ ] Implement network visualization
+  - Power lines render as yellow/orange lines
+  - Water pipes render as blue lines
+  - Sewage pipes render as brown/gray lines
+  - Show coverage zones as colored overlays
+- [ ] Add utility construction tools
+  - Power line tool (click-drag to place)
+  - Water pipe tool
+  - Sewage pipe tool
+  - Bulldoze tool for utility removal
+- [ ] Create utility failure mechanics
+  - Overloaded plants (demand > supply) = brownouts
+  - Water shortage = water rationing
+  - Pipe breaks = repair costs
+  - Aging infrastructure = increased failure rate
+
+**New Files**:
+- `src/game/utilities/PowerNetwork.ts` - Power grid logic
+- `src/game/utilities/WaterNetwork.ts` - Water distribution logic
+- `src/game/utilities/SewageSystem.ts` - Sewage handling
+- `src/game/utilities/NetworkPathfinder.ts` - Network connectivity algorithm
+- `src/game/utilities/UtilityBuildings.ts` - Power plants, pumps, etc.
+- `src/components/game/UtilityTools.tsx` - Line/pipe placement tools
+- `src/components/overlays/PowerOverlay.tsx` - Power coverage map
+- `src/components/overlays/WaterOverlay.tsx` - Water coverage map
+
+**Modified Files**:
+- `src/game/MainScene.ts` - Add utility rendering and updates
+- `src/game/zones/ZoneGrowth.ts` - Check utility coverage before growth
+- `src/game/economy/Budget.ts` - Add utility construction/maintenance costs
+
+**Estimated Complexity**: ⭐⭐⭐⭐⭐ Very High (12-16 hours)
+
+---
+
+### Phase 2: Data & Feedback Systems - HIGH PRIORITY
+
+#### 2.1 Data Overlays & Maps
+**Goal**: Add 11+ overlay types showing city stats (power, water, pollution, crime, traffic, land value, etc.)
+
+**Tasks**:
+- [ ] Create overlay rendering system
+  - Base overlay class with render method
+  - Heatmap color gradient (red = bad, yellow = medium, green = good)
+  - Tile-based data storage (each tile has stats)
+- [ ] Implement overlays:
+  - **Power**: Coverage (green = powered, red = no power)
+  - **Water**: Coverage (blue = water, red = no water)
+  - **Pollution**: Air/ground pollution levels (heatmap)
+  - **Crime**: Crime density (heatmap)
+  - **Fire Hazard**: Fire risk (heatmap)
+  - **Traffic**: Congestion levels (heatmap)
+  - **Land Value**: Desirability (heatmap)
+  - **Population Density**: People per tile (heatmap)
+  - **Zone Demand**: RCI demand levels (heatmap)
+  - **Education**: School coverage (green/red)
+  - **Health**: Hospital coverage (green/red)
+- [ ] Create overlay toggle UI
+  - Dropdown menu or button bar
+  - Show/hide overlays
+  - Legend showing color meanings
+- [ ] Add overlay rendering to scene
+  - Draw colored squares over tiles
+  - Semi-transparent so buildings still visible
+  - Update overlay data every few seconds
+
+**New Files**:
+- `src/game/overlays/OverlaySystem.ts` - Base overlay class
+- `src/game/overlays/PowerOverlay.ts` - Power coverage
+- `src/game/overlays/WaterOverlay.ts` - Water coverage
+- `src/game/overlays/PollutionOverlay.ts` - Pollution heatmap
+- `src/game/overlays/CrimeOverlay.ts` - Crime density
+- `src/game/overlays/TrafficOverlay.ts` - Traffic congestion
+- `src/game/overlays/LandValueOverlay.ts` - Desirability
+- `src/game/overlays/PopulationOverlay.ts` - Population density
+- `src/components/game/OverlaySelector.tsx` - Overlay toggle UI
+
+**Modified Files**:
+- `src/game/MainScene.ts` - Render active overlay
+- `src/components/game/GameUI.tsx` - Add overlay selector
+
+**Estimated Complexity**: ⭐⭐⭐⭐ High (8-10 hours)
+
+---
+
+#### 2.2 Query/Inspection Tool
+**Goal**: Click any building/zone to see detailed stats and info
+
+**Tasks**:
+- [ ] Create inspection tool mode
+  - Click on building to open info panel
+  - Click on zone to show zone stats
+  - Click on empty tile to show land info
+- [ ] Build info panel component
+  - **Building Info**: Name, type, status
+  - **Resources**: Power/water usage, production/consumption
+  - **Workers**: Staffing level, efficiency
+  - **Coverage**: Services reaching this building
+  - **Problems**: Alerts (no power, no water, crime, fire risk)
+- [ ] Add zone info display
+  - **Zone Type**: Residential/Commercial/Industrial
+  - **Density Level**: Low/Medium/High
+  - **Demand**: Growth potential
+  - **Desirability**: Land value score
+  - **Population/Jobs**: Current count
+- [ ] Add land info display
+  - **Terrain Type**: Grass, wasteland, rubble
+  - **Land Value**: Desirability score
+  - **Services**: Nearby coverage
+  - **Utilities**: Power/water/sewage availability
+  - **Traffic**: Congestion level
+
+**New Files**:
+- `src/game/tools/InspectionTool.ts` - Click handler for inspection
+- `src/components/game/InfoPanel.tsx` - Inspection UI component
+- `src/components/game/BuildingInfo.tsx` - Building details
+- `src/components/game/ZoneInfo.tsx` - Zone details
+- `src/components/game/LandInfo.tsx` - Tile details
+
+**Modified Files**:
+- `src/game/MainScene.ts` - Add inspection mode input handling
+- `src/components/game/GameUI.tsx` - Add info panel toggle
+
+**Estimated Complexity**: ⭐⭐⭐ Medium (4-6 hours)
+
+---
+
+#### 2.3 Graphs & Charts
+**Goal**: Add historical data tracking and trend visualization
+
+**Tasks**:
+- [ ] Create data history storage
+  - Store stats every game month (or real-time interval)
+  - Track: population, income, expenses, traffic, pollution, crime, happiness
+  - Keep last 12 months (or configurable)
+- [ ] Build graphing system
+  - Line chart component (reusable)
+  - X-axis: Time (months)
+  - Y-axis: Value (auto-scaled)
+  - Multiple data series on same chart (e.g., income vs expenses)
+- [ ] Create graph types:
+  - **Population Graph**: Total population over time
+  - **Budget Graph**: Income, expenses, balance over time
+  - **Traffic Graph**: Congestion level over time
+  - **Pollution Graph**: Pollution levels over time
+  - **Crime Graph**: Crime rate over time
+  - **Happiness Graph**: Population happiness over time
+- [ ] Add graph window UI
+  - Tabs for different graph types
+  - Toggle data series on/off
+  - Show current value and trend (↑ increasing, ↓ decreasing)
+
+**New Files**:
+- `src/game/statistics/DataHistory.ts` - Historical data storage
+- `src/game/statistics/StatTracker.ts` - Stat collection logic
+- `src/components/game/GraphWindow.tsx` - Graph display UI
+- `src/components/charts/LineChart.tsx` - Reusable chart component
+
+**Modified Files**:
+- `src/game/MainScene.ts` - Record stats every interval
+- `src/components/game/GameUI.tsx` - Add graph window toggle
+
+**Estimated Complexity**: ⭐⭐⭐ Medium (6-8 hours)
+
+---
+
+### Phase 3: Simulation & Gameplay Depth - MEDIUM PRIORITY
+
+#### 3.1 Traffic Simulation
+**Goal**: Calculate real traffic congestion based on commuters and road capacity
+
+**Tasks**:
+- [ ] Create commuter system
+  - Sims live in residential zones
+  - Sims work in commercial/industrial zones
+  - Sims travel to work each day (pathfinding)
+  - Calculate traffic volume on each road tile
+- [ ] Implement road capacity
+  - Each road tile has capacity (e.g., 100 cars/day)
+  - Calculate congestion: traffic volume / capacity
+  - Congestion levels: None (0-25%), Light (25-50%), Medium (50-75%), Heavy (75-100%), Gridlock (100%+)
+- [ ] Add traffic impact on gameplay
+  - Congestion slows zone growth (workers can't reach jobs)
+  - Congestion increases pollution
+  - Congestion decreases land value
+  - Traffic overlay shows problem areas
+- [ ] Create mass transit system
+  - **Bus System**: Bus stops, routes, ridership
+  - **Subway**: Underground rail network
+  - **Train**: Passenger rail stations
+  - Transit reduces road traffic
+  - Transit cost: construction + monthly maintenance
+- [ ] Add road upgrade system
+  - **Basic Road**: Low capacity (100 cars/day)
+  - **Avenue**: Medium capacity (300 cars/day)
+  - **Highway**: High capacity (1000 cars/day)
+  - Upgrade roads with higher construction cost
+
+**New Files**:
+- `src/game/traffic/CommuterSystem.ts` - Sim pathfinding and travel
+- `src/game/traffic/CongestionCalculator.ts` - Traffic volume calculation
+- `src/game/traffic/MassTransit.ts` - Bus/subway/train logic
+- `src/game/traffic/RoadTypes.ts` - Road upgrade definitions
+- `src/components/game/TransitPanel.tsx` - Transit building menu
+
+**Modified Files**:
+- `src/game/MainScene.ts` - Update traffic each cycle
+- `src/game/zones/ZoneGrowth.ts` - Factor in traffic for growth
+- `src/game/overlays/TrafficOverlay.ts` - Show congestion levels
+
+**Estimated Complexity**: ⭐⭐⭐⭐⭐ Very High (10-14 hours)
+
+---
+
+#### 3.2 Pollution & Environment
+**Goal**: Add pollution from industry/traffic/power, environmental degradation, cleanup
+
+**Tasks**:
+- [ ] Create pollution types
+  - **Air Pollution**: From industry, power plants, traffic
+  - **Water Pollution**: From sewage, industry
+  - **Ground Pollution**: From landfills, toxic waste
+- [ ] Implement pollution spread
+  - Pollution diffuses to neighboring tiles
+  - Wind direction affects air pollution spread
+  - Rivers/water flow affects water pollution spread
+- [ ] Add pollution effects
+  - Reduces population health (increases death rate)
+  - Reduces residential desirability (lowers land value)
+  - Causes complaints from citizens
+  - High pollution = population exodus
+- [ ] Create pollution sources
+  - Industrial zones produce pollution (high)
+  - Coal power plants produce pollution (medium)
+  - Traffic produces pollution (low)
+  - Landfills produce ground pollution
+- [ ] Add pollution reduction
+  - **Parks**: Reduce air pollution in radius
+  - **Trees**: Absorb pollution
+  - **Ordinances**: Pollution controls (reduce industry output but lower pollution)
+  - **Clean Energy**: Solar/wind/nuclear (low pollution)
+- [ ] Create pollution overlay
+  - Heatmap showing pollution density
+  - Color: Green (clean) → Yellow (moderate) → Red (hazardous)
+
+**New Files**:
+- `src/game/environment/PollutionSystem.ts` - Pollution calculation and spread
+- `src/game/environment/PollutionSources.ts` - Buildings that pollute
+- `src/game/environment/PollutionMitigation.ts` - Cleanup logic
+- `src/components/overlays/PollutionOverlay.tsx` - Pollution heatmap
+
+**Modified Files**:
+- `src/game/MainScene.ts` - Update pollution each cycle
+- `src/game/zones/LandValue.ts` - Factor in pollution for desirability
+- `src/game/population/PopulationSystem.ts` - Pollution affects health
+
+**Estimated Complexity**: ⭐⭐⭐⭐ High (8-10 hours)
+
+---
+
+#### 3.3 Advisors & Guidance
+**Goal**: Add 4-5 advisor characters providing proactive advice and warnings
+
+**Tasks**:
+- [ ] Create advisor character system
+  - **Financial Advisor**: Budget, taxes, loans
+  - **Public Safety Advisor**: Police, fire, disaster response
+  - **Utilities Advisor**: Power, water, sewage
+  - **Transportation Advisor**: Traffic, roads, transit
+  - **Environmental Advisor**: Pollution, parks, ordinances (optional)
+- [ ] Implement advisor AI
+  - Each advisor monitors their domain
+  - Trigger warnings when problems detected
+    - Financial: "We're running a deficit! Raise taxes or cut expenses."
+    - Safety: "Crime is rising in the northwest. Build more police stations."
+    - Utilities: "Power demand exceeds supply. Build another power plant."
+    - Transportation: "Traffic is gridlocked on Main Street. Add mass transit."
+  - Prioritize most critical issues
+- [ ] Create advisor UI
+  - **Advisor Panel**: Shows active advisor with portrait and message
+  - **Advisor Queue**: List of pending messages
+  - **Dismiss/Acknowledge**: Button to clear message
+  - **Advisor History**: Log of past advice
+- [ ] Add advisor personality
+  - Each advisor has distinct voice/tone
+  - Financial: Conservative, cautious about spending
+  - Safety: Alarmist, always wants more protection
+  - Utilities: Technical, focused on infrastructure
+  - Transportation: Pragmatic, focused on efficiency
+- [ ] Implement petition system
+  - Citizens can request changes (e.g., "Build a park in this neighborhood")
+  - Petitions appear in advisor messages
+  - Accept/Deny petitions with consequences (happiness impact)
+
+**New Files**:
+- `src/game/advisors/AdvisorSystem.ts` - Advisor AI and message generation
+- `src/game/advisors/FinancialAdvisor.ts` - Budget/tax advisor
+- `src/game/advisors/SafetyAdvisor.ts` - Police/fire advisor
+- `src/game/advisors/UtilitiesAdvisor.ts` - Power/water advisor
+- `src/game/advisors/TransportAdvisor.ts` - Traffic advisor
+- `src/components/game/AdvisorPanel.tsx` - Advisor message UI
+- `src/components/game/PetitionModal.tsx` - Citizen request UI
+
+**Modified Files**:
+- `src/game/MainScene.ts` - Update advisors each cycle
+- `src/components/game/GameUI.tsx` - Add advisor panel
+
+**Estimated Complexity**: ⭐⭐⭐⭐ High (8-10 hours)
+
+---
+
+### Phase 4: Progression & Content - LOW PRIORITY
+
+#### 4.1 Scenarios & Objectives
+**Goal**: Add goal-based challenges with win conditions and scoring
+
+**Tasks**:
+- [ ] Create scenario system
+  - **Scenario Definition**: Name, description, objectives, starting conditions
+  - **Objectives**: Population goal, income goal, specific buildings
+  - **Starting State**: Initial funds, map terrain, pre-placed buildings
+  - **Time Limit**: Optional deadline for completion
+  - **Scoring**: Points based on objectives achieved
+- [ ] Build scenario types:
+  - **Tutorial**: Guided introduction to game mechanics
+  - **Sandbox**: No goals, unlimited time and money
+  - **Challenge**: Specific difficult goals (e.g., "Reach 50k population in 10 years")
+  - **Disaster Recovery**: Start after disaster, rebuild city
+  - **Historical**: Recreate real-world cities
+- [ ] Implement win/lose conditions
+  - **Win**: All objectives completed
+  - **Lose**: Bankruptcy, population drops to zero, time runs out
+  - **Victory Screen**: Show score, stats, replay option
+  - **Defeat Screen**: Show what went wrong, retry option
+- [ ] Add mayoral rating system
+  - **Score**: 0-100 based on city performance
+  - **Factors**: Population size, income, happiness, services, environment
+  - **Ratings**: 
+    - 90-100: Excellent
+    - 70-89: Good
+    - 50-69: Average
+    - 30-49: Poor
+    - 0-29: Terrible
+  - **Effects**: High rating attracts immigrants, low rating causes exodus
+- [ ] Create achievement system
+  - **Achievements**: Unlockable milestones (e.g., "First 10k population")
+  - **Rewards**: Cosmetic unlocks, building unlocks, bonus funds
+  - **Achievement UI**: List of locked/unlocked achievements
+
+**New Files**:
+- `src/game/scenarios/ScenarioSystem.ts` - Scenario loading and tracking
+- `src/game/scenarios/ScenarioDefinitions.ts` - Scenario data
+- `src/game/scenarios/ObjectiveTracker.ts` - Goal progress tracking
+- `src/game/scoring/MayoralRating.ts` - Performance score calculation
+- `src/game/progression/AchievementSystem.ts` - Achievement unlocks
+- `src/components/game/ScenarioMenu.tsx` - Scenario selection UI
+- `src/components/game/ObjectivePanel.tsx` - Goal progress UI
+- `src/components/game/VictoryScreen.tsx` - Win screen
+- `src/components/game/DefeatScreen.tsx` - Lose screen
+- `src/components/game/AchievementList.tsx` - Achievement UI
+
+**Modified Files**:
+- `src/game/MainScene.ts` - Check objectives each cycle
+- `src/components/game/GameUI.tsx` - Add objective panel
+
+**Estimated Complexity**: ⭐⭐⭐⭐ High (8-10 hours)
+
+---
+
+#### 4.2 Ordinances/Policies
+**Goal**: Add city laws that affect gameplay with tradeoffs
+
+**Tasks**:
+- [ ] Create ordinance system
+  - **Ordinance Definition**: Name, description, monthly cost, effects
+  - **Enable/Disable**: Toggle ordinances on/off
+  - **Budget Impact**: Ordinances cost money per month
+- [ ] Build ordinance types:
+  - **Legalize Gambling**: +Income from commercial, +Crime
+  - **Energy Conservation**: -Power consumption, -Industrial growth
+  - **Pollution Controls**: -Pollution, -Industrial output
+  - **Education Programs**: +Education, +Budget cost
+  - **Public Smoking Ban**: +Health, -Commercial happiness
+  - **Free Clinics**: +Health, +Budget cost
+  - **Tax Relief**: +Happiness, -Income
+  - **Neighborhood Watch**: -Crime, +Citizen participation
+  - **Recycling**: -Pollution, -Waste, +Budget cost
+  - **Tourist Promotion**: +Commercial income, +Traffic
+- [ ] Create ordinance UI
+  - **Ordinance Menu**: List of available ordinances
+  - **Enable/Disable Toggle**: Checkbox for each
+  - **Cost Display**: Monthly budget impact
+  - **Effect Summary**: Pros/cons description
+- [ ] Implement ordinance effects
+  - Apply effects to city stats each update
+  - Show ordinance impact in budget window
+  - Allow stacking multiple ordinances
+
+**New Files**:
+- `src/game/policies/OrdinanceSystem.ts` - Ordinance logic and effects
+- `src/game/policies/OrdinanceDefinitions.ts` - Ordinance data
+- `src/components/game/OrdinanceMenu.tsx` - Ordinance UI
+
+**Modified Files**:
+- `src/game/MainScene.ts` - Apply ordinance effects each cycle
+- `src/game/economy/Budget.ts` - Add ordinance costs
+
+**Estimated Complexity**: ⭐⭐⭐ Medium (4-6 hours)
+
+---
+
+#### 4.3 Natural Disasters
+**Goal**: Add random catastrophic events (earthquake, fire, tornado, flood, meteor)
+
+**Tasks**:
+- [ ] Create disaster types
+  - **Earthquake**: Destroys buildings randomly across city, severity levels
+  - **Tornado**: Destroys buildings in path, moves across map
+  - **Flood**: Destroys buildings in low-lying areas near water
+  - **Fire**: Starts in one building, spreads to neighbors without fire protection
+  - **Meteor Strike**: Destroys buildings in impact radius
+  - **UFO Attack**: Destroys buildings in path (rare, easter egg)
+- [ ] Implement disaster triggers
+  - **Random**: Low probability each month (configurable)
+  - **Player-Triggered**: Option to manually trigger disasters for fun
+  - **Scenario-Based**: Disasters as part of scenario challenges
+- [ ] Build disaster mechanics
+  - **Damage Calculation**: Buildings have health, disasters deal damage
+  - **Spread Logic**: Fire and flood spread to neighbors
+  - **Service Response**: Fire stations fight fires, reduces spread
+  - **Recovery Costs**: Bulldoze rubble, rebuild buildings
+- [ ] Create disaster UI
+  - **Disaster Alert**: Warning popup before disaster
+  - **Disaster Progress**: Show disaster moving/spreading
+  - **Damage Report**: Post-disaster summary (buildings lost, cost)
+- [ ] Add disaster frequency settings
+  - **Off**: No disasters
+  - **Low**: Rare (1% chance per month)
+  - **Medium**: Occasional (5% chance per month)
+  - **High**: Frequent (10% chance per month)
+
+**New Files**:
+- `src/game/disasters/DisasterSystem.ts` - Disaster triggering and execution
+- `src/game/disasters/DisasterTypes.ts` - Disaster definitions
+- `src/game/disasters/DisasterSpread.ts` - Fire/flood spread logic
+- `src/components/game/DisasterAlert.tsx` - Warning UI
+- `src/components/game/DisasterSettings.tsx` - Frequency settings
+
+**Modified Files**:
+- `src/game/MainScene.ts` - Trigger disasters randomly
+- `src/game/services/FireSystem.ts` - Fire response logic
+
+**Estimated Complexity**: ⭐⭐⭐⭐ High (8-10 hours)
+
+---
+
+### Phase 5: Advanced Features - OPTIONAL
+
+#### 5.1 Neighboring Cities & Regions
+**Goal**: Connect multiple cities in a region, trade resources between cities
+
+**Tasks**:
+- [ ] Create region map system
+  - **Region View**: Zoom out to see multiple city tiles
+  - **City Slots**: 4-16 city slots in region
+  - **Interconnections**: Cities can trade with neighbors
+- [ ] Implement resource sharing
+  - **Power Trading**: Sell excess power to neighbors or buy when short
+  - **Water Trading**: Import/export water
+  - **Pricing**: Dynamic prices based on supply/demand
+  - **Trade Routes**: Connect cities with power lines, pipes
+- [ ] Add regional economy
+  - **Regional Budget**: Shared funds pool (optional)
+  - **Regional Projects**: Expensive projects spanning multiple cities (airport, stadium, arcology)
+  - **Regional Competition**: Cities compete for population, businesses
+- [ ] Create city comparison
+  - **Leaderboard**: Rank cities by population, income, mayoral rating
+  - **Statistics**: Compare stats across cities (population, pollution, crime)
+
+**New Files**:
+- `src/game/region/RegionSystem.ts` - Region management
+- `src/game/region/CitySlot.ts` - Individual city data
+- `src/game/region/ResourceTrade.ts` - Inter-city trading
+- `src/components/game/RegionView.tsx` - Region map UI
+- `src/components/game/TradeMenu.tsx` - Trade interface
+
+**Modified Files**:
+- `src/game/MainScene.ts` - Load/save region data
+
+**Estimated Complexity**: ⭐⭐⭐⭐⭐ Very High (12-16 hours)
+
+---
+
+#### 5.2 Multiplayer/Online Features
+**Goal**: Add online features (leaderboards, city sharing, challenges)
+
+**Tasks**:
+- [ ] Create cloud save system
+  - Upload city data to server
+  - Download cities from other players
+  - Requires backend API
+- [ ] Add global leaderboards
+  - Rank cities by population, income, mayoral rating
+  - Filter by scenario, difficulty, date
+- [ ] Implement city sharing
+  - Export city as shareable link
+  - Import other players' cities
+  - Browse featured cities
+- [ ] Create online challenges
+  - Weekly challenges with specific goals
+  - Global participation, leaderboard ranking
+  - Rewards for top players
+
+**New Files**:
+- `src/api/CloudSave.ts` - Cloud save API client
+- `src/api/Leaderboard.ts` - Leaderboard API client
+- `src/components/game/OnlineMenu.tsx` - Online features UI
+
+**Modified Files**:
+- `src/game/MainScene.ts` - Cloud save integration
+
+**Estimated Complexity**: ⭐⭐⭐⭐⭐ Very High (16-20 hours) + Backend
+
+---
+
+## 🎯 RECOMMENDED IMPLEMENTATION ORDER
+
+### Quick Wins (Make It Feel Like SimCity Fast)
+1. **Zoning System** (Phase 1.1) - Core SimCity mechanic, high impact
+2. **Data Overlays** (Phase 2.1) - Visual feedback, essential for strategy
+3. **Query Tool** (Phase 2.2) - Understanding city state, low effort high value
+4. **Budget & Taxes** (Phase 1.2) - Economic gameplay loop
+
+### Medium Priority (Add Depth)
+5. **Service Coverage** (Phase 1.3) - Police, fire, health, education
+6. **Graphs & Charts** (Phase 2.3) - Historical trends
+7. **Advisors** (Phase 3.3) - Guidance and personality
+8. **Pollution** (Phase 3.2) - Environmental challenge
+
+### Long-Term (Complete Experience)
+9. **Utility Networks** (Phase 1.4) - Physical infrastructure (complex)
+10. **Traffic Simulation** (Phase 3.1) - Commuter pathfinding (complex)
+11. **Scenarios** (Phase 4.1) - Goals and progression
+12. **Ordinances** (Phase 4.2) - Strategic policy choices
+13. **Disasters** (Phase 4.3) - Catastrophic events
+
+### Optional Advanced Features
+14. **Regions** (Phase 5.1) - Multi-city gameplay
+15. **Multiplayer** (Phase 5.2) - Online features
+
+---
+
+## 📊 EFFORT ESTIMATION SUMMARY
+
+| **Phase** | **Feature** | **Complexity** | **Time Estimate** | **Impact** |
+|-----------|-------------|----------------|-------------------|------------|
+| 1.1 | Zoning System | ⭐⭐⭐⭐⭐ | 8-12 hours | ⭐⭐⭐⭐⭐ CRITICAL |
+| 1.2 | Budget & Taxes | ⭐⭐⭐⭐ | 6-8 hours | ⭐⭐⭐⭐⭐ CRITICAL |
+| 1.3 | Service Coverage | ⭐⭐⭐⭐⭐ | 10-14 hours | ⭐⭐⭐⭐⭐ CRITICAL |
+| 1.4 | Utility Networks | ⭐⭐⭐⭐⭐ | 12-16 hours | ⭐⭐⭐⭐ HIGH |
+| 2.1 | Data Overlays | ⭐⭐⭐⭐ | 8-10 hours | ⭐⭐⭐⭐⭐ CRITICAL |
+| 2.2 | Query Tool | ⭐⭐⭐ | 4-6 hours | ⭐⭐⭐⭐ HIGH |
+| 2.3 | Graphs & Charts | ⭐⭐⭐ | 6-8 hours | ⭐⭐⭐ MEDIUM |
+| 3.1 | Traffic Simulation | ⭐⭐⭐⭐⭐ | 10-14 hours | ⭐⭐⭐⭐ HIGH |
+| 3.2 | Pollution | ⭐⭐⭐⭐ | 8-10 hours | ⭐⭐⭐ MEDIUM |
+| 3.3 | Advisors | ⭐⭐⭐⭐ | 8-10 hours | ⭐⭐⭐ MEDIUM |
+| 4.1 | Scenarios | ⭐⭐⭐⭐ | 8-10 hours | ⭐⭐⭐ MEDIUM |
+| 4.2 | Ordinances | ⭐⭐⭐ | 4-6 hours | ⭐⭐⭐ MEDIUM |
+| 4.3 | Disasters | ⭐⭐⭐⭐ | 8-10 hours | ⭐⭐ LOW |
+| 5.1 | Regions | ⭐⭐⭐⭐⭐ | 12-16 hours | ⭐⭐ LOW |
+| 5.2 | Multiplayer | ⭐⭐⭐⭐⭐ | 16-20 hours | ⭐⭐ LOW |
+
+**Total Estimated Effort**: 120-160 hours (3-4 weeks full-time)
+
+**Minimum Viable SimCity Experience**: Phases 1.1, 1.2, 2.1, 2.2 = ~26-36 hours (1 week)
+
+---
+
+## 🏗️ ARCHITECTURAL CONSIDERATIONS
+
+### Code Organization
+
+**New Directory Structure**:
+```
+src/
+  game/
+    zones/              # Phase 1.1 - Zoning system
+    economy/            # Phase 1.2 - Budget & taxes
+    services/           # Phase 1.3 - Police, fire, health, education
+    utilities/          # Phase 1.4 - Power/water networks
+    overlays/           # Phase 2.1 - Data map overlays
+    traffic/            # Phase 3.1 - Commuter simulation
+    environment/        # Phase 3.2 - Pollution
+    advisors/           # Phase 3.3 - Advisor AI
+    scenarios/          # Phase 4.1 - Scenarios & objectives
+    policies/           # Phase 4.2 - Ordinances
+    disasters/          # Phase 4.3 - Natural disasters
+    region/             # Phase 5.1 - Multi-city
+    statistics/         # Phase 2.3 - Data history
+  components/
+    game/               # Game UI components
+    overlays/           # Overlay visualization components
+    charts/             # Graph components
+  api/                  # Phase 5.2 - Online features
+```
+
+### Design Patterns
+
+1. **System Architecture**: Continue ECS-like pattern
+   - Each major feature is a system (ZoneSystem, BudgetSystem, etc.)
+   - Systems update independently each game tick
+   - Systems communicate via events
+
+2. **Data-Driven Design**: All game content in config files
+   - Zone definitions in `ZoneTypes.ts`
+   - Building definitions in `BuildingRegistry.ts`
+   - Ordinance definitions in `OrdinanceDefinitions.ts`
+
+3. **Overlay System**: Reusable base class
+   - `BaseOverlay` with render method
+   - Each overlay type extends base
+   - Overlays can be toggled on/off independently
+
+4. **Advisor System**: AI-driven feedback
+   - Each advisor monitors specific domain
+   - Advisors generate messages based on thresholds
+   - Prioritize critical issues
+
+5. **Network System**: Graph-based connectivity
+   - Power/water networks use pathfinding
+   - Check connectivity from source to destination
+   - Visualize networks with line rendering
+
+### Performance Optimization
+
+**Potential Bottlenecks**:
+- Zoning auto-growth checks (every zone every tick)
+- Traffic pathfinding (every commuter every day)
+- Pollution spread calculations (diffusion every tile)
+- Overlay rendering (48x48 tiles every frame)
+
+**Optimization Strategies**:
+- **Throttling**: Update zones in batches, not all at once
+- **Spatial Partitioning**: Only check zones/tiles in active view
+- **Caching**: Cache pathfinding results, overlay data
+- **LOD**: Lower detail when zoomed out
+- **Web Workers**: Offload heavy calculations (pathfinding, pollution spread) to background threads
+
+---
+
+## 🚧 MIGRATION STRATEGY
+
+### Handling Existing Features
+
+**Current Resource System**:
+- Keep resource system (scrap, food, water, caps) for wasteland theme
+- Add parallel budget system for SimCity-style economics
+- Resources = survival, Budget = city management
+- Both systems coexist
+
+**Current Buildings**:
+- Categorize existing buildings into zones
+  - Scrap Shack, Bunker, Apartments → Residential zone buildings
+  - Trading Post, Market Tent → Commercial zone buildings
+  - Scavenging Station, Hydroponic Farm → Industrial zone buildings (wasteland-themed)
+- Add new service buildings (police, fire, school, hospital)
+- Keep existing buildings as manual-place options
+
+**Current Population System**:
+- Adapt happiness-based growth to work with zones
+- Keep death mechanics (starvation, dehydration) for survival mode
+- Add normal death rate for non-survival mode
+- Population in zones auto-grows, housing buildings still have capacity
+
+**Current Worker System**:
+- Keep priority-based worker allocation for production buildings
+- Add employment system for zones (jobs vs workers)
+- Workers in zones = abstract (no manual assignment)
+
+**Backward Compatibility**:
+- Load old saves in "legacy mode" (no zones, manual buildings only)
+- Option to convert old city to new zoning system
+- Save format version number for migration
+
+---
+
+## 🎨 THEME INTEGRATION
+
+### Maintaining Wasteland Aesthetic
+
+**SimCity + Fallout Fusion**:
+- **Zones**: Radioactive zones (industrial), Shantytown (residential), Trader camps (commercial)
+- **Services**: Militia (police), Fire brigade (fire), Medic station (hospital), School tent (education)
+- **Utilities**: Makeshift grid (power), Purified water (water), Scrap pipes (sewage)
+- **Advisors**: Vault Dweller personas (Overseer = Financial, Security Chief = Safety, Engineer = Utilities, Caravan Master = Trade)
+- **Disasters**: Radstorms, raider attacks, super mutant invasions, rad-scorpion infestations
+- **Overlays**: Radiation levels (pollution), Raider threat (crime), Salvage value (land value)
+
+**Visual Style**:
+- Keep Fallout-inspired terminal UI (phosphor green text)
+- Add SimCity-style data maps with wasteland color palette (browns, greens, oranges)
+- Isometric buildings with weathered/rusted textures
+- Advisors rendered as pip-boy style portraits
+
+---
+
+## 🏁 SUCCESS CRITERIA
+
+**Definition of "More Like SimCity"**:
+
+### Minimum Viable Product (MVP)
+✅ Zoning system with RCI zones and auto-growth
+✅ Budget system with taxes and monthly cycle
+✅ Data overlays showing at least 5 stats (power, water, crime, land value, traffic)
+✅ Query tool for inspecting buildings/zones
+✅ Service buildings with coverage (police, fire, hospital, school)
+
+### Full SimCity Experience
+✅ All MVP features
+✅ Utility networks (power lines, water pipes) with coverage zones
+✅ Traffic simulation with congestion calculation
+✅ Advisors providing guidance
+✅ Graphs showing historical trends
+✅ Pollution system with environmental impact
+✅ Scenarios with objectives and win conditions
+✅ Ordinances affecting gameplay
+
+### Feature Parity with SimCity 2000
+✅ Full SimCity Experience
+✅ Natural disasters
+✅ Multiple building unlock tiers
+✅ Underground view (pipes, subway)
+✅ Neighboring cities and trade
+✅ Mayoral rating system
+✅ Newspaper/event summaries
+
+---
+
+## 📝 NEXT STEPS
+
+### Immediate Actions
+
+1. **Confirm Scope**: Decide which phases to implement
+   - MVP only? (Phases 1.1, 1.2, 2.1, 2.2)
+   - Full experience? (Phases 1-4)
+   - Feature parity? (All phases)
+
+2. **Prioritize Features**: Choose starting point
+   - Recommendation: Start with Phase 1.1 (Zoning) - highest impact
+
+3. **Create Tasks**: Break down chosen phase into subtasks
+   - Use TodoWrite tool to track implementation
+
+4. **Prototype**: Build simple version of core feature first
+   - Test with minimal UI
+   - Validate gameplay before polish
+
+5. **Iterate**: Add features incrementally
+   - Test after each feature
+   - Get feedback
+   - Adjust priorities
+
+### Questions to Answer
+
+- **Scope**: How much SimCity do you want? MVP, full, or parity?
+- **Theme**: Pure SimCity or keep wasteland theme?
+- **Priority**: Which feature is most important to you?
+- **Timeline**: What's the development timeline?
+- **Team**: Solo developer or team? (affects estimates)
+
+---
+
+## 🎯 CONCLUSION
+
+**Current State**: Wasteland Rebuilders is a solid resource management settlement builder (~28% SimCity overlap)
+
+**Gap Analysis**: Missing core SimCity systems:
+- Zoning (0%)
+- Budget/Taxes (0%)
+- Service coverage (10%)
+- Data overlays (0%)
+- Utility networks (20%)
+- Traffic simulation (10%)
+- Advisors (0%)
+
+**Transformation Path**: 3 main approaches:
+
+1. **SimCity Lite** (MVP): Add zoning, budget, overlays, query tool (~26-36 hours)
+   - Feels like SimCity, lighter scope
+   - Playable in 1 week
+
+2. **SimCity Standard** (Full): Add all Phase 1-4 features (~100-130 hours)
+   - Complete SimCity experience
+   - 3-4 weeks full-time
+
+3. **SimCity+** (Parity): All features including regions, multiplayer (~120-160 hours)
+   - Exceeds classic SimCity
+   - 4-5 weeks full-time
+
+**Recommendation**: Start with **SimCity Lite MVP** (Phase 1.1, 1.2, 2.1, 2.2) to validate core loop, then expand based on feedback.
+
+---
+
+*Audit completed 2026-01-12*
+*Next: Decide scope and begin implementation*
+
