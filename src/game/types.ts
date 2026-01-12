@@ -52,6 +52,26 @@ export enum ToolType {
   ZoneCommercial = "zoneCommercial",
   ZoneIndustrial = "zoneIndustrial",
   Dezone = "dezone",
+  // Query tool
+  Query = "query",
+}
+
+/**
+ * Overlay types for data visualization (SimCity-style data maps)
+ */
+export enum OverlayType {
+  None = "none",
+  Power = "power",           // Power coverage (green = powered, red = no power)
+  Water = "water",           // Water coverage (blue = water, red = no water)
+  Radiation = "radiation",   // Radiation levels (green = safe, yellow/red = dangerous)
+  Crime = "crime",           // Crime/raider threat (green = safe, red = high threat)
+  Fire = "fire",             // Fire hazard (green = protected, red = high risk)
+  Happiness = "happiness",   // Happiness/satisfaction (green = happy, red = unhappy)
+  Population = "population", // Population density (gradient based on density)
+  LandValue = "landValue",   // Land/salvage value (green = high value, red = low)
+  ZoneDemand = "zoneDemand", // RCI zone demand (shows which zones are needed)
+  Traffic = "traffic",       // Traffic density (green = clear, red = congested)
+  Employment = "employment", // Job availability (green = jobs available, red = unemployment)
 }
 
 export interface GridCell {
@@ -68,6 +88,8 @@ export interface GridCell {
   zoneType?: ZoneType;
   zoneDensity?: ZoneDensity;
   zoneDevelopmentLevel?: number; // 0-100, affects automatic building growth
+  // Overlay data (computed by OverlaySystem)
+  overlayData?: OverlayData;
 }
 
 export enum Direction {
@@ -261,6 +283,62 @@ export interface ZoneStats {
   averageDevelopmentLevel: number; // Average development progress (0-100)
 }
 
+/**
+ * Overlay data for a single grid cell
+ * Values typically range from 0 (none/bad) to 100 (full/good)
+ */
+export interface OverlayData {
+  power?: number;        // 0-100: Power coverage percentage
+  water?: number;        // 0-100: Water coverage percentage
+  radiation?: number;    // 0-100: Radiation level (higher = worse)
+  crime?: number;        // 0-100: Crime/threat level (higher = worse)
+  fire?: number;         // 0-100: Fire hazard level (higher = worse)
+  happiness?: number;    // 0-100: Happiness level
+  population?: number;   // Actual population count on this tile
+  landValue?: number;    // 0-100: Land/salvage value
+  traffic?: number;      // 0-100: Traffic density (higher = more congested)
+  employment?: number;   // 0-100: Employment availability (higher = more jobs)
+}
+
+/**
+ * Historical data point for graphs
+ */
+export interface HistoricalDataPoint {
+  timestamp: number;     // Game time in seconds
+  population: number;
+  happiness: number;
+  resources: Partial<Resources>;
+  zoneDemand?: ZoneDemand;
+  income?: number;       // For budget system
+  expenses?: number;     // For budget system
+}
+
+/**
+ * Query result for a grid cell (when using Query tool)
+ */
+export interface QueryResult {
+  x: number;
+  y: number;
+  tileType: TileType;
+  building?: {
+    id: string;
+    name: string;
+    category: BuildingCategory;
+    produces?: ResourceRate;
+    consumes?: ResourceRate;
+    workersAssigned?: number;
+    workersRequired?: number;
+    status?: string;
+  };
+  zone?: {
+    type: ZoneType;
+    density: ZoneDensity;
+    developmentLevel: number;
+  };
+  overlayData?: OverlayData;
+  issues?: string[];     // List of problems (e.g., "No power", "High crime")
+}
+
 export interface BuildingDefinition {
   id: string;
   name: string;
@@ -310,6 +388,10 @@ export interface GameState {
     commercial: ZoneStats;
     industrial: ZoneStats;
   };
+  // Overlay system state
+  activeOverlay?: OverlayType;
+  // Historical data for graphs
+  historicalData?: HistoricalDataPoint[];
 }
 
 // Isometric constants - matching original repo (44x22)

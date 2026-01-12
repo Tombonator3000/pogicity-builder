@@ -1,11 +1,12 @@
 import Phaser from 'phaser';
-import { Car, Character, CharacterType, Direction, GridCell, TileType } from '../types';
+import { Car, Character, CharacterType, Direction, GridCell, TileType, OverlayType } from '../types';
 import { COLOR_PALETTE, GRID_CONFIG, RENDER_CONFIG } from '../config';
 import { calculateDepth, getSnowTextureKey, gridToScreen } from '../utils/GridUtils';
 import { directionToShortString, directionToString } from '../utils/DirectionUtils';
 import { getBuilding, getBuildingFootprint } from '../buildings';
 import { CharacterAnimationManager } from '../GifLoader';
 import { GameSystem } from './GameSystem';
+import type { OverlaySystem } from './OverlaySystem';
 
 /**
  * Rendering system
@@ -20,6 +21,7 @@ export class RenderSystem implements GameSystem {
   private buildingSprites: Map<string, Phaser.GameObjects.Image> = new Map();
   private carSprites: Map<string, Phaser.GameObjects.Sprite> = new Map();
   private characterSprites: Map<string, Phaser.GameObjects.Image> = new Map();
+  private overlayGraphics: Map<string, Phaser.GameObjects.Graphics> = new Map();
 
   // Character animation
   private characterAnimationManager: CharacterAnimationManager | null = null;
@@ -27,6 +29,9 @@ export class RenderSystem implements GameSystem {
     string,
     { frameIndex: number; elapsed: number; lastDir: string }
   > = new Map();
+
+  // Overlay system reference
+  private overlaySystem?: OverlaySystem;
 
   init(scene: Phaser.Scene): void {
     this.scene = scene;
@@ -46,6 +51,13 @@ export class RenderSystem implements GameSystem {
   }
 
   /**
+   * Sets the overlay system reference
+   */
+  setOverlaySystem(overlaySystem: OverlaySystem): void {
+    this.overlaySystem = overlaySystem;
+  }
+
+  /**
    * Renders the entire grid (tiles and buildings)
    */
   renderGrid(): void {
@@ -54,6 +66,8 @@ export class RenderSystem implements GameSystem {
     this.tileSprites.clear();
     this.buildingSprites.forEach((sprite) => sprite.destroy());
     this.buildingSprites.clear();
+    this.overlayGraphics.forEach((graphics) => graphics.destroy());
+    this.overlayGraphics.clear();
 
     // Render tiles
     for (let y = 0; y < GRID_CONFIG.height; y++) {
@@ -112,6 +126,8 @@ export class RenderSystem implements GameSystem {
     this.carSprites.clear();
     this.characterSprites.forEach((sprite) => sprite.destroy());
     this.characterSprites.clear();
+    this.overlayGraphics.forEach((graphics) => graphics.destroy());
+    this.overlayGraphics.clear();
     this.characterAnimationFrames.clear();
   }
 
@@ -151,6 +167,14 @@ export class RenderSystem implements GameSystem {
     // Render zone overlay if this is a zone tile
     if (cell.type === TileType.Zone && cell.zoneType) {
       this.renderZoneOverlay(x, y, cell);
+    }
+
+    // Render data overlay if an overlay is active
+    if (this.overlaySystem) {
+      const activeOverlay = this.overlaySystem.getActiveOverlay();
+      if (activeOverlay !== OverlayType.None) {
+        this.renderDataOverlay(x, y, cell, activeOverlay);
+      }
     }
 
     // Render building if this is the origin
@@ -306,6 +330,54 @@ export class RenderSystem implements GameSystem {
 
     // Set proper depth
     graphics.setDepth(calculateDepth(x, y, RENDER_CONFIG.layers.tile + 0.01));
+  }
+
+  /**
+   * Renders data overlay visualization (heatmap style)
+   */
+  private renderDataOverlay(x: number, y: number, cell: GridCell, overlayType: OverlayType): void {
+    if (!this.overlaySystem) return;
+
+    const value = this.overlaySystem.getOverlayValue(cell);
+    if (value === 0 && overlayType !== OverlayType.ZoneDemand) {
+      return; // Don't render empty overlays (except zone demand)
+    }
+
+    const screenPos = gridToScreen(x, y);
+    const key = `overlay_${x}_${y}`;
+
+    // Reuse or create graphics object
+    let graphics = this.overlayGraphics.get(key);
+    if (!graphics) {
+      graphics = this.scene.add.graphics();
+      this.overlayGraphics.set(key, graphics);
+    } else {
+      graphics.clear();
+    }
+
+    // Define isometric tile diamond shape
+    const points = [
+      { x: screenPos.x, y: screenPos.y - GRID_CONFIG.tileHeight / 2 },
+      { x: screenPos.x + GRID_CONFIG.tileWidth / 2, y: screenPos.y },
+      { x: screenPos.x, y: screenPos.y + GRID_CONFIG.tileHeight / 2 },
+      { x: screenPos.x - GRID_CONFIG.tileWidth / 2, y: screenPos.y },
+    ];
+
+    // Get color based on value and overlay type
+    const color = this.overlaySystem.getOverlayColor(value, overlayType);
+
+    // Draw semi-transparent heatmap overlay
+    graphics.fillStyle(color, 0.4);
+    graphics.beginPath();
+    graphics.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) {
+      graphics.lineTo(points[i].x, points[i].y);
+    }
+    graphics.closePath();
+    graphics.fillPath();
+
+    // Set proper depth (above zone overlay, below buildings)
+    graphics.setDepth(calculateDepth(x, y, RENDER_CONFIG.layers.tile + 0.02));
   }
 
   // ============================================
