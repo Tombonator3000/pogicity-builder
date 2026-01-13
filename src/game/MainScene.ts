@@ -636,9 +636,9 @@ export class MainScene extends Phaser.Scene {
     // Phase 4: Disaster system event listeners
     this.events.on('disaster:getBuildingsInRadius', (data: { epicenter: { x: number; y: number }; radius: number; buildings: string[] }) => {
       // Find all buildings within radius of epicenter
-      for (let x = 0; x < this.grid.length; x++) {
-        for (let y = 0; y < this.grid[x].length; y++) {
-          const cell = this.grid[x][y];
+      for (let y = 0; y < this.grid.length; y++) {
+        for (let x = 0; x < this.grid[y].length; x++) {
+          const cell = this.grid[y][x];
           if (cell.buildingId && cell.isOrigin) {
             // Calculate distance to epicenter
             const dx = x - data.epicenter.x;
@@ -655,9 +655,9 @@ export class MainScene extends Phaser.Scene {
 
     this.events.on('building:getPosition', (data: { buildingId: string; position: { x: number; y: number } }) => {
       // Find building position in grid
-      for (let x = 0; x < this.grid.length; x++) {
-        for (let y = 0; y < this.grid[x].length; y++) {
-          const cell = this.grid[x][y];
+      for (let y = 0; y < this.grid.length; y++) {
+        for (let x = 0; x < this.grid[y].length; x++) {
+          const cell = this.grid[y][x];
           if (cell.buildingId === data.buildingId && cell.isOrigin) {
             data.position.x = x;
             data.position.y = y;
@@ -668,8 +668,8 @@ export class MainScene extends Phaser.Scene {
     });
 
     this.events.on('disaster:getGridSize', (data: { width: number; height: number }) => {
-      data.width = this.grid.length;
-      data.height = this.grid[0]?.length || 0;
+      data.width = this.grid[0]?.length || 0;
+      data.height = this.grid.length;
     });
 
     this.events.on('building:checkRepairCost', (data: { buildingId: string; cost: any; result: { canAfford: boolean } }) => {
