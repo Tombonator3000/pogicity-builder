@@ -6,6 +6,7 @@ import { ResourcePanel } from "./ResourcePanel";
 import { WorkerPanel } from "./WorkerPanel";
 import { BudgetPanel } from "./BudgetPanel";
 import { ServicePanel } from "./ServicePanel";
+import { UtilitiesPanel } from "./UtilitiesPanel";
 import { MainMenu } from "./MainMenu";
 import { EventModal } from "./EventModal";
 import { EventLog } from "./EventLog";
@@ -31,10 +32,11 @@ import {
   removeBuilding,
   eraseTile,
 } from "@/utils/buildingPlacementUtils";
-import { Save, FolderOpen, ZoomIn, ZoomOut, Trash2, Home, MapPin, User, Car, RotateCw, Square, CircleDot, Menu, Map, ArrowRightLeft, Landmark, House, Store, Factory as FactoryIcon, DollarSign, Shield } from "lucide-react";
+import { Save, FolderOpen, ZoomIn, ZoomOut, Trash2, Home, MapPin, User, Car, RotateCw, Square, CircleDot, Menu, Map, ArrowRightLeft, Landmark, House, Store, Factory as FactoryIcon, DollarSign, Shield, Zap, Droplet, Cable, Waves } from "lucide-react";
 import { toast } from "sonner";
 import type { BudgetState, TaxRates } from "@/game/systems/BudgetSystem";
 import type { ServiceStats } from "@/game/systems/ServiceCoverageSystem";
+import type { UtilityStats, UtilityType } from "@/game/systems/UtilitiesNetworkSystem";
 
 const STORAGE_KEY = "city-builder-save";
 
@@ -145,6 +147,25 @@ export function GameUI() {
     averageCoverage: { police: 0, fire: 0, health: 0, education: 0, landValue: 0 },
     coveredTiles: 0,
     uncoveredTiles: 0,
+  });
+
+  // Utilities network state
+  const [showUtilitiesPanel, setShowUtilitiesPanel] = useState(false);
+  const [utilityStats, setUtilityStats] = useState<UtilityStats>({
+    totalPowerLines: 0,
+    totalWaterPipes: 0,
+    totalPowerPoles: 0,
+    totalWaterTowers: 0,
+    powerNetworks: 0,
+    waterNetworks: 0,
+    buildingsWithPower: 0,
+    buildingsWithWater: 0,
+    buildingsWithoutPower: 0,
+    buildingsWithoutWater: 0,
+    totalPowerOutput: 0,
+    totalPowerDemand: 0,
+    totalWaterOutput: 0,
+    totalWaterDemand: 0,
   });
 
   const handleGridChange = useCallback((newGrid: GridCell[][]) => {
@@ -371,8 +392,71 @@ export function GameUI() {
     });
   }, [placeRoadSegmentsOnGrid, updateRoadPatternsForSegments]);
 
+  /**
+   * Handles utility placement via drag operation
+   * Places power lines, water pipes, poles, and towers through UtilitiesNetworkSystem
+   */
+  const handleUtilityPlacement = useCallback((tiles: Array<{ x: number; y: number }>, tool: ToolType) => {
+    // Map tool type to utility type
+    const utilityTypeMap: Record<string, UtilityType> = {
+      [ToolType.PowerLine]: "power_line" as UtilityType,
+      [ToolType.WaterPipe]: "water_pipe" as UtilityType,
+      [ToolType.PowerPole]: "power_pole" as UtilityType,
+      [ToolType.WaterTower]: "water_tower" as UtilityType,
+    };
+
+    // Utility costs (from UtilitiesNetworkSystem)
+    const utilityCosts: Record<UtilityType, { scrap: number; caps: number }> = {
+      power_line: { scrap: 2, caps: 0 },
+      water_pipe: { scrap: 3, caps: 0 },
+      power_pole: { scrap: 10, caps: 5 },
+      water_tower: { scrap: 15, caps: 10 },
+    };
+
+    const utilityType = utilityTypeMap[tool];
+    if (!utilityType) return;
+
+    const cost = utilityCosts[utilityType];
+    const scene = gameRef.current?.scene;
+    if (!scene) return;
+
+    // Try to place utilities on each tile
+    for (const tile of tiles) {
+      const { x, y } = tile;
+      if (x < 0 || x >= GRID_WIDTH || y < 0 || y >= GRID_HEIGHT) continue;
+
+      // Check if utility already exists at this location
+      const existing = scene.getUtilityAt(x, y);
+      if (existing) continue;
+
+      // Check resources
+      if (resources.scrap < cost.scrap || resources.caps < cost.caps) {
+        toast.error(`Not enough resources! Need ${cost.scrap} Scrap${cost.caps > 0 ? ` and ${cost.caps} Caps` : ''}`);
+        return;
+      }
+
+      // Place utility through MainScene
+      const success = scene.placeUtility(x, y, utilityType);
+      if (success) {
+        // Deduct resources
+        setResources((prev) => ({
+          ...prev,
+          scrap: prev.scrap - cost.scrap,
+          caps: prev.caps - cost.caps,
+        }));
+      }
+    }
+  }, [resources]);
+
   const handleTilesDrag = useCallback((tiles: Array<{ x: number; y: number }>) => {
     const tool = currentToolRef.current; // Use ref for current tool
+
+    // Handle utility placement separately (not grid state)
+    if (tool === ToolType.PowerLine || tool === ToolType.WaterPipe ||
+        tool === ToolType.PowerPole || tool === ToolType.WaterTower) {
+      handleUtilityPlacement(tiles, tool);
+      return;
+    }
 
     setGrid((prevGrid) => {
       const newGrid = prevGrid.map((row) => row.map((cell) => ({ ...cell })));
@@ -541,17 +625,19 @@ export function GameUI() {
         setBudgetState(budgetData);
       };
 
-      // Poll budget and service data periodically
+      // Poll budget, service, and utilities data periodically
       const pollInterval = setInterval(() => {
         const budget = scene.getBudgetState?.();
         const taxes = scene.getTaxRates?.();
         const timeLeft = scene.getTimeUntilNextBudgetCycle?.();
         const services = scene.getServiceStats?.();
+        const utilities = scene.getUtilitiesStats?.();
 
         if (budget) setBudgetState(budget);
         if (taxes) setTaxRates(taxes);
         if (typeof timeLeft === 'number') setTimeUntilNextCycle(timeLeft);
         if (services) setServiceStats(services);
+        if (utilities) setUtilityStats(utilities);
       }, 1000);
 
       scene.events.on('resources:changed', handleResourceChange);
@@ -698,6 +784,31 @@ export function GameUI() {
             isActive={currentTool === ToolType.Dezone}
             onClick={() => handleToolChange(ToolType.Dezone)}
           />
+          <div className="w-px bg-border mx-1" />
+          <ToolButton
+            icon={<Cable className="w-5 h-5" />}
+            label="Power Line"
+            isActive={currentTool === ToolType.PowerLine}
+            onClick={() => handleToolChange(ToolType.PowerLine)}
+          />
+          <ToolButton
+            icon={<Zap className="w-5 h-5" />}
+            label="Power Pole"
+            isActive={currentTool === ToolType.PowerPole}
+            onClick={() => handleToolChange(ToolType.PowerPole)}
+          />
+          <ToolButton
+            icon={<Waves className="w-5 h-5" />}
+            label="Water Pipe"
+            isActive={currentTool === ToolType.WaterPipe}
+            onClick={() => handleToolChange(ToolType.WaterPipe)}
+          />
+          <ToolButton
+            icon={<Droplet className="w-5 h-5" />}
+            label="Water Tower"
+            isActive={currentTool === ToolType.WaterTower}
+            onClick={() => handleToolChange(ToolType.WaterTower)}
+          />
         </div>
       </div>
 
@@ -728,6 +839,11 @@ export function GameUI() {
       {/* Service Coverage Panel */}
       {showServicePanel && (
         <ServicePanel serviceStats={serviceStats} />
+      )}
+
+      {/* Utilities Network Panel */}
+      {showUtilitiesPanel && (
+        <UtilitiesPanel utilityStats={utilityStats} />
       )}
 
       {/* Building Panel with Rotate button */}
@@ -785,6 +901,12 @@ export function GameUI() {
             label="Services"
             isActive={showServicePanel}
             onClick={() => setShowServicePanel(!showServicePanel)}
+          />
+          <ToolButton
+            icon={<Zap className="w-5 h-5" />}
+            label="Utilities"
+            isActive={showUtilitiesPanel}
+            onClick={() => setShowUtilitiesPanel(!showUtilitiesPanel)}
           />
           <div className="w-px bg-border mx-1" />
           <ToolButton icon={<Map className="w-5 h-5" />} label="Region" onClick={() => setShowRegionView(true)} />
