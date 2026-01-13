@@ -7,6 +7,9 @@ import { WorkerPanel } from "./WorkerPanel";
 import { MainMenu } from "./MainMenu";
 import { EventModal } from "./EventModal";
 import { EventLog } from "./EventLog";
+import { RegionView } from "./RegionView";
+import { TradeMenu } from "./TradeMenu";
+import { RegionalProjectsPanel } from "./RegionalProjectsPanel";
 import { GridCell, TileType, ToolType, GRID_WIDTH, GRID_HEIGHT, BuildingDefinition, Direction, Resources, WorkerAssignment, GameEvent } from "@/game/types";
 import { getBuilding, getBuildingFootprint } from "@/game/buildings";
 import {
@@ -25,7 +28,7 @@ import {
   removeBuilding,
   eraseTile,
 } from "@/utils/buildingPlacementUtils";
-import { Save, FolderOpen, ZoomIn, ZoomOut, Trash2, Home, MapPin, User, Car, RotateCw, Square, CircleDot, Menu } from "lucide-react";
+import { Save, FolderOpen, ZoomIn, ZoomOut, Trash2, Home, MapPin, User, Car, RotateCw, Square, CircleDot, Menu, Map, ArrowRightLeft, Landmark } from "lucide-react";
 import { toast } from "sonner";
 
 const STORAGE_KEY = "city-builder-save";
@@ -52,6 +55,9 @@ export function GameUI() {
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
   const [buildingOrientation, setBuildingOrientation] = useState<Direction>(Direction.Down);
   const [showBuildingPanel, setShowBuildingPanel] = useState(false);
+  const [showRegionView, setShowRegionView] = useState(false);
+  const [showTradeMenu, setShowTradeMenu] = useState(false);
+  const [showRegionalProjects, setShowRegionalProjects] = useState(false);
   const [zoom, setZoom] = useState(1);
   const gameRef = useRef<PhaserGameRef>(null);
 
@@ -612,6 +618,11 @@ export function GameUI() {
         <div className="game-panel flex gap-1 p-2">
           <ToolButton icon={<User className="w-5 h-5" />} label="Spawn Person" onClick={() => gameRef.current?.spawnCharacter()} />
           <ToolButton icon={<Car className="w-5 h-5" />} label="Spawn Car" onClick={() => gameRef.current?.spawnCar()} />
+          <div className="w-px bg-border mx-1" />
+          <ToolButton icon={<Map className="w-5 h-5" />} label="Region" onClick={() => setShowRegionView(true)} />
+          <ToolButton icon={<ArrowRightLeft className="w-5 h-5" />} label="Trade" onClick={() => setShowTradeMenu(true)} />
+          <ToolButton icon={<Landmark className="w-5 h-5" />} label="Projects" onClick={() => setShowRegionalProjects(true)} />
+          <div className="w-px bg-border mx-1" />
           <ToolButton icon={<Save className="w-5 h-5" />} label="Save" onClick={handleSave} />
           <ToolButton icon={<FolderOpen className="w-5 h-5" />} label="Load" onClick={handleLoad} />
         </div>
@@ -643,6 +654,30 @@ export function GameUI() {
         onChoice={handleEventChoice}
         onDismiss={handleEventDismiss}
       />
+
+      {/* Region Management */}
+      {showRegionView && (
+        <RegionView
+          gameRef={gameRef}
+          onClose={() => setShowRegionView(false)}
+        />
+      )}
+
+      {/* Trade Menu */}
+      {showTradeMenu && (
+        <TradeMenu
+          gameRef={gameRef}
+          onClose={() => setShowTradeMenu(false)}
+        />
+      )}
+
+      {/* Regional Projects */}
+      {showRegionalProjects && (
+        <RegionalProjectsPanel
+          gameRef={gameRef}
+          onClose={() => setShowRegionalProjects(false)}
+        />
+      )}
     </div>
   );
 }
