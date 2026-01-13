@@ -12,6 +12,7 @@ export * from './ResourceSystem';
 export * from './ZoningSystem';
 export * from './BudgetSystem';
 export * from './ServiceCoverageSystem';
+export * from './UtilitiesNetworkSystem';
 export * from './OverlaySystem';
 export * from './HistorySystem';
 export * from './TrafficSystem';

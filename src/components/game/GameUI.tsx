@@ -4,6 +4,8 @@ import { ToolButton } from "./ToolButton";
 import { BuildingPanel } from "./BuildingPanel";
 import { ResourcePanel } from "./ResourcePanel";
 import { WorkerPanel } from "./WorkerPanel";
+import { BudgetPanel } from "./BudgetPanel";
+import { ServicePanel } from "./ServicePanel";
 import { MainMenu } from "./MainMenu";
 import { EventModal } from "./EventModal";
 import { EventLog } from "./EventLog";
@@ -29,8 +31,10 @@ import {
   removeBuilding,
   eraseTile,
 } from "@/utils/buildingPlacementUtils";
-import { Save, FolderOpen, ZoomIn, ZoomOut, Trash2, Home, MapPin, User, Car, RotateCw, Square, CircleDot, Menu, Map, ArrowRightLeft, Landmark, House, Store, Factory as FactoryIcon } from "lucide-react";
+import { Save, FolderOpen, ZoomIn, ZoomOut, Trash2, Home, MapPin, User, Car, RotateCw, Square, CircleDot, Menu, Map, ArrowRightLeft, Landmark, House, Store, Factory as FactoryIcon, DollarSign, Shield } from "lucide-react";
 import { toast } from "sonner";
+import type { BudgetState, TaxRates } from "@/game/systems/BudgetSystem";
+import type { ServiceStats } from "@/game/systems/ServiceCoverageSystem";
 
 const STORAGE_KEY = "city-builder-save";
 
@@ -112,6 +116,37 @@ export function GameUI() {
   // Event system state
   const [currentEvent, setCurrentEvent] = useState<GameEvent | null>(null);
   const [eventHistory, setEventHistory] = useState<GameEvent[]>([]);
+
+  // Budget system state
+  const [showBudgetPanel, setShowBudgetPanel] = useState(false);
+  const [budgetState, setBudgetState] = useState<BudgetState>({
+    income: { residential: 0, commercial: 0, industrial: 0, services: 0, infrastructure: 0, maintenance: 0 },
+    expenses: { residential: 0, commercial: 0, industrial: 0, services: 0, infrastructure: 0, maintenance: 0 },
+    netIncome: 0,
+    balance: 0,
+    debt: 0,
+    lastUpdate: Date.now(),
+  });
+  const [taxRates, setTaxRates] = useState<TaxRates>({
+    residential: 7,
+    commercial: 7,
+    industrial: 7,
+  });
+  const [timeUntilNextCycle, setTimeUntilNextCycle] = useState(30000);
+
+  // Service coverage state
+  const [showServicePanel, setShowServicePanel] = useState(false);
+  const [serviceStats, setServiceStats] = useState<ServiceStats>({
+    totalPoliceStations: 0,
+    totalFireStations: 0,
+    totalHealthFacilities: 0,
+    totalSchools: 0,
+    totalParks: 0,
+    averageCoverage: { police: 0, fire: 0, health: 0, education: 0, landValue: 0 },
+    coveredTiles: 0,
+    uncoveredTiles: 0,
+  });
+
   const handleGridChange = useCallback((newGrid: GridCell[][]) => {
     setGrid(newGrid);
   }, []);
@@ -502,14 +537,34 @@ export function GameUI() {
         }
       };
 
+      const handleBudgetCycle = (budgetData: BudgetState) => {
+        setBudgetState(budgetData);
+      };
+
+      // Poll budget and service data periodically
+      const pollInterval = setInterval(() => {
+        const budget = scene.getBudgetState?.();
+        const taxes = scene.getTaxRates?.();
+        const timeLeft = scene.getTimeUntilNextBudgetCycle?.();
+        const services = scene.getServiceStats?.();
+
+        if (budget) setBudgetState(budget);
+        if (taxes) setTaxRates(taxes);
+        if (typeof timeLeft === 'number') setTimeUntilNextCycle(timeLeft);
+        if (services) setServiceStats(services);
+      }, 1000);
+
       scene.events.on('resources:changed', handleResourceChange);
       scene.events.on('workers:changed', handleWorkerChange);
       scene.events.on('event:triggered', handleEventTriggered);
+      scene.events.on('budget:cycle', handleBudgetCycle);
 
       return () => {
         scene.events.off('resources:changed', handleResourceChange);
         scene.events.off('workers:changed', handleWorkerChange);
         scene.events.off('event:triggered', handleEventTriggered);
+        scene.events.off('budget:cycle', handleBudgetCycle);
+        clearInterval(pollInterval);
       };
     };
 
@@ -536,6 +591,27 @@ export function GameUI() {
     }
     setCurrentEvent(null);
   }, [currentEvent]);
+
+  // Budget handlers
+  const handleTaxRateChange = useCallback((category: keyof TaxRates, rate: number) => {
+    const scene = gameRef.current?.getScene();
+    if (scene && scene.setTaxRate) {
+      scene.setTaxRate(category, rate);
+      setTaxRates(prev => ({ ...prev, [category]: rate }));
+    }
+  }, []);
+
+  const handleTakeLoan = useCallback((amount: number) => {
+    const scene = gameRef.current?.getScene();
+    if (scene && scene.takeLoan) {
+      const success = scene.takeLoan(amount);
+      if (success) {
+        toast.success(`Loan approved: ${amount} caps`);
+      } else {
+        toast.error("Loan denied - already at maximum debt");
+      }
+    }
+  }, []);
 
   // Show main menu
   if (showMenu) {
@@ -638,6 +714,22 @@ export function GameUI() {
         assignments={workerAssignments}
       />
 
+      {/* Budget Panel */}
+      {showBudgetPanel && (
+        <BudgetPanel
+          budgetState={budgetState}
+          taxRates={taxRates}
+          timeUntilNextCycle={timeUntilNextCycle}
+          onTaxRateChange={handleTaxRateChange}
+          onTakeLoan={handleTakeLoan}
+        />
+      )}
+
+      {/* Service Coverage Panel */}
+      {showServicePanel && (
+        <ServicePanel serviceStats={serviceStats} />
+      )}
+
       {/* Building Panel with Rotate button */}
       <BuildingPanel
         isOpen={showBuildingPanel}
@@ -681,6 +773,19 @@ export function GameUI() {
         <div className="game-panel flex gap-1 p-2">
           <ToolButton icon={<User className="w-5 h-5" />} label="Spawn Person" onClick={() => gameRef.current?.spawnCharacter()} />
           <ToolButton icon={<Car className="w-5 h-5" />} label="Spawn Car" onClick={() => gameRef.current?.spawnCar()} />
+          <div className="w-px bg-border mx-1" />
+          <ToolButton
+            icon={<DollarSign className="w-5 h-5" />}
+            label="Budget"
+            isActive={showBudgetPanel}
+            onClick={() => setShowBudgetPanel(!showBudgetPanel)}
+          />
+          <ToolButton
+            icon={<Shield className="w-5 h-5" />}
+            label="Services"
+            isActive={showServicePanel}
+            onClick={() => setShowServicePanel(!showServicePanel)}
+          />
           <div className="w-px bg-border mx-1" />
           <ToolButton icon={<Map className="w-5 h-5" />} label="Region" onClick={() => setShowRegionView(true)} />
           <ToolButton icon={<ArrowRightLeft className="w-5 h-5" />} label="Trade" onClick={() => setShowTradeMenu(true)} />
