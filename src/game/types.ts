@@ -54,6 +54,11 @@ export enum ToolType {
   Dezone = "dezone",
   // Query tool
   Query = "query",
+  // Utility tools
+  PowerLine = "powerLine",
+  WaterPipe = "waterPipe",
+  PowerPole = "powerPole",
+  WaterTower = "waterTower",
 }
 
 /**
