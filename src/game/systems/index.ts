@@ -22,3 +22,5 @@ export * from './advisors';
 export * from './ScenarioSystem';
 export * from './OrdinanceSystem';
 export * from './DisasterSystem';
+// Phase 5: Advanced Features
+export * from './RegionSystem';
