@@ -618,3 +618,256 @@ export function isoToGrid(isoX: number, isoY: number): { x: number; y: number } 
     y: (isoY / (TILE_HEIGHT / 2) - isoX / (TILE_WIDTH / 2)) / 2,
   };
 }
+
+/**
+ * ========================================
+ * PHASE 4: Content Systems (Scenarios, Ordinances, Disasters)
+ * ========================================
+ */
+
+/**
+ * Objective types for scenarios
+ */
+export enum ObjectiveType {
+  Population = "population",           // Reach X population
+  Happiness = "happiness",             // Maintain X happiness
+  Resources = "resources",             // Collect X resources
+  Buildings = "buildings",             // Build X buildings
+  ZoneDevelopment = "zoneDevelopment", // Develop X zones
+  Budget = "budget",                   // Reach X caps
+  Survival = "survival",               // Survive X days
+  DisasterSurvival = "disasterSurvival", // Survive a disaster
+  Pollution = "pollution",             // Keep pollution below X
+  Custom = "custom",                   // Custom condition
+}
+
+/**
+ * Objective definition
+ */
+export interface Objective {
+  id: string;
+  type: ObjectiveType;
+  title: string;
+  description: string;
+  target: number;
+  current: number;
+  completed: boolean;
+  required: boolean; // Must complete to win scenario
+  hidden?: boolean;  // Hidden until revealed
+}
+
+/**
+ * Scenario difficulty
+ */
+export enum ScenarioDifficulty {
+  Tutorial = "tutorial",
+  Easy = "easy",
+  Medium = "medium",
+  Hard = "hard",
+  Expert = "expert",
+}
+
+/**
+ * Scenario definition
+ */
+export interface Scenario {
+  id: string;
+  name: string;
+  description: string;
+  difficulty: ScenarioDifficulty;
+  objectives: Objective[];
+  startingResources: Resources;
+  startingBuildings?: Array<{
+    buildingId: string;
+    x: number;
+    y: number;
+    orientation: Direction;
+  }>;
+  timeLimit?: number; // In seconds (optional)
+  disasterFrequency?: number; // Multiplier for disaster probability
+  specialRules?: string[]; // Custom rules text
+  rewards?: {
+    unlockBuildings?: string[];
+    unlockScenarios?: string[];
+    achievement?: string;
+  };
+}
+
+/**
+ * Achievement types
+ */
+export enum AchievementCategory {
+  Population = "population",
+  Building = "building",
+  Economy = "economy",
+  Survival = "survival",
+  Scenario = "scenario",
+  Special = "special",
+}
+
+/**
+ * Achievement definition
+ */
+export interface Achievement {
+  id: string;
+  category: AchievementCategory;
+  name: string;
+  description: string;
+  icon?: string;
+  requirement: {
+    type: string;
+    value: number;
+  };
+  unlocked: boolean;
+  unlockedAt?: number; // Timestamp
+  secret?: boolean; // Hidden until unlocked
+}
+
+/**
+ * Mayor rating levels (SimCity-style)
+ */
+export enum MayorRating {
+  Outcast = "outcast",           // 0-20: Terrible performance
+  Settler = "settler",           // 21-40: Poor performance
+  Overseer = "overseer",         // 41-60: Average performance
+  Guardian = "guardian",         // 61-80: Good performance
+  WastelandHero = "wastelandHero", // 81-95: Excellent performance
+  Legend = "legend",             // 96-100: Perfect performance
+}
+
+/**
+ * Mayor rating factors
+ */
+export interface MayorRatingFactors {
+  population: number;        // Population size (0-100)
+  happiness: number;         // Average happiness (0-100)
+  economy: number;           // Budget health (0-100)
+  infrastructure: number;    // Coverage & services (0-100)
+  environment: number;       // Pollution control (0-100)
+  safety: number;            // Crime & disaster management (0-100)
+}
+
+/**
+ * Ordinance/Policy types (SimCity-style city ordinances)
+ */
+export enum OrdinanceCategory {
+  Finance = "finance",       // Tax & budget policies
+  Safety = "safety",         // Security & disaster prep
+  Environment = "environment", // Pollution & conservation
+  Social = "social",         // Population policies
+  Industry = "industry",     // Production & trade
+}
+
+/**
+ * Ordinance definition
+ */
+export interface Ordinance {
+  id: string;
+  category: OrdinanceCategory;
+  name: string;
+  description: string;
+  monthlyCost: number; // Monthly budget cost
+  effects: {
+    happinessModifier?: number;    // +/- happiness
+    taxRateModifier?: number;      // +/- tax income
+    pollutionModifier?: number;    // +/- pollution
+    productionModifier?: number;   // +/- resource production
+    disasterRiskModifier?: number; // +/- disaster probability
+    crimeModifier?: number;        // +/- crime rate
+  };
+  requirements?: {
+    minPopulation?: number;
+    minBudget?: number;
+    requiredBuildings?: string[];
+  };
+  enabled: boolean;
+}
+
+/**
+ * Disaster types (wasteland-themed)
+ */
+export enum DisasterType {
+  // Natural disasters
+  Radstorm = "radstorm",               // Radiation storm
+  DustStorm = "duststorm",             // Wasteland dust storm
+  Earthquake = "earthquake",           // Earthquake
+  // Hostile events
+  RaiderAssault = "raiderAssault",     // Major raider attack
+  SuperMutantInvasion = "superMutantInvasion", // Super mutant raid
+  FeralhGoulPlague = "feralGhoulPlague", // Feral ghoul infestation
+  // Infrastructure disasters
+  ReactorMeltdown = "reactorMeltdown", // Nuclear reactor failure
+  WaterContamination = "waterContamination", // Water supply poisoned
+  Fire = "fire",                       // Spreading fire
+  // Creature attacks
+  DeathclawAttack = "deathclawAttack", // Deathclaw rampage
+  RadscorpionSwarm = "radscorpionSwarm", // Radscorpion infestation
+}
+
+/**
+ * Disaster severity
+ */
+export enum DisasterSeverity {
+  Minor = "minor",       // Small area, low damage
+  Moderate = "moderate", // Medium area, moderate damage
+  Major = "major",       // Large area, high damage
+  Catastrophic = "catastrophic", // Massive area, devastating damage
+}
+
+/**
+ * Building damage state
+ */
+export enum DamageState {
+  None = "none",           // No damage (100%)
+  Light = "light",         // Light damage (75-99%)
+  Moderate = "moderate",   // Moderate damage (50-74%)
+  Heavy = "heavy",         // Heavy damage (25-49%)
+  Critical = "critical",   // Critical damage (1-24%)
+  Destroyed = "destroyed", // Completely destroyed (0%)
+}
+
+/**
+ * Disaster instance (active disaster)
+ */
+export interface Disaster {
+  id: string;
+  type: DisasterType;
+  severity: DisasterSeverity;
+  name: string;
+  description: string;
+  epicenter: { x: number; y: number };
+  radius: number;
+  startTime: number;
+  duration: number; // In seconds
+  active: boolean;
+  damageDealt: number;
+  buildingsAffected: string[]; // Building IDs
+  warning?: {
+    warningTime: number; // Seconds before disaster
+    message: string;
+  };
+}
+
+/**
+ * Building damage information
+ */
+export interface BuildingDamage {
+  buildingId: string;
+  damageState: DamageState;
+  healthPercent: number; // 0-100
+  repairCost: ResourceCost;
+  productionPenalty: number; // 0-1 (percentage of production lost)
+}
+
+/**
+ * Scenario progress tracking
+ */
+export interface ScenarioProgress {
+  scenarioId: string;
+  startTime: number;
+  elapsedTime: number;
+  objectiveProgress: Record<string, number>; // objective ID -> current value
+  completed: boolean;
+  victory: boolean;
+  score?: number;
+}
