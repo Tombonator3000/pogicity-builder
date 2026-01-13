@@ -871,3 +871,264 @@ export interface ScenarioProgress {
   victory: boolean;
   score?: number;
 }
+
+// ============================================================================
+// PHASE 5: ADVANCED FEATURES - REGION SYSTEM & MULTIPLAYER
+// ============================================================================
+
+/**
+ * Resource types that can be traded between cities
+ */
+export enum TradableResource {
+  Power = "power",
+  Water = "water",
+  Scrap = "scrap",
+  Food = "food",
+  Medicine = "medicine",
+  Caps = "caps",
+}
+
+/**
+ * Regional project types (expensive multi-city projects)
+ */
+export enum RegionalProjectType {
+  Airport = "airport",
+  Stadium = "stadium",
+  Arcology = "arcology",
+  Railroad = "railroad",
+  PowerPlant = "powerPlant",
+  WaterTreatment = "waterTreatment",
+  ResearchCenter = "researchCenter",
+  TradeHub = "tradeHub",
+}
+
+/**
+ * Regional project status
+ */
+export enum RegionalProjectStatus {
+  Proposed = "proposed",
+  InProgress = "inProgress",
+  Completed = "completed",
+  Abandoned = "abandoned",
+}
+
+/**
+ * Individual city slot in a region
+ */
+export interface CitySlot {
+  id: string;
+  name: string;
+  position: { x: number; y: number }; // Position in region grid
+  founded: number; // Timestamp
+  population: number;
+  budget: number;
+  mayorRating: MayorRating;
+
+  // City statistics (for comparison)
+  stats: {
+    population: number;
+    income: number;
+    happiness: number;
+    pollution: number;
+    crime: number;
+    landValue: number;
+    buildings: number;
+  };
+
+  // Trade settings
+  tradeEnabled: boolean;
+  exportingResources: TradableResource[];
+  importingResources: TradableResource[];
+
+  // Save data (serialized city state)
+  saveData?: string; // JSON string of full city state
+
+  // Metadata
+  lastModified: number;
+  playTimeMinutes: number;
+
+  // Is this the current city being played?
+  isActive: boolean;
+}
+
+/**
+ * Resource trade offer (one-time or recurring)
+ */
+export interface ResourceTradeOffer {
+  id: string;
+  fromCityId: string;
+  toCityId: string;
+  resource: TradableResource;
+  amount: number;
+  pricePerUnit: number;
+  totalCost: number;
+  recurring: boolean; // If true, trade happens every month
+  expiresAt?: number; // Timestamp when offer expires (null = permanent)
+  createdAt: number;
+}
+
+/**
+ * Active resource trade deal
+ */
+export interface ResourceTradeDeal {
+  id: string;
+  offerId: string;
+  fromCityId: string;
+  toCityId: string;
+  resource: TradableResource;
+  amountPerMonth: number;
+  pricePerUnit: number;
+  startedAt: number;
+  lastTradeAt: number;
+  totalTraded: number;
+  totalPaid: number;
+  active: boolean;
+}
+
+/**
+ * Regional project (multi-city infrastructure)
+ */
+export interface RegionalProject {
+  id: string;
+  type: RegionalProjectType;
+  name: string;
+  description: string;
+
+  // Cost (shared among cities)
+  totalCost: ResourceCost;
+
+  // Contributions from each city
+  contributions: Record<string, number>; // cityId -> amount contributed
+
+  // Project status
+  status: RegionalProjectStatus;
+  progress: number; // 0-100
+
+  // Benefits (applied to all cities in region)
+  benefits: {
+    happinessBonus?: number;
+    populationCapBonus?: number;
+    incomeBonus?: number;
+    pollutionReduction?: number;
+    crimeReduction?: number;
+    powerBonus?: number;
+    waterBonus?: number;
+  };
+
+  // Requirements
+  requirements: {
+    minCities?: number;
+    minPopulationPerCity?: number;
+    minRegionalPopulation?: number;
+  };
+
+  // Timestamps
+  proposedAt: number;
+  startedAt?: number;
+  completedAt?: number;
+}
+
+/**
+ * Region configuration
+ */
+export interface RegionConfig {
+  id: string;
+  name: string;
+  description: string;
+
+  // Region grid size (e.g., 2x2 = 4 cities, 4x4 = 16 cities)
+  gridWidth: number;
+  gridHeight: number;
+  maxCities: number;
+
+  // Region settings
+  sharedBudget: boolean; // If true, cities share a regional fund
+  allowTrade: boolean;
+  allowRegionalProjects: boolean;
+  competitiveMode: boolean; // If true, cities compete for population/businesses
+
+  // Starting resources for new cities
+  startingResources: Record<string, number>;
+
+  // Difficulty modifiers
+  difficultyMultipliers: {
+    disasterFrequency: number;
+    resourceProduction: number;
+    costs: number;
+  };
+
+  // Metadata
+  createdAt: number;
+  lastModified: number;
+}
+
+/**
+ * Regional statistics (aggregate of all cities)
+ */
+export interface RegionStats {
+  totalPopulation: number;
+  totalBudget: number;
+  totalIncome: number;
+  totalExpenses: number;
+  averageHappiness: number;
+  averagePollution: number;
+  averageCrime: number;
+  totalBuildings: number;
+  totalLandValue: number;
+
+  // Resource totals
+  totalResources: Record<string, number>;
+
+  // Active trades
+  activeTradeDeals: number;
+  monthlyTradeVolume: number;
+
+  // Projects
+  completedProjects: number;
+  activeProjects: number;
+}
+
+/**
+ * City comparison data (for leaderboards)
+ */
+export interface CityComparison {
+  cityId: string;
+  cityName: string;
+  rank: number;
+
+  // Ranking metrics
+  population: number;
+  income: number;
+  happiness: number;
+  mayorRating: MayorRating;
+  landValue: number;
+
+  // Achievements
+  achievementsUnlocked: number;
+  scenariosCompleted: number;
+
+  // Play stats
+  playTimeMinutes: number;
+  foundedAt: number;
+
+  // Score (0-100, weighted combination of all metrics)
+  overallScore: number;
+}
+
+/**
+ * Region data (complete region state)
+ */
+export interface RegionData {
+  config: RegionConfig;
+  cities: CitySlot[];
+  tradeOffers: ResourceTradeOffer[];
+  activeDeals: ResourceTradeDeal[];
+  projects: RegionalProject[];
+  stats: RegionStats;
+
+  // Regional fund (if sharedBudget = true)
+  regionalFund?: number;
+
+  // Metadata
+  lastUpdated: number;
+}

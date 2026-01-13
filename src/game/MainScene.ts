@@ -17,6 +17,7 @@ import {
   ScenarioSystem,
   OrdinanceSystem,
   DisasterSystem,
+  RegionSystem,
 } from './systems';
 import { PopulationSystem } from './systems/PopulationSystem';
 import { EventSystem } from './systems/EventSystem';
@@ -55,6 +56,8 @@ export class MainScene extends Phaser.Scene {
   private scenarioSystem!: ScenarioSystem;
   private ordinanceSystem!: OrdinanceSystem;
   private disasterSystem!: DisasterSystem;
+  // Phase 5: Advanced Features
+  private regionSystem!: RegionSystem;
 
   constructor() {
     super({ key: 'MainScene' });
@@ -129,6 +132,8 @@ export class MainScene extends Phaser.Scene {
     this.scenarioSystem.update(delta);
     this.ordinanceSystem.update(delta);
     this.disasterSystem.update(delta);
+    // Phase 5: Advanced Features
+    this.regionSystem.update(delta);
 
     // Update resources with population consumption
     this.updateResourcesWithPopulation(delta);
@@ -309,6 +314,8 @@ export class MainScene extends Phaser.Scene {
     this.scenarioSystem = this.initializeSystem(new ScenarioSystem(), false);
     this.ordinanceSystem = this.initializeSystem(new OrdinanceSystem(), false);
     this.disasterSystem = this.initializeSystem(new DisasterSystem(), false);
+    // Phase 5: Advanced Features
+    this.regionSystem = this.initializeSystem(new RegionSystem(), false);
 
     // Register all buildings with systems
     for (const building of Object.values(BUILDINGS)) {
@@ -507,6 +514,48 @@ export class MainScene extends Phaser.Scene {
 
     this.events.on('building:destroyed', (buildingId: string) => {
       console.log(`[DISASTER] Building ${buildingId} has been destroyed!`);
+    });
+
+    // Phase 5: Region system event listeners
+    this.events.on('region:created', (region: any) => {
+      console.log(`[REGION] Region created: ${region.config.name}`);
+    });
+
+    this.events.on('city:created', (city: any) => {
+      console.log(`[REGION] City created: ${city.name} at (${city.position.x}, ${city.position.y})`);
+    });
+
+    this.events.on('city:switched', (city: any) => {
+      console.log(`[REGION] Switched to city: ${city.name}`);
+      // TODO: Load city state when switching between cities
+    });
+
+    this.events.on('city:deleted', (city: any) => {
+      console.log(`[REGION] City deleted: ${city.name}`);
+    });
+
+    this.events.on('trade:offer-created', (offer: any) => {
+      console.log(`[TRADE] Trade offer created: ${offer.amount} ${offer.resource} @ ${offer.pricePerUnit} caps each`);
+    });
+
+    this.events.on('trade:deal-accepted', (deal: any) => {
+      console.log(`[TRADE] Trade deal accepted between cities`);
+    });
+
+    this.events.on('trade:execute', (deal: any) => {
+      // Handle resource transfer between cities
+      // For now, just log (full implementation requires city-specific resource tracking)
+      console.log(`[TRADE] Executing monthly trade: ${deal.amountPerMonth} ${deal.resource}`);
+    });
+
+    this.events.on('project:proposed', (project: any) => {
+      console.log(`[PROJECT] Regional project proposed: ${project.name}`);
+    });
+
+    this.events.on('project:completed', (project: any) => {
+      console.log(`[PROJECT] Regional project completed: ${project.name}`);
+      // Apply project benefits to current city
+      // TODO: Implement benefit application
     });
   }
 
@@ -721,6 +770,11 @@ export class MainScene extends Phaser.Scene {
 
   getDisasterSystem(): DisasterSystem {
     return this.disasterSystem;
+  }
+
+  // Phase 5: Advanced features getters
+  getRegionSystem(): RegionSystem {
+    return this.regionSystem;
   }
 
   // ============================================
