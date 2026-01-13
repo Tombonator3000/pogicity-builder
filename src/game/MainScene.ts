@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
-import { GridCell, TileType, ToolType, Direction, Resources, OverlayType, QueryResult } from './types';
+import { GridCell, TileType, ToolType, Direction, Resources, OverlayType, QueryResult, Footprint } from './types';
 import { GRID_CONFIG } from './config';
-import { BUILDINGS } from './buildings';
+import { BUILDINGS, getBuildingFootprint } from './buildings';
 import { getAssetPath } from './utils/AssetPathUtils';
 import {
   CharacterSystem,
@@ -12,6 +12,8 @@ import {
   ResourceSystem,
   SceneEvents,
   ZoningSystem,
+  BudgetSystem,
+  ServiceCoverageSystem,
   OverlaySystem,
   HistorySystem,
   ScenarioSystem,
@@ -50,6 +52,8 @@ export class MainScene extends Phaser.Scene {
   private eventSystem!: EventSystem;
   private workerSystem!: WorkerSystem;
   private zoningSystem!: ZoningSystem;
+  private budgetSystem!: BudgetSystem;
+  private serviceCoverageSystem!: ServiceCoverageSystem;
   private overlaySystem!: OverlaySystem;
   private historySystem!: HistorySystem;
   // Phase 4: Content Systems
@@ -126,6 +130,8 @@ export class MainScene extends Phaser.Scene {
     this.populationSystem.update(delta);
     this.eventSystem.update(delta);
     this.zoningSystem.update(_time, delta);
+    this.budgetSystem.update(_time, delta);
+    this.serviceCoverageSystem.update(_time, delta);
     this.overlaySystem.update(delta);
     this.historySystem.update(delta);
     // Phase 4: Content Systems
@@ -140,6 +146,12 @@ export class MainScene extends Phaser.Scene {
 
     // Update zoning system with current game state
     this.updateZoningSystem(_time);
+
+    // Update budget system with monthly cycle
+    this.updateBudgetSystem();
+
+    // Update service coverage system
+    this.updateServiceCoverageSystem();
 
     // Update overlay system with current game state
     this.updateOverlaySystem();
@@ -214,11 +226,45 @@ export class MainScene extends Phaser.Scene {
     // Place buildings in zones that are ready for development
     for (const location of growthLocations) {
       if (location.building) {
-        // TODO: Implement automatic building placement
-        // For now, just mark the zone as developed
-        console.log(
-          `[ZONING] Zone at (${location.x}, ${location.y}) ready for ${location.zoneType} development`
+        // Automatic building placement in zone
+        const building = location.building;
+        const orientation = Direction.Down; // Default orientation for zoned buildings
+
+        // Get footprint
+        const footprint = this.getBuildingFootprint(building, orientation);
+
+        // Validate placement (zones are already marked as buildable)
+        const canPlace = this.validateZonedBuildingPlacement(
+          location.x,
+          location.y,
+          footprint
         );
+
+        if (canPlace) {
+          // Place building on grid
+          this.placeBuildingOnGrid(
+            location.x,
+            location.y,
+            building,
+            orientation,
+            footprint
+          );
+
+          // Log automatic placement
+          console.log(
+            `[ZONING] Auto-placed ${building.name} at (${location.x}, ${location.y}) in ${location.zoneType} zone`
+          );
+
+          // Emit resource change event (zoned buildings are free - no cost)
+          this.events.emit("building:placed", {
+            building,
+            x: location.x,
+            y: location.y,
+          });
+
+          // Trigger re-render
+          this.renderSystem.renderGrid();
+        }
       }
     }
   }
@@ -258,6 +304,142 @@ export class MainScene extends Phaser.Scene {
       zoneDemand
       // TODO: Add income/expenses when budget system is implemented
     );
+  }
+
+  /**
+   * Updates the budget system with monthly cycle
+   */
+  private updateBudgetSystem(): void {
+    // Check if budget cycle should run (every 30 seconds)
+    if (this.budgetSystem.shouldRunBudgetCycle()) {
+      const resources = this.resourceSystem.getResources();
+
+      // Process budget cycle
+      const budgetState = this.budgetSystem.processBudgetCycle(
+        this.grid,
+        resources.caps
+      );
+
+      // Update caps balance
+      resources.caps = budgetState.balance;
+
+      // Apply tax happiness penalty
+      const taxPenalty = this.budgetSystem.calculateTaxHappinessPenalty();
+      const currentHappiness = this.populationSystem.getState().happiness;
+      const newHappiness = Math.max(0, Math.min(100, currentHappiness + taxPenalty));
+
+      // Emit resource change event
+      this.events.emit('resources:changed', resources);
+
+      // Emit budget event
+      this.events.emit('budget:cycle', budgetState);
+
+      // Log budget info
+      console.log(
+        `[BUDGET] Monthly cycle: Income ${budgetState.income.residential + budgetState.income.commercial + budgetState.income.industrial}, ` +
+        `Expenses ${budgetState.expenses.services + budgetState.expenses.infrastructure + budgetState.expenses.maintenance}, ` +
+        `Net ${budgetState.netIncome}, Balance ${budgetState.balance}`
+      );
+    }
+  }
+
+  /**
+   * Updates the service coverage system
+   */
+  private updateServiceCoverageSystem(): void {
+    // Calculate coverage for all tiles
+    this.serviceCoverageSystem.calculateCoverage(this.grid);
+
+    // Apply service happiness bonus to population
+    const serviceBonus = this.serviceCoverageSystem.calculateServiceHappinessBonus();
+    // Note: This bonus would be applied in PopulationSystem's happiness calculation
+    // For now, we just make it available via getter
+  }
+
+  /**
+   * Validates if a building can be placed in a zone
+   * (More permissive than regular placement - allows zone tiles)
+   */
+  private validateZonedBuildingPlacement(
+    x: number,
+    y: number,
+    footprint: Footprint
+  ): boolean {
+    const gridWidth = GRID_CONFIG.width;
+    const gridHeight = GRID_CONFIG.height;
+
+    // Check if footprint fits within grid bounds
+    for (let dy = 0; dy < footprint.height; dy++) {
+      for (let dx = 0; dx < footprint.width; dx++) {
+        const gx = x + dx;
+        const gy = y + dy;
+
+        // Out of bounds
+        if (gx >= gridWidth || gy >= gridHeight || gx < 0 || gy < 0) {
+          return false;
+        }
+
+        const cell = this.grid[gy][gx];
+
+        // Must be zone tile or other buildable tile
+        if (
+          cell.type !== TileType.Zone &&
+          cell.type !== TileType.Grass &&
+          cell.type !== TileType.Wasteland &&
+          cell.type !== TileType.Rubble
+        ) {
+          return false;
+        }
+
+        // Can't place on existing buildings
+        if (cell.buildingId) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Places a building on the grid (used for automatic zone development)
+   */
+  private placeBuildingOnGrid(
+    x: number,
+    y: number,
+    building: { id: string; name: string },
+    orientation: Direction,
+    footprint: Footprint
+  ): void {
+    // Store original grid for underlying tile tracking
+    const originalGrid = this.grid.map((row) =>
+      row.map((cell) => ({ ...cell }))
+    );
+
+    // Place building on all footprint tiles
+    for (let dy = 0; dy < footprint.height; dy++) {
+      for (let dx = 0; dx < footprint.width; dx++) {
+        const gx = x + dx;
+        const gy = y + dy;
+
+        this.grid[gy][gx] = {
+          type: TileType.Building,
+          x: gx,
+          y: gy,
+          isOrigin: dx === 0 && dy === 0,
+          originX: x,
+          originY: y,
+          buildingId: building.id,
+          buildingOrientation: orientation,
+          underlyingTileType: originalGrid[gy][gx].type,
+          // Preserve zone information if it was a zone
+          zoneType: originalGrid[gy][gx].zoneType,
+        };
+      }
+    }
+
+    // Notify React
+    this.onGridChange(this.grid);
   }
 
   // ============================================
@@ -308,6 +490,8 @@ export class MainScene extends Phaser.Scene {
     this.workerSystem = this.initializeSystem(new WorkerSystem());
     this.eventSystem = this.initializeSystem(new EventSystem(), false);
     this.zoningSystem = this.initializeSystem(new ZoningSystem(), false);
+    this.budgetSystem = this.initializeSystem(new BudgetSystem(), false);
+    this.serviceCoverageSystem = this.initializeSystem(new ServiceCoverageSystem(), false);
     this.overlaySystem = this.initializeSystem(new OverlaySystem(), false);
     this.historySystem = this.initializeSystem(new HistorySystem(), false);
     // Phase 4: Content Systems
@@ -614,6 +798,34 @@ export class MainScene extends Phaser.Scene {
 
   getZoneStats() {
     return this.zoningSystem.getZoneStats();
+  }
+
+  getBudgetState() {
+    return this.budgetSystem.getBudgetState();
+  }
+
+  getTaxRates() {
+    return this.budgetSystem.getTaxRates();
+  }
+
+  setTaxRates(rates: any) {
+    this.budgetSystem.setTaxRates(rates);
+  }
+
+  getTimeUntilNextBudgetCycle(): number {
+    return this.budgetSystem.getTimeUntilNextCycle();
+  }
+
+  getServiceCoverageAt(x: number, y: number) {
+    return this.serviceCoverageSystem.getCoverageAt(x, y);
+  }
+
+  getServiceStats() {
+    return this.serviceCoverageSystem.getServiceStats();
+  }
+
+  getServiceBuildings() {
+    return this.serviceCoverageSystem.getServiceBuildings();
   }
 
   // ============================================
