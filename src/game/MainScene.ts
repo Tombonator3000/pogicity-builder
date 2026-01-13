@@ -14,6 +14,7 @@ import {
   ZoningSystem,
   BudgetSystem,
   ServiceCoverageSystem,
+  UtilitiesNetworkSystem,
   OverlaySystem,
   HistorySystem,
   ScenarioSystem,
@@ -54,6 +55,7 @@ export class MainScene extends Phaser.Scene {
   private zoningSystem!: ZoningSystem;
   private budgetSystem!: BudgetSystem;
   private serviceCoverageSystem!: ServiceCoverageSystem;
+  private utilitiesNetworkSystem!: UtilitiesNetworkSystem;
   private overlaySystem!: OverlaySystem;
   private historySystem!: HistorySystem;
   // Phase 4: Content Systems
@@ -152,6 +154,9 @@ export class MainScene extends Phaser.Scene {
 
     // Update service coverage system
     this.updateServiceCoverageSystem();
+
+    // Update utilities network system
+    this.updateUtilitiesNetworkSystem();
 
     // Update overlay system with current game state
     this.updateOverlaySystem();
@@ -357,6 +362,15 @@ export class MainScene extends Phaser.Scene {
   }
 
   /**
+   * Update utilities network system
+   */
+  private updateUtilitiesNetworkSystem(): void {
+    // Rebuild networks periodically or when grid changes
+    // For now, we don't need to rebuild every frame
+    // Networks are rebuilt when utilities are placed/removed
+  }
+
+  /**
    * Validates if a building can be placed in a zone
    * (More permissive than regular placement - allows zone tiles)
    */
@@ -492,6 +506,7 @@ export class MainScene extends Phaser.Scene {
     this.zoningSystem = this.initializeSystem(new ZoningSystem(), false);
     this.budgetSystem = this.initializeSystem(new BudgetSystem(), false);
     this.serviceCoverageSystem = this.initializeSystem(new ServiceCoverageSystem(), false);
+    this.utilitiesNetworkSystem = this.initializeSystem(new UtilitiesNetworkSystem(), false);
     this.overlaySystem = this.initializeSystem(new OverlaySystem(), false);
     this.historySystem = this.initializeSystem(new HistorySystem(), false);
     // Phase 4: Content Systems
@@ -812,6 +827,15 @@ export class MainScene extends Phaser.Scene {
     this.budgetSystem.setTaxRates(rates);
   }
 
+  setTaxRate(category: 'residential' | 'commercial' | 'industrial', rate: number) {
+    const currentRates = this.budgetSystem.getTaxRates();
+    this.budgetSystem.setTaxRates({ ...currentRates, [category]: rate });
+  }
+
+  takeLoan(amount: number): boolean {
+    return this.budgetSystem.takeLoan(amount);
+  }
+
   getTimeUntilNextBudgetCycle(): number {
     return this.budgetSystem.getTimeUntilNextCycle();
   }
@@ -826,6 +850,31 @@ export class MainScene extends Phaser.Scene {
 
   getServiceBuildings() {
     return this.serviceCoverageSystem.getServiceBuildings();
+  }
+
+  // Utilities Network System API
+  getUtilitiesStats() {
+    return this.utilitiesNetworkSystem.getStats(this.grid);
+  }
+
+  getUtilityAt(x: number, y: number) {
+    return this.utilitiesNetworkSystem.getUtility(x, y);
+  }
+
+  placeUtility(x: number, y: number, type: any) {
+    return this.utilitiesNetworkSystem.placeUtility(x, y, type, this.grid);
+  }
+
+  removeUtility(x: number, y: number) {
+    return this.utilitiesNetworkSystem.removeUtility(x, y, this.grid);
+  }
+
+  isBuildingConnectedToPower(x: number, y: number) {
+    return this.utilitiesNetworkSystem.isBuildingConnectedToPower(x, y, this.grid);
+  }
+
+  isBuildingConnectedToWater(x: number, y: number) {
+    return this.utilitiesNetworkSystem.isBuildingConnectedToWater(x, y, this.grid);
   }
 
   // ============================================

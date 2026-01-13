@@ -6898,3 +6898,203 @@ Se ResourceSystem.ts og PopulationSystem.ts for korrekt pattern.
 
 ---
 
+
+---
+
+## 📊 Session 24 - Utilities Network & UI Panels (2026-01-13)
+
+### Mål
+Implementere Utilities Network System (power lines, water pipes) og lage UI-komponenter for Budget og Service Coverage.
+
+### Hva ble gjort
+
+#### 1. UtilitiesNetworkSystem Backend ✅ (650 lines)
+**Fil**: `src/game/systems/UtilitiesNetworkSystem.ts`
+
+**Features**:
+- **Utility Types**: PowerLine, WaterPipe, PowerPole, WaterTower
+- **Network Detection**: BFS/flood fill algorithm for connected networks
+- **Building Connectivity**: Validates if buildings are connected to power/water sources
+- **Coverage Calculation**: Provides coverage data for overlay system
+- **Placement Validation**: Can only place utilities on grass, road, or existing utilities
+- **Cost System**: Different costs for each utility type (scrap + caps)
+- **Network Visualization**: Renders utilities with color coding (yellow = power, blue = water)
+
+**Key Methods**:
+- `placeUtility(x, y, type, grid)` - Place utility tile
+- `removeUtility(x, y, grid)` - Remove utility tile
+- `rebuildNetworks(grid)` - Rebuild all utility networks (power and water)
+- `isBuildingConnectedToPower(x, y, grid)` - Check if building has power
+- `isBuildingConnectedToWater(x, y, grid)` - Check if building has water
+- `getStats(grid)` - Get statistics about utilities
+
+**Network Algorithm**:
+```typescript
+// Flood fill from source building (solar array, water purifier, etc.)
+// - Follows power lines/water pipes (4-directional)
+// - Connects to other source buildings (extends network)
+// - Identifies consumer buildings (hydroponic farm, med tent, etc.)
+// - Tracks total output and demand per network
+```
+
+**Wasteland Theme**:
+- Power lines = Makeshift cables (⚡)
+- Water pipes = Scrap pipes (💧)
+- Power poles = Salvaged poles
+- Water towers = Water storage tanks
+
+---
+
+#### 2. BudgetPanel.tsx UI Component ✅ (620 lines)
+**Fil**: `src/components/game/BudgetPanel.tsx`
+
+**Features**:
+- **Treasury Display**: Current balance (caps) with color-coded status
+- **Debt Tracking**: Shows outstanding loans
+- **Monthly Report**: 
+  - Income breakdown (Residential, Commercial, Industrial tax)
+  - Expenses breakdown (Services, Infrastructure, Maintenance)
+  - Net income (positive/negative)
+- **Tax Rate Sliders**: Adjustable tax rates (0-20%) for each zone type
+  - Residential: Green slider
+  - Commercial: Yellow slider
+  - Industrial: Orange slider
+- **Loan System**: UI for taking loans (100-10,000 caps)
+- **Budget Cycle Countdown**: Timer showing time until next monthly cycle
+- **Fallout Terminal Aesthetic**: Phosphor green CRT style with glow effects
+
+**Integration**:
+- Polls budget data every second via `scene.getBudgetState()`
+- Tax rate changes via `scene.setTaxRate(category, rate)`
+- Loan requests via `scene.takeLoan(amount)`
+
+---
+
+#### 3. ServicePanel.tsx UI Component ✅ (400 lines)
+**Fil**: `src/components/game/ServicePanel.tsx`
+
+**Features**:
+- **Overall Coverage**: Aggregate coverage across all services
+- **Individual Services**:
+  - Militia (Police) 🗼
+  - Fire Brigade 🔥
+  - Medics (Health) 🏥
+  - Education 📚
+  - Recreation (Parks) 🌳
+- **Coverage Status**: Color-coded (Excellent, Good, Fair, Poor, None)
+- **Building Counts**: Number of each service type
+- **Area Coverage**: Percentage of tiles covered
+- **Fallout Terminal Aesthetic**: Matches ResourcePanel style
+
+**Integration**:
+- Polls service data every second via `scene.getServiceStats()`
+
+---
+
+#### 4. GameUI.tsx Integration ✅
+**Fil**: `src/components/game/GameUI.tsx`
+
+**Changes**:
+- Added imports for `BudgetPanel` and `ServicePanel`
+- Added state for budget and service data
+- Added toolbar buttons (💵 Budget, 🛡️ Services)
+- Added event listeners for `budget:cycle` event
+- Added polling interval (1s) for budget, tax rates, and service stats
+- Added handlers for `handleTaxRateChange()` and `handleTakeLoan()`
+- Rendered panels conditionally based on toggle state
+
+---
+
+#### 5. MainScene.ts Integration ✅
+**Fil**: `src/game/MainScene.ts`
+
+**Changes**:
+- Imported `UtilitiesNetworkSystem` from `./systems`
+- Added `private utilitiesNetworkSystem!: UtilitiesNetworkSystem`
+- Initialized system in `create()`: `this.initializeSystem(new UtilitiesNetworkSystem(), false)`
+- Added `updateUtilitiesNetworkSystem()` method (called in update loop)
+- Added getter methods:
+  - `setTaxRate(category, rate)` - Set individual tax rate
+  - `takeLoan(amount)` - Request loan
+  - `getUtilitiesStats()` - Get utilities statistics
+  - `getUtilityAt(x, y)` - Get utility at position
+  - `placeUtility(x, y, type)` - Place utility tile
+  - `removeUtility(x, y)` - Remove utility tile
+  - `isBuildingConnectedToPower(x, y)` - Check power connection
+  - `isBuildingConnectedToWater(x, y)` - Check water connection
+
+---
+
+### Status oppdatering
+
+**Phase 1 (Core Systems) - 80% Komplett**:
+- 1.1 Zoning System: ✅ 100% (backend + UI)
+- 1.2 Budget & Tax: ✅ 100% (backend + UI) 🎉 **NY**
+- 1.3 Service Coverage: ✅ 100% (backend + UI) 🎉 **NY**
+- 1.4 Utilities Network: ✅ 100% backend 🎉 **NY**, ⏳ UI pending (optional)
+
+**Phase 2 (Feedback Systems) - 100% Komplett** ✅
+**Phase 3 (Simulation & Gameplay) - 100% Komplett** ✅
+**Phase 4 (Content Systems) - 100% Komplett** ✅
+**Phase 5.1 (Region System) - 100% Komplett** ✅
+
+---
+
+### Statistikk
+
+**Nye filer (4)**:
+- `src/game/systems/UtilitiesNetworkSystem.ts` (650 lines)
+- `src/components/game/BudgetPanel.tsx` (620 lines)
+- `src/components/game/ServicePanel.tsx` (400 lines)
+
+**Modifiserte filer (3)**:
+- `src/game/MainScene.ts` (~50 lines added)
+- `src/components/game/GameUI.tsx` (~100 lines added)
+- `src/game/systems/index.ts` (1 export added)
+
+**Totalt nye linjer**: ~1,820 linjer
+
+**Estimert tid brukt**: ~4 timer
+- UtilitiesNetworkSystem: 1.5 timer
+- BudgetPanel.tsx: 1 time
+- ServicePanel.tsx: 1 time
+- Integration: 0.5 timer
+
+---
+
+### Testing
+
+**Build Status**: ✅ Vellykket
+```bash
+npm run build
+# ✓ 1753 modules transformed.
+# ✓ built in 10.40s
+```
+
+**TypeScript**: ✅ Ingen feil
+**Import/Export**: ✅ Alle systemer eksportert korrekt
+
+---
+
+### Neste steg
+
+**Fullføring av Phase 1**:
+1. ✅ Zoning UI (RCIDemandBar, zone tools)
+2. ✅ Budget UI (BudgetPanel)
+3. ✅ Service UI (ServicePanel)
+4. ⏳ Utilities UI (UtilitiesPanel - optional)
+   - Power line/water pipe placement tool
+   - Utilities overlay showing networks
+   - Building connectivity indicators
+
+**Testing i spillet**:
+- Test budget panel (tax rates, loans, monthly cycle)
+- Test service panel (coverage display)
+- Test utilities network (place power lines, check connectivity)
+
+---
+
+*Session completed 2026-01-13*
+*Phase 1 (Core Systems): 80% complete*
+*SimCity Lite MVP: ~95% complete*
+
