@@ -710,3 +710,37 @@ Etter MVP, evaluer hva som fungerer og bestem neste fase.
 *🏆🏆🏆 ALLE PHASES FULLFØRT! 🏆🏆🏆*
 *SimCity-Lite MVP: 100% KOMPLETT!*
 *Se log.md for fullstendig detaljert analyse*
+
+---
+
+## 🐛 BUG FIXES
+
+### Session 26 (2026-01-13) - Critical Coordinate System Bug
+
+**Bug Type**: Coordinate System Inversion
+**Severity**: CRITICAL
+**Files Affected**: `src/game/MainScene.ts`
+**Lines**: 639-672 (3 event handlers)
+
+**Issue**: Three event handlers were using inverted coordinate system:
+- `disaster:getBuildingsInRadius` - Used `grid[x][y]` instead of `grid[y][x]`
+- `building:getPosition` - Returned swapped X/Y coordinates
+- `disaster:getGridSize` - Returned height as width and vice versa
+
+**Root Cause**: Grid is structured as `grid[y][x]` (row-major order), but event handlers looped with `x` as outer variable and `y` as inner variable, then accessed `grid[x][y]`.
+
+**Fix**: Changed all three handlers to use correct coordinate system:
+```typescript
+// Correct pattern:
+for (let y = 0; y < this.grid.length; y++) {
+  for (let x = 0; x < this.grid[y].length; x++) {
+    const cell = this.grid[y][x];
+```
+
+**Impact**:
+- ✅ Disaster system can now correctly identify buildings in radius
+- ✅ Building position queries return accurate coordinates
+- ✅ Grid dimensions properly calculated for spatial systems
+- ✅ All dependent systems (DisasterSystem, RegionSystem) now function correctly
+
+**Status**: ✅ FIXED (Session 26)
