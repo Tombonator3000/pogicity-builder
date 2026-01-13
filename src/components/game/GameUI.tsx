@@ -10,6 +10,7 @@ import { EventLog } from "./EventLog";
 import { RegionView } from "./RegionView";
 import { TradeMenu } from "./TradeMenu";
 import { RegionalProjectsPanel } from "./RegionalProjectsPanel";
+import { RCIDemandBar } from "./RCIDemandBar";
 import { GridCell, TileType, ToolType, GRID_WIDTH, GRID_HEIGHT, BuildingDefinition, Direction, Resources, WorkerAssignment, GameEvent } from "@/game/types";
 import { getBuilding, getBuildingFootprint } from "@/game/buildings";
 import {
@@ -28,7 +29,7 @@ import {
   removeBuilding,
   eraseTile,
 } from "@/utils/buildingPlacementUtils";
-import { Save, FolderOpen, ZoomIn, ZoomOut, Trash2, Home, MapPin, User, Car, RotateCw, Square, CircleDot, Menu, Map, ArrowRightLeft, Landmark } from "lucide-react";
+import { Save, FolderOpen, ZoomIn, ZoomOut, Trash2, Home, MapPin, User, Car, RotateCw, Square, CircleDot, Menu, Map, ArrowRightLeft, Landmark, House, Store, Factory as FactoryIcon } from "lucide-react";
 import { toast } from "sonner";
 
 const STORAGE_KEY = "city-builder-save";
@@ -337,7 +338,7 @@ export function GameUI() {
 
   const handleTilesDrag = useCallback((tiles: Array<{ x: number; y: number }>) => {
     const tool = currentToolRef.current; // Use ref for current tool
-    
+
     setGrid((prevGrid) => {
       const newGrid = prevGrid.map((row) => row.map((cell) => ({ ...cell })));
 
@@ -345,17 +346,51 @@ export function GameUI() {
         const { x, y } = tile;
         if (x < 0 || x >= GRID_WIDTH || y < 0 || y >= GRID_HEIGHT) continue;
 
+        const cell = newGrid[y][x];
+
         if (tool === ToolType.Eraser) {
-          if (newGrid[y][x].type !== TileType.Grass) {
+          if (cell.type !== TileType.Grass) {
             newGrid[y][x] = { type: TileType.Grass, x, y, isOrigin: true };
           }
         } else if (tool === ToolType.Wasteland) {
-          if (newGrid[y][x].type === TileType.Grass) {
-            newGrid[y][x].type = TileType.Wasteland;
+          if (cell.type === TileType.Grass) {
+            cell.type = TileType.Wasteland;
           }
         } else if (tool === ToolType.Rubble) {
-          if (newGrid[y][x].type === TileType.Grass || newGrid[y][x].type === TileType.Wasteland) {
-            newGrid[y][x].type = TileType.Rubble;
+          if (cell.type === TileType.Grass || cell.type === TileType.Wasteland) {
+            cell.type = TileType.Rubble;
+          }
+        } else if (tool === ToolType.ZoneResidential) {
+          // Place residential zone
+          if ((cell.type === TileType.Grass || cell.type === TileType.Wasteland) && !cell.buildingId) {
+            cell.type = TileType.Zone;
+            cell.zoneType = "residential";
+            cell.zoneDensity = "low";
+            cell.zoneDevelopmentLevel = 0;
+          }
+        } else if (tool === ToolType.ZoneCommercial) {
+          // Place commercial zone
+          if ((cell.type === TileType.Grass || cell.type === TileType.Wasteland) && !cell.buildingId) {
+            cell.type = TileType.Zone;
+            cell.zoneType = "commercial";
+            cell.zoneDensity = "low";
+            cell.zoneDevelopmentLevel = 0;
+          }
+        } else if (tool === ToolType.ZoneIndustrial) {
+          // Place industrial zone
+          if ((cell.type === TileType.Grass || cell.type === TileType.Wasteland) && !cell.buildingId) {
+            cell.type = TileType.Zone;
+            cell.zoneType = "industrial";
+            cell.zoneDensity = "low";
+            cell.zoneDevelopmentLevel = 0;
+          }
+        } else if (tool === ToolType.Dezone) {
+          // Remove zone
+          if (cell.type === TileType.Zone) {
+            cell.type = TileType.Grass;
+            cell.zoneType = undefined;
+            cell.zoneDensity = undefined;
+            cell.zoneDevelopmentLevel = undefined;
           }
         }
       }
@@ -524,6 +559,9 @@ export function GameUI() {
         onRoadDrag={handleRoadDrag}
       />
 
+      {/* RCI Demand Bar */}
+      <RCIDemandBar gameRef={gameRef} />
+
       {/* Main Toolbar - Wasteland Tools */}
       <div className="game-toolbar">
         <div className="game-panel flex gap-1 p-2">
@@ -558,6 +596,31 @@ export function GameUI() {
             isActive={currentTool === ToolType.Eraser}
             onClick={() => handleToolChange(ToolType.Eraser)}
             variant="danger"
+          />
+          <div className="w-px bg-border mx-1" />
+          <ToolButton
+            icon={<House className="w-5 h-5" />}
+            label="Zone R"
+            isActive={currentTool === ToolType.ZoneResidential}
+            onClick={() => handleToolChange(ToolType.ZoneResidential)}
+          />
+          <ToolButton
+            icon={<Store className="w-5 h-5" />}
+            label="Zone C"
+            isActive={currentTool === ToolType.ZoneCommercial}
+            onClick={() => handleToolChange(ToolType.ZoneCommercial)}
+          />
+          <ToolButton
+            icon={<FactoryIcon className="w-5 h-5" />}
+            label="Zone I"
+            isActive={currentTool === ToolType.ZoneIndustrial}
+            onClick={() => handleToolChange(ToolType.ZoneIndustrial)}
+          />
+          <ToolButton
+            icon={<Square className="w-5 h-5" />}
+            label="Dezone"
+            isActive={currentTool === ToolType.Dezone}
+            onClick={() => handleToolChange(ToolType.Dezone)}
           />
         </div>
       </div>

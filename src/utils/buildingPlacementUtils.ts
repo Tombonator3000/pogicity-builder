@@ -17,6 +17,7 @@ export const BUILDABLE_TILES: TileType[] = [
   TileType.Snow,
   TileType.Wasteland,
   TileType.Rubble,
+  TileType.Zone, // Zoned tiles can have buildings placed on them
 ];
 
 /**

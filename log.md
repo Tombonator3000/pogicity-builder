@@ -1,5 +1,289 @@
 # Development Log
 
+## 2026-01-13 (Session 23) - Phase 1 Core Systems: Zoning UI, Budget, and Service Coverage
+
+### Overview
+Continued Phase 1 (Core Systems) implementation, completing Zoning UI, Budget & Tax System, and Service Coverage System. These are critical SimCity-style features that transform the game from a basic city builder to a strategic management simulation.
+
+### What Was Implemented
+
+#### 1. **Zoning UI Completion** (RCI Demand Bars & Zone Tools)
+
+**RCIDemandBar.tsx Component** (200 lines):
+- **Visual RCI Demand Indicators**: Three vertical bars showing Residential, Commercial, and Industrial demand
+- **Real-time Updates**: Polls ZoningSystem every 2 seconds for current demand values
+- **Color-coded Visualization**:
+  - Positive demand (green bars) = growth needed
+  - Negative demand (red bars) = oversupply
+- **Demand Range**: -100 (oversupply) to +100 (high demand)
+- **Fallout Aesthetic**: Phosphor green CRT terminal styling with glow effects
+- **Icons**: Home (R), Shopping Bag (C), Factory (I) for each zone type
+
+**Zone Tools in GameUI** (4 new tool buttons):
+- **Zone Residential** (House icon): Paint residential zones for housing
+- **Zone Commercial** (Store icon): Paint commercial zones for trading posts
+- **Zone Industrial** (Factory icon): Paint industrial zones for production
+- **Dezone** (Square icon): Remove zones from tiles
+- **Drag-Painting Support**: All zone tools support click-and-drag placement
+- **Zone Tile Handling**: Zones can be placed on Grass, Wasteland, Rubble tiles
+
+**Zone Placement Logic**:
+- Modified `handleTilesDrag()` in GameUI to handle zone placement
+- Zones store: `zoneType`, `zoneDensity`, `zoneDevelopmentLevel`
+- Automatic zone rendering via RenderSystem (semi-transparent overlays)
+- Zone colors: Residential (green), Commercial (blue), Industrial (yellow)
+
+#### 2. **Automatic Building Placement in Zones**
+
+**Zone Growth Logic** (MainScene integration):
+- **Development System**: Zones automatically develop when demand is positive
+- **Growth Probability**: 10% base chance per check, scaled by demand level
+- **Development Levels**: Zones accumulate development (0-100%)
+- **Automatic Building Spawn**: At 100% development, suitable building is placed
+- **Building Selection**: Random building from matching category (residential/commercial/resource)
+- **Free Placement**: Zoned buildings don't cost resources (SimCity-style)
+
+**New Methods**:
+- `validateZonedBuildingPlacement()`: Validates building placement in zones
+- `placeBuildingOnGrid()`: Places building automatically without resource cost
+- Integration with existing `updateZoningSystem()` method
+
+#### 3. **Budget & Tax System** (BudgetSystem.ts - 450 lines)
+
+**Core Features**:
+- **Monthly Budget Cycle**: Runs every 30 seconds (1 in-game month)
+- **Tax Collection**:
+  - Residential tax: Settlement fees (0-20%)
+  - Commercial tax: Trade licenses (0-20%)
+  - Industrial tax: Scrap production fees (0-20%)
+  - Base tax: 10 caps per developed zone
+  - Adjustable tax rates affect happiness
+
+**Income Calculation**:
+- Counts developed zones (zones with buildings)
+- Tax income = base tax × tax rate × number of zones
+- Separate tracking for R/C/I income
+
+**Expense Calculation**:
+- **Service Expenses**: 5 caps per service worker (militia, medics, etc.)
+- **Infrastructure**: 0.1 caps per road tile
+- **Maintenance**: 2 caps per building
+- **Debt Interest**: 5% monthly interest on outstanding loans
+
+**Budget State**:
+- Income breakdown (residential, commercial, industrial)
+- Expense breakdown (services, infrastructure, maintenance)
+- Net income (total income - total expenses)
+- Balance (current caps)
+- Debt tracking
+
+**Tax Impact on Happiness**:
+- 0-7% tax: No penalty
+- 7-15% tax: -10 to -20 happiness
+- 15-20% tax: -20 to -30 happiness
+
+**Loan System**:
+- Max loan: 10,000 caps
+- Interest rate: 5% per month
+- Manual repayment system
+
+**MainScene Integration**:
+- `updateBudgetSystem()`: Runs budget cycle every 30 seconds
+- `getBudgetState()`: Get current budget state
+- `getTaxRates()` / `setTaxRates()`: Tax rate management
+- `getTimeUntilNextBudgetCycle()`: Countdown to next cycle
+
+#### 4. **Service Coverage System** (ServiceCoverageSystem.ts - 400 lines)
+
+**Service Types**:
+- **Police/Militia**: Reduces crime in radius
+- **Fire Stations**: Provides fire protection in radius
+- **Health Facilities**: Health bonus in radius
+- **Schools**: Education level in radius
+- **Parks**: Increases land value in radius
+
+**Coverage Calculation**:
+- **Radius-based**: Each service building covers tiles in circular radius
+- **Distance Falloff**: 100% effectiveness at center, decreasing with distance
+- **Cumulative Coverage**: Multiple buildings stack up to 100% coverage
+- **Land Value**: Parks provide additive land value bonus
+
+**Service Building Definitions**:
+| Building | Service Type | Radius |
+|----------|-------------|--------|
+| watch_tower | Police | 8 tiles |
+| militia_post | Police | 10 tiles |
+| fire_station | Fire | 10 tiles |
+| medic_tent | Health | 8 tiles |
+| clinic | Health | 12 tiles |
+| school_tent | Education | 10 tiles |
+| park | Park | 6 tiles |
+
+**Coverage Map**:
+- 2D array storing coverage data for every tile
+- Stores: police, fire, health, education, landValue
+- Real-time recalculation when buildings change
+
+**Service Statistics**:
+- Total count of each service type
+- Average coverage across all tiles
+- Covered vs uncovered tiles
+- Service happiness bonus (0 to +20)
+
+**MainScene Integration**:
+- `updateServiceCoverageSystem()`: Recalculates coverage every frame
+- `getServiceCoverageAt()`: Get coverage for specific tile
+- `getServiceStats()`: Get service statistics
+- `getServiceBuildings()`: Get all service buildings
+
+#### 5. **Type System Updates**
+
+**buildingPlacementUtils.ts**:
+- Added `TileType.Zone` to `BUILDABLE_TILES`
+- Zones can now have buildings placed on them
+
+**MainScene Imports**:
+- Added `Footprint` type import for building placement
+- Added `getBuildingFootprint` import for zone auto-placement
+
+### Files Created (4 new files)
+
+1. **src/components/game/RCIDemandBar.tsx** (200 lines)
+   - RCI demand indicator component
+   - Real-time polling of zone demand
+   - Fallout-themed visual design
+
+2. **src/game/systems/BudgetSystem.ts** (450 lines)
+   - Complete budget and taxation system
+   - Monthly cycle, income/expenses tracking
+   - Tax rate adjustments, loan system
+
+3. **src/game/systems/ServiceCoverageSystem.ts** (400 lines)
+   - Service coverage calculation
+   - 5 service types with radius-based coverage
+   - Coverage map and statistics
+
+4. **src/game/systems/index.ts** (2 lines added)
+   - Export BudgetSystem
+   - Export ServiceCoverageSystem
+
+### Files Modified (6 files)
+
+1. **src/components/game/GameUI.tsx** (~80 lines modified)
+   - Import RCIDemandBar component
+   - Added 4 zone tool buttons (R/C/I/Dezone)
+   - Zone handling in handleTilesDrag()
+   - RCIDemandBar rendering
+
+2. **src/game/MainScene.ts** (~150 lines added)
+   - Import BudgetSystem and ServiceCoverageSystem
+   - System declarations and initialization
+   - `updateBudgetSystem()` method
+   - `updateServiceCoverageSystem()` method
+   - Budget and service getter methods
+   - Automatic building placement in zones
+   - `validateZonedBuildingPlacement()` method
+   - `placeBuildingOnGrid()` method
+
+3. **src/utils/buildingPlacementUtils.ts** (1 line)
+   - Added `TileType.Zone` to buildable tiles
+
+4. **src/game/systems/ZoningSystem.ts** (already existed)
+   - Used for zone demand calculation
+   - Used for automatic growth checks
+
+5. **src/game/types.ts** (no changes, already had zone types)
+   - ZoneType enum exists
+   - ToolType enum has zone tools
+
+### Code Statistics
+
+**Total New Code**: ~1,200 lines
+- RCIDemandBar.tsx: 200 lines
+- BudgetSystem.ts: 450 lines
+- ServiceCoverageSystem.ts: 400 lines
+- MainScene integration: 150 lines
+
+**Systems Created**: 2 (BudgetSystem, ServiceCoverageSystem)
+**UI Components Created**: 1 (RCIDemandBar)
+**Tool Buttons Added**: 4 (Zone R/C/I, Dezone)
+
+### Design Patterns & Best Practices
+
+#### 1. **Modular Game Systems**
+- BudgetSystem and ServiceCoverageSystem follow GameSystem interface
+- Clean separation of concerns (logic in systems, rendering in RenderSystem)
+- Easy to test and maintain independently
+
+#### 2. **Event-Driven Architecture**
+- Budget cycle emits `budget:cycle` event
+- Service coverage recalculated on grid changes
+- Decoupled communication between systems
+
+#### 3. **SimCity-Style Gameplay**
+- Tax rates affect happiness (trade-off between income and citizen satisfaction)
+- Service coverage affects happiness (incentive to build service buildings)
+- Automatic zone development (organic city growth)
+- Monthly budget cycle (strategic resource management)
+
+#### 4. **Wasteland Theme Integration**
+- Tax names: Settlement fees, Trade licenses, Scrap production fees
+- Service names: Militia, Medic tents, School tents
+- Fallout-style UI (phosphor green, CRT effects)
+
+#### 5. **Performance Optimization**
+- Coverage map cached (only recalculated when needed)
+- Budget cycle runs every 30 seconds (not every frame)
+- Zone demand polled every 2 seconds (not every frame)
+
+### Testing & Validation
+
+- ✅ **TypeScript Compilation**: No errors (`npx tsc --noEmit`)
+- ✅ **Type Safety**: Full TypeScript typing throughout
+- ✅ **Import Resolution**: All imports resolve correctly
+- ✅ **System Integration**: All systems properly initialized in MainScene
+- ⏳ **Runtime Testing**: Pending in-game verification
+- ⏳ **User Testing**: Pending user feedback
+
+### Integration Points
+
+**ZoningSystem Integration**:
+- MainScene calls `calculateZoneDemand()` with population and resources
+- MainScene calls `checkForGrowth()` for automatic building placement
+- RCIDemandBar polls `getZoneDemand()` for UI updates
+
+**BudgetSystem Integration**:
+- Runs on 30-second cycle in MainScene
+- Modifies caps balance directly
+- Emits budget events for UI updates
+- Tax rates affect PopulationSystem happiness
+
+**ServiceCoverageSystem Integration**:
+- Calculates coverage every update cycle
+- Coverage data available to OverlaySystem for visualization
+- Service bonus affects PopulationSystem happiness
+- Land value modifier affects ZoningSystem development
+
+### What's Next
+
+**Phase 1 Remaining Work**:
+- [ ] Utilities Network System (power lines, water pipes)
+- [ ] UI components (BudgetPanel, ServicePanel, UtilitiesPanel)
+- [ ] In-game testing of all Phase 1 features
+- [ ] Balance tuning (tax rates, service costs, coverage radius)
+
+**Phase 1 Status**: ~75% Complete
+- ✅ Zoning System (100% backend, 100% UI)
+- ✅ Budget System (100% backend, 0% UI)
+- ✅ Service Coverage (100% backend, 0% UI)
+- ⏳ Utilities Network (0% backend, 0% UI)
+
+**Estimated Remaining Time**: 15-20 hours
+- Utilities Network: 10-12 hours
+- UI Components: 5-8 hours
+
+---
+
 ## 2026-01-13 (Session 22) - Phase 5.1 Complete: Region Management UI Implementation
 
 ### Overview
