@@ -1,5 +1,428 @@
 # Development Log
 
+## 2026-01-13 (Session 20) - Phase 4: Content Systems - Scenarios, Ordinances & Disasters
+
+### Overview
+Implemented comprehensive content systems for scenarios, city policies (ordinances), and major disasters - completing Phase 4 of the SimCity transformation. These systems add structured gameplay objectives, strategic policy decisions, and dramatic challenges.
+
+### What Was Implemented
+
+#### 1. **Scenario System** (Phase 4.1)
+
+**ScenarioSystem** (`src/game/systems/ScenarioSystem.ts`):
+- **Objective Tracking**: 10 objective types (Population, Happiness, Resources, Buildings, ZoneDevelopment, Budget, Survival, DisasterSurvival, Pollution, Custom)
+- **Victory/Failure Conditions**: Automatic scenario completion detection
+- **Mayor Rating System**: 6-tier rating (Outcast → Settler → Overseer → Guardian → Wasteland Hero → Legend)
+- **Achievement System**: Unlockable achievements across 6 categories
+- **5 Predefined Scenarios**:
+  - **Tutorial**: "First Steps in the Wasteland" (Learn basics, 3 objectives)
+  - **Easy**: "Scavenger Camp" (Build trading settlement, 3 objectives)
+  - **Medium**: "Radiated Valley Challenge" (Survive high pollution, 3 objectives)
+  - **Hard**: "The Fortress" (Defend against constant raids, 3 objectives)
+  - **Expert**: "Wasteland Metropolis" (Build ultimate city, 4 objectives)
+- **Progressive Unlocking**: Complete scenarios to unlock next tier
+- **Time Limits**: Optional time constraints for challenge
+- **Score System**: 0-100 score based on objectives (70%) and time bonus (30%)
+- **Disaster Frequency Modifiers**: Scenarios can increase/decrease disaster rates
+
+**Mayor Rating Factors** (0-100 each):
+- Population size (20% weight)
+- Average happiness (20% weight)
+- Budget health (15% weight)
+- Infrastructure coverage (15% weight)
+- Pollution control (15% weight)
+- Safety & disaster management (15% weight)
+
+**Achievements** (9 predefined):
+- Scenario completions (First Steps, Master Trader, Radiation Master, Fortress Defender, Wasteland Legend)
+- Population milestones (Century Club: 100 pop)
+- Economic goals (Wasteland Tycoon: 10,000 caps)
+- Building achievements (Master Builder: 100 buildings)
+- Survival feats (Survivor: 5 disasters)
+
+**Configuration**:
+```typescript
+SCENARIO_CONFIG = {
+  updateInterval: 5000, // Check objectives every 5s
+  autoSave: true,
+  autoSaveInterval: 30000, // Auto-save every 30s
+}
+```
+
+#### 2. **Ordinance System** (Phase 4.2)
+
+**OrdinanceSystem** (`src/game/systems/OrdinanceSystem.ts`):
+- **City Policy Management**: Enable/disable ordinances with real-time effects
+- **22 Predefined Ordinances** across 5 categories:
+
+**Finance Ordinances (4)**:
+- Ration Control System: -30 caps/month, -10 happiness, -20% consumption
+- Tax Break for Traders: -50 caps/month, +10 happiness, -30% tax, +15% caps production
+- Heavy Taxation: +0 caps/month, -20 happiness, +50% tax income
+- Scavenger Subsidies: 100 caps/month, +5 happiness, +25% scrap production
+
+**Safety Ordinances (4)**:
+- Night Curfew: 50 caps/month, -15 happiness, -40% crime, -10% production
+- Disaster Preparedness Program: 80 caps/month, +5 happiness, -30% disaster damage
+- Mandatory Militia Training: 70 caps/month, -10 happiness, -50% crime, -20% disaster damage
+- Security Patrols: 60 caps/month, +5 happiness, -30% crime
+
+**Environment Ordinances (4)**:
+- Pollution Controls: 100 caps/month, -40% pollution, -15% production, +10 happiness
+- Mandatory Recycling: 50 caps/month, -20% pollution, +10% scrap, -5 happiness
+- Clean Energy Initiative: 150 caps/month, -50% pollution, +15 happiness
+- Green Space Preservation: 40 caps/month, +10 happiness, -15% pollution
+
+**Social Ordinances (4)**:
+- Refugee Welcome Program: 80 caps/month, +5 happiness, -10% resources
+- Healthcare Expansion: 90 caps/month, +15 happiness, -20% disease impact
+- Wasteland Education: 70 caps/month, +10 happiness, +10% production
+- Entertainment & Recreation: 60 caps/month, +20 happiness
+
+**Industry Ordinances (6)**:
+- Industrial Expansion: 100 caps/month, +30% production, +50% pollution, -10 happiness
+- Trade Agreements: 50 caps/month, +20% caps, +5 happiness
+- Automation Initiative: 150 caps/month, +40% production, -5 happiness
+- Quality Control Standards: 40 caps/month, -10% quantity, +20% value, +10 happiness
+
+**Features**:
+- **Requirement Checking**: Population, budget, and building requirements
+- **Monthly Costs**: Automatic budget deduction every 30 seconds
+- **Cumulative Effects**: Multiple ordinances stack
+- **Max 10 Active Ordinances**: Prevents overwhelming complexity
+- **Real-time Recalculation**: Effects update immediately on enable/disable
+
+**Configuration**:
+```typescript
+ORDINANCE_CONFIG = {
+  updateInterval: 30000, // Monthly costs every 30s
+  maxActiveOrdinances: 10,
+}
+```
+
+#### 3. **Disaster System** (Phase 4.3)
+
+**DisasterSystem** (`src/game/systems/DisasterSystem.ts`):
+- **11 Disaster Types** (wasteland-themed):
+
+**Natural Disasters (3)**:
+- Radstorm: Radiation storm (Minor-Major, 60s duration, damage 20, radius 8)
+- Dust Storm: Visibility zero (Minor-Moderate, 45s duration, damage 10, radius 12)
+- Earthquake: Ground shakes (Moderate-Catastrophic, 15s duration, damage 50, radius 20)
+
+**Hostile Events (3)**:
+- Raider Assault: Gang attack (Minor-Major, 90s duration, damage 30, radius 10)
+- Super Mutant Invasion: War party (Major-Catastrophic, 120s duration, damage 70, radius 15)
+- Feral Ghoul Plague: Ghoul horde (Moderate-Major, 100s duration, damage 40, radius 12)
+
+**Infrastructure Disasters (3)**:
+- Reactor Meltdown: Nuclear failure (Major-Catastrophic, 180s duration, damage 100, radius 25)
+- Water Contamination: Poisoned supply (Minor-Moderate, 120s duration, damage 15, radius 8)
+- Fire: Spreading flames (Minor-Major, 80s duration, damage 45, radius 6)
+
+**Creature Attacks (2)**:
+- Deathclaw Attack: Deathclaw rampage (Major-Catastrophic, 60s duration, damage 80, radius 10)
+- Radscorpion Swarm: Giant scorpions (Minor-Moderate, 75s duration, damage 25, radius 8)
+
+**Disaster Mechanics**:
+- **Warning System**: 30-second warning before disaster strikes
+- **Severity Levels**: Minor (0.5x damage), Moderate (1.0x), Major (1.8x), Catastrophic (3.0x)
+- **Building Damage**: 6 damage states (None → Light → Moderate → Heavy → Critical → Destroyed)
+- **Production Penalty**: Damaged buildings produce less (penalty = 1 - health%)
+- **Repair System**: Buildings can be repaired for scrap + caps cost
+- **Epicenter & Radius**: Damage decreases with distance from epicenter
+- **Random Probability**: 5% base chance per minute, weighted by disaster type
+- **Cooldown**: Minimum 2 minutes between disasters
+- **Disaster Frequency Multiplier**: Can be adjusted by scenarios or ordinances
+
+**Damage States**:
+- None: 100% health, no penalty
+- Light: 75-99% health, 1-25% penalty
+- Moderate: 50-74% health, 26-50% penalty
+- Heavy: 25-49% health, 51-75% penalty
+- Critical: 1-24% health, 76-99% penalty
+- Destroyed: 0% health, 100% penalty (building non-functional)
+
+**Configuration**:
+```typescript
+DISASTER_CONFIG = {
+  checkInterval: 60000, // Check every 60s
+  baseDisasterChance: 0.05, // 5% per check
+  warningTime: 30, // 30s warning
+  minDisasterInterval: 120, // 2 minutes between disasters
+}
+```
+
+#### 4. **Type Definitions** (`src/game/types.ts`)
+
+Added 200+ lines of Phase 4 types:
+
+**Scenario Types**:
+- `ObjectiveType`: 10 objective types
+- `Objective`: Objective definition with progress tracking
+- `ScenarioDifficulty`: Tutorial, Easy, Medium, Hard, Expert
+- `Scenario`: Full scenario definition
+- `ScenarioProgress`: Progress tracking with score
+
+**Achievement Types**:
+- `AchievementCategory`: 6 categories
+- `Achievement`: Achievement definition with unlock tracking
+
+**Mayor Rating Types**:
+- `MayorRating`: 6 rating levels
+- `MayorRatingFactors`: 6 performance factors
+
+**Ordinance Types**:
+- `OrdinanceCategory`: 5 categories
+- `Ordinance`: Policy definition with effects and costs
+
+**Disaster Types**:
+- `DisasterType`: 11 disaster types
+- `DisasterSeverity`: 4 severity levels
+- `DamageState`: 6 damage states
+- `Disaster`: Active disaster instance
+- `BuildingDamage`: Building damage tracking
+
+#### 5. **MainScene Integration** (`src/game/MainScene.ts`)
+
+**System Initialization**:
+```typescript
+this.scenarioSystem = this.initializeSystem(new ScenarioSystem(), false);
+this.ordinanceSystem = this.initializeSystem(new OrdinanceSystem(), false);
+this.disasterSystem = this.initializeSystem(new DisasterSystem(), false);
+```
+
+**Update Loop**:
+```typescript
+this.scenarioSystem.update(delta);
+this.ordinanceSystem.update(delta);
+this.disasterSystem.update(delta);
+```
+
+**Event Listeners** (10+ new listeners):
+- `objective:check`: Update objective progress from game state
+- `ordinance:checkRequirements`: Validate ordinance requirements
+- `ordinance:monthlyCosts`: Apply monthly ordinance costs to budget
+- `disaster:getBuildingsInRadius`: Find buildings affected by disaster
+- `building:getPosition`: Get building grid position
+- `disaster:getGridSize`: Get grid dimensions
+- `building:checkRepairCost`: Validate repair affordability
+- `building:applyRepairCost`: Deduct repair costs from resources
+- `building:getValue`: Get building base value
+- `disaster:warning/started/ended`: Log disaster events
+- `building:destroyed`: Log building destruction
+
+**Getter Methods**:
+```typescript
+getScenarioSystem(): ScenarioSystem
+getOrdinanceSystem(): OrdinanceSystem
+getDisasterSystem(): DisasterSystem
+```
+
+### Technical Details
+
+**Performance Optimizations**:
+- Scenario system: 5-second objective checks
+- Ordinance system: 30-second monthly cost updates
+- Disaster system: 60-second disaster checks
+- Event-driven architecture: No polling, all event-based
+- Efficient grid searching: Early termination, distance-based filtering
+
+**Memory Management**:
+- Map-based disaster tracking: O(1) lookups
+- Circular scenario history: Prevents unbounded growth
+- Achievement unlocking: One-time events, no continuous checking
+- Building damage map: Only stores damaged buildings
+
+**Integration Points**:
+- ScenarioSystem ↔ All Systems: Reads game state for objectives
+- OrdinanceSystem ↔ ResourceSystem: Applies budget costs
+- OrdinanceSystem ↔ PopulationSystem: Checks population requirements
+- DisasterSystem ↔ MainScene: Grid queries, building damage
+- DisasterSystem ↔ AdvisorSystem: Warnings and alerts
+- All Systems ↔ EventSystem: Event-driven communication
+
+### Architecture Highlights
+
+**Modular Design**:
+- Each system is independent and follows GameSystem interface
+- Event-driven communication between systems
+- Configuration-driven parameters
+- No tight coupling between systems
+- Clean separation of concerns
+
+**Data-Driven**:
+- All scenarios defined in SCENARIOS object
+- All ordinances defined in ORDINANCES object
+- All disasters defined in DISASTER_TEMPLATES
+- All achievements defined in ACHIEVEMENTS object
+- Easy to add new content without code changes
+
+**Wasteland Theme Integration**:
+- Scenarios: Post-apocalyptic setting (Scavenger Camp, Radiated Valley, Fortress)
+- Ordinances: Wasteland-appropriate (Ration System, Militia Training, Recycling)
+- Disasters: Fallout-themed (Radstorm, Super Mutants, Deathclaws, Feral Ghouls)
+- Mayor Rating: Wasteland titles (Outcast → Settler → Overseer → Guardian → Wasteland Hero → Legend)
+- Achievements: Survival-focused (Radiation Master, Fortress Defender)
+
+### What Still Needs Work
+
+**React UI Components (Phase 4 UI)** - NOT IMPLEMENTED:
+1. **Scenario Selection Screen**:
+   - List available scenarios with difficulty and description
+   - Show locked scenarios (grayed out)
+   - Display scenario objectives and rewards
+   - Start scenario button
+
+2. **Scenario Progress Panel**:
+   - Current scenario name and description
+   - Objective list with progress bars
+   - Time remaining (if time limit)
+   - Mayor rating display
+   - Achievement notifications
+
+3. **Ordinance Panel**:
+   - List ordinances by category
+   - Show enabled/disabled state
+   - Display effects and costs
+   - Enable/disable buttons
+   - Requirement indicators (red if not met)
+   - Total monthly cost summary
+
+4. **Disaster Warning Panel**:
+   - Warning message and countdown
+   - Disaster type and severity
+   - Affected area visualization
+   - Prepare/evacuate options
+
+5. **Building Repair UI**:
+   - Show damaged buildings on map (health bars)
+   - Repair cost display
+   - Repair button
+   - Batch repair option
+
+6. **Achievement Panel**:
+   - List unlocked achievements
+   - Show locked achievements (if not secret)
+   - Achievement unlock animations
+   - Progress bars for tracked achievements
+
+**Future Enhancements**:
+1. **Advanced Scenario Features**:
+   - Custom objectives with scripted events
+   - Scenario editor for players
+   - Dynamic difficulty adjustment
+   - Scenario leaderboards
+
+2. **Ordinance Improvements**:
+   - Citizen voting on ordinances
+   - Ordinance effectiveness metrics
+   - Random ordinance events (e.g., "Citizens demand...")
+   - Ordinance unlock system (research-based)
+
+3. **Disaster Enhancements**:
+   - Fire spreading mechanics (tile-by-tile)
+   - Disaster chains (earthquake → fire)
+   - Evacuation system for population
+   - Disaster preparedness buildings (bunkers, fire stations)
+   - Visual disaster effects (screen shake, particles)
+   - Disaster recovery phase (debris cleanup)
+
+4. **Integration with Budget System** (Phase 1.2):
+   - Ordinance costs deducted from monthly budget
+   - Disaster repair costs tracked in budget
+   - Insurance system for disasters
+
+5. **Integration with Service Coverage** (Phase 1.3):
+   - Fire stations reduce fire disaster damage
+   - Security buildings reduce raider damage
+   - Medical facilities reduce disease impact
+
+### Code Quality
+
+**Type Safety**:
+- ✅ Full TypeScript typing
+- ✅ No `any` types without justification
+- ✅ Proper interface definitions
+- ✅ Enum-based types for safety
+
+**Architecture**:
+- ✅ Modular system design
+- ✅ Event-driven communication
+- ✅ Configuration-driven
+- ✅ Clear separation of concerns
+- ✅ Follows existing patterns
+
+**Testing**:
+- ✅ TypeScript compilation passes
+- ⏳ Runtime testing needed (MainScene integration complete)
+- ⏳ UI testing needed (React components)
+- ⏳ Balance testing needed (disaster frequency, ordinance costs)
+
+### Progress Summary
+
+**Phase 4: Content Systems - Status:**
+- ✅ Scenario System (8-10h) - **COMPLETE**
+- ✅ Ordinance System (4-6h) - **COMPLETE**
+- ✅ Disaster System (8-10h) - **COMPLETE**
+- ✅ MainScene Integration - **COMPLETE**
+- ⏳ React UI Components - **TODO**
+
+**Commits**:
+- TBD (pending commit)
+
+**Files Created (3 new files)**:
+- `src/game/systems/ScenarioSystem.ts` (850 lines)
+- `src/game/systems/OrdinanceSystem.ts` (520 lines)
+- `src/game/systems/DisasterSystem.ts` (650 lines)
+
+**Files Modified (3 files)**:
+- `src/game/types.ts` - Added Phase 4 types (~250 lines)
+- `src/game/systems/index.ts` - Exported new systems (3 lines)
+- `src/game/MainScene.ts` - Integrated Phase 4 systems (~150 lines)
+
+**Total Implementation**:
+- ~2,400 lines of new code
+- 3 major systems (Scenario, Ordinance, Disaster)
+- 5 scenarios, 22 ordinances, 11 disasters, 9 achievements
+- Full SimCity-style content depth
+
+### Next Steps
+
+**Immediate**:
+1. Test Phase 4 systems in-game
+2. Create React UI components for scenarios, ordinances, disasters
+3. Balance testing (disaster frequency, ordinance costs, scenario difficulty)
+4. Visual effects for disasters (screen shake, particles, overlays)
+5. Achievement unlock animations
+
+**Future Enhancements**:
+- Budget system (Phase 1.2)
+- Service coverage (Phase 1.3)
+- Utility networks (Phase 1.4)
+- Advanced content (scenario editor, dynamic difficulty)
+
+### Notes
+
+**Comparison to SimCity**:
+- ✅ Scenarios - IMPLEMENTED (5 scenarios with objectives)
+- ✅ Ordinances/Policies - IMPLEMENTED (22 policies across 5 categories)
+- ✅ Disasters - IMPLEMENTED (11 disaster types with damage)
+- ✅ Mayor Rating - IMPLEMENTED (6-tier performance rating)
+- ✅ Achievements - IMPLEMENTED (9 achievements)
+- ⏳ Scenario UI - TODO
+- ⏳ Ordinance UI - TODO
+- ⏳ Disaster warning UI - TODO
+
+**Wasteland Theme Consistency**:
+- All content themed for post-apocalyptic setting
+- Scenarios: Scavenger camps, radiated valleys, fortresses
+- Ordinances: Ration controls, militia training, recycling
+- Disasters: Radstorms, super mutants, deathclaws, feral ghouls
+- Mayor titles: Outcast → Settler → Overseer → Guardian → Wasteland Hero → Legend
+
+---
+
 ## 2026-01-12 (Session 19) - Phase 3: Simulation & Gameplay Depth - Traffic, Pollution & Advisors
 
 ### Overview

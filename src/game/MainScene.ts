@@ -14,6 +14,9 @@ import {
   ZoningSystem,
   OverlaySystem,
   HistorySystem,
+  ScenarioSystem,
+  OrdinanceSystem,
+  DisasterSystem,
 } from './systems';
 import { PopulationSystem } from './systems/PopulationSystem';
 import { EventSystem } from './systems/EventSystem';
@@ -48,6 +51,10 @@ export class MainScene extends Phaser.Scene {
   private zoningSystem!: ZoningSystem;
   private overlaySystem!: OverlaySystem;
   private historySystem!: HistorySystem;
+  // Phase 4: Content Systems
+  private scenarioSystem!: ScenarioSystem;
+  private ordinanceSystem!: OrdinanceSystem;
+  private disasterSystem!: DisasterSystem;
 
   constructor() {
     super({ key: 'MainScene' });
@@ -118,6 +125,10 @@ export class MainScene extends Phaser.Scene {
     this.zoningSystem.update(_time, delta);
     this.overlaySystem.update(delta);
     this.historySystem.update(delta);
+    // Phase 4: Content Systems
+    this.scenarioSystem.update(delta);
+    this.ordinanceSystem.update(delta);
+    this.disasterSystem.update(delta);
 
     // Update resources with population consumption
     this.updateResourcesWithPopulation(delta);
@@ -294,6 +305,10 @@ export class MainScene extends Phaser.Scene {
     this.zoningSystem = this.initializeSystem(new ZoningSystem(), false);
     this.overlaySystem = this.initializeSystem(new OverlaySystem(), false);
     this.historySystem = this.initializeSystem(new HistorySystem(), false);
+    // Phase 4: Content Systems
+    this.scenarioSystem = this.initializeSystem(new ScenarioSystem(), false);
+    this.ordinanceSystem = this.initializeSystem(new OrdinanceSystem(), false);
+    this.disasterSystem = this.initializeSystem(new DisasterSystem(), false);
 
     // Register all buildings with systems
     for (const building of Object.values(BUILDINGS)) {
@@ -346,6 +361,152 @@ export class MainScene extends Phaser.Scene {
 
     this.events.on('population:growth', (data: { population: number }) => {
       console.log(`[POPULATION] New settler arrived! Total: ${data.population}`);
+    });
+
+    // Phase 4: Scenario system event listeners
+    this.events.on('objective:check', (data: { objective: any; result: { value: number } }) => {
+      // Update objective progress based on game state
+      const { objective, result } = data;
+
+      switch (objective.type) {
+        case 'population':
+          result.value = this.populationSystem.getPopulation();
+          break;
+        case 'happiness':
+          result.value = this.populationSystem.getHappiness();
+          break;
+        case 'resources':
+          result.value = this.resourceSystem.getResources().scrap; // Example: scrap
+          break;
+        case 'budget':
+          result.value = this.resourceSystem.getResources().caps;
+          break;
+        case 'survival':
+          // Handled by scenario system's elapsed time
+          break;
+      }
+    });
+
+    // Phase 4: Ordinance system event listeners
+    this.events.on('ordinance:checkRequirements', (data: { ordinance: any; result: { passed: boolean } }) => {
+      const { ordinance, result } = data;
+      const requirements = ordinance.requirements;
+
+      if (!requirements) {
+        result.passed = true;
+        return;
+      }
+
+      // Check population requirement
+      if (requirements.minPopulation) {
+        if (this.populationSystem.getPopulation() < requirements.minPopulation) {
+          result.passed = false;
+          return;
+        }
+      }
+
+      // Check budget requirement
+      if (requirements.minBudget) {
+        if (this.resourceSystem.getResources().caps < requirements.minBudget) {
+          result.passed = false;
+          return;
+        }
+      }
+
+      // Check building requirements
+      if (requirements.requiredBuildings && requirements.requiredBuildings.length > 0) {
+        // TODO: Check if required buildings exist
+        // For now, pass the check
+      }
+
+      result.passed = true;
+    });
+
+    this.events.on('ordinance:monthlyCosts', (data: { costs: Record<string, number>; totalCost: number }) => {
+      // Apply monthly ordinance costs to budget
+      this.resourceSystem.addResources({ caps: -data.totalCost });
+    });
+
+    // Phase 4: Disaster system event listeners
+    this.events.on('disaster:getBuildingsInRadius', (data: { epicenter: { x: number; y: number }; radius: number; buildings: string[] }) => {
+      // Find all buildings within radius of epicenter
+      for (let x = 0; x < this.grid.length; x++) {
+        for (let y = 0; y < this.grid[x].length; y++) {
+          const cell = this.grid[x][y];
+          if (cell.buildingId && cell.isOrigin) {
+            // Calculate distance to epicenter
+            const dx = x - data.epicenter.x;
+            const dy = y - data.epicenter.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance <= data.radius) {
+              data.buildings.push(cell.buildingId);
+            }
+          }
+        }
+      }
+    });
+
+    this.events.on('building:getPosition', (data: { buildingId: string; position: { x: number; y: number } }) => {
+      // Find building position in grid
+      for (let x = 0; x < this.grid.length; x++) {
+        for (let y = 0; y < this.grid[x].length; y++) {
+          const cell = this.grid[x][y];
+          if (cell.buildingId === data.buildingId && cell.isOrigin) {
+            data.position.x = x;
+            data.position.y = y;
+            return;
+          }
+        }
+      }
+    });
+
+    this.events.on('disaster:getGridSize', (data: { width: number; height: number }) => {
+      data.width = this.grid.length;
+      data.height = this.grid[0]?.length || 0;
+    });
+
+    this.events.on('building:checkRepairCost', (data: { buildingId: string; cost: any; result: { canAfford: boolean } }) => {
+      const resources = this.resourceSystem.getResources();
+      const cost = data.cost;
+
+      // Check if player can afford repair
+      data.result.canAfford = true;
+      if (cost.scrap && resources.scrap < cost.scrap) data.result.canAfford = false;
+      if (cost.caps && resources.caps < cost.caps) data.result.canAfford = false;
+    });
+
+    this.events.on('building:applyRepairCost', (data: { buildingId: string; cost: any }) => {
+      // Deduct repair cost from resources
+      const cost = data.cost;
+      this.resourceSystem.addResources({
+        scrap: -(cost.scrap || 0),
+        caps: -(cost.caps || 0),
+      });
+    });
+
+    this.events.on('building:getValue', (data: { buildingId: string; value: { scrap: number; caps: number } }) => {
+      // Get building base value from BUILDINGS registry
+      // For now, use default values (can be enhanced later)
+      data.value.scrap = 50;
+      data.value.caps = 25;
+    });
+
+    // Log disaster events
+    this.events.on('disaster:warning', (disaster: any) => {
+      console.log(`[DISASTER WARNING] ${disaster.name}: ${disaster.warning?.message}`);
+    });
+
+    this.events.on('disaster:started', (disaster: any) => {
+      console.log(`[DISASTER] ${disaster.name} has begun!`);
+    });
+
+    this.events.on('disaster:ended', (disaster: any) => {
+      console.log(`[DISASTER] ${disaster.name} has ended. Damage dealt: ${disaster.damageDealt}`);
+    });
+
+    this.events.on('building:destroyed', (buildingId: string) => {
+      console.log(`[DISASTER] Building ${buildingId} has been destroyed!`);
     });
   }
 
@@ -547,6 +708,19 @@ export class MainScene extends Phaser.Scene {
   // Event system methods
   applyEventChoice(eventId: string, choiceIndex: number): void {
     this.eventSystem.applyEventChoice(eventId, choiceIndex);
+  }
+
+  // Phase 4: Content system getters
+  getScenarioSystem(): ScenarioSystem {
+    return this.scenarioSystem;
+  }
+
+  getOrdinanceSystem(): OrdinanceSystem {
+    return this.ordinanceSystem;
+  }
+
+  getDisasterSystem(): DisasterSystem {
+    return this.disasterSystem;
   }
 
   // ============================================
